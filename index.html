@@ -324,6 +324,20 @@ textarea{resize:vertical;line-height:1.5}
 .pv b{margin-left:auto;font-family:var(--f-m);font-size:11px;font-weight:600;
   color:var(--amber);white-space:nowrap}
 .clock{white-space:nowrap}
+
+/* controls sit above the question so nothing needs scrolling to reach */
+.ctrl.top{margin-top:0;padding-top:0;padding-bottom:13px;border-top:none;
+  border-bottom:1px solid var(--stage-rule);align-items:center}
+.done{margin-left:auto;font-family:var(--f-m);font-size:12px;color:var(--stage-mute);white-space:nowrap}
+.done b{color:var(--stage-ink);font-size:15px;margin-left:4px}
+.meta{display:flex;justify-content:space-between;align-items:baseline;gap:20px;flex-wrap:wrap;
+  font-family:var(--f-m);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--stage-mute);margin:0}
+.meta b{color:var(--amber);font-weight:600}
+.meta b.ok{color:var(--teal-lit)}
+.meta b.plain{color:var(--stage-ink)}
+.qbtn .ns.was{color:var(--teal)}
+.mgrid input.hide{display:none}
 </style>
 </head>
 <body>
@@ -417,6 +431,11 @@ function selectedQ(){
   return null;
 }
 function isLive(q){ return !!(q && S && S.activeId===q.id); }
+function askedList(){ return (S && S.asked) || []; }
+function wasAsked(q){ return !!q && askedList().indexOf(q.id)>=0; }
+function pollsDone(){ return askedList().length; }
+/* The room counts in the order questions were asked, not their place in the list. */
+function askedNumber(q){ var i=askedList().indexOf(q.id); return i<0 ? null : i+1; }
 function counts(q){
   var c=[], total=0, by=(isLive(q) && S.counts && S.counts.by)||{};
   for(var i=0;i<q.options.length;i++){ var n=+by[i]||0; c.push(n); total+=n; }
@@ -460,7 +479,7 @@ function renderAudience(){
       : 'Voting is closed for this question.')+'</p>';
   }
   app.innerHTML='<div class="aud"><div class="qcard">'+
-    '<p class="qn">Question '+(questions().indexOf(q)+1)+' of '+questions().length+'</p>'+
+    '<p class="qn">Question '+(askedNumber(q)||1)+'</p>'+
     '<h1 class="qtext">'+esc(q.q)+'</h1>'+body+'</div></div>';
   barMeta.textContent = reveal?'Results':(open?'Voting open':'Voting closed');
   [].forEach.call(app.querySelectorAll('.opt'),function(b){
@@ -479,6 +498,55 @@ function vote(qid,i){
 /* ---- presenter ---- */
 var META_FIELDS=[['company','Company'],['title','Session title'],['date','Date'],
                  ['place','Place'],['participants','People in the room'],['duration','Duration']];
+var DURATIONS=['30 minutes','1 hour','90 minutes','2 hours'];
+
+/* Date and duration are the two fields people mistype, so neither is a free
+   text box: one is the browser's own calendar, the other a short list with a
+   way out for anything unusual. */
+function metaField(f){
+  var k=f[0], v=META[k]||'';
+  if(k==='date')
+    return '<label><span class="lab">'+f[1]+'</span>'+
+      '<input type="date" id="m_date" value="'+esc(v)+'"></label>';
+  if(k==='duration'){
+    var listed = DURATIONS.indexOf(v)>=0 || v==='';
+    return '<label><span class="lab">'+f[1]+'</span>'+
+      '<select id="m_duration">'+
+        DURATIONS.map(function(d){
+          return '<option'+(v===d?' selected':'')+'>'+d+'</option>'; }).join('')+
+        '<option value="__other"'+(listed?'':' selected')+'>Something else&hellip;</option>'+
+      '</select>'+
+      '<input type="text" id="m_durationOther" class="'+(listed?'hide':'')+'" '+
+        'placeholder="How long?" value="'+esc(listed?'':v)+'"></label>';
+  }
+  return '<label><span class="lab">'+f[1]+'</span>'+
+    '<input type="text" id="m_'+k+'" value="'+esc(v)+'"></label>';
+}
+function readMetaFields(){
+  META_FIELDS.forEach(function(f){
+    var e=document.getElementById('m_'+f[0]); if(e) META[f[0]]=e.value;
+  });
+  if(META.duration==='__other'){
+    var o=document.getElementById('m_durationOther');
+    META.duration = o ? o.value.trim() : '';
+  }
+}
+function wireMetaFields(){
+  var d=document.getElementById('m_duration');
+  if(d) d.addEventListener('change',function(){
+    var o=document.getElementById('m_durationOther');
+    if(o){ o.classList.toggle('hide', d.value!=='__other'); if(d.value==='__other') o.focus(); }
+  });
+}
+/* 2026-09-12 reads badly on a report sent to a company. */
+function prettyDate(v){
+  if(!v) return '';
+  var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if(!m) return v;
+  var mo=['January','February','March','April','May','June','July','August',
+          'September','October','November','December'][+m[2]-1];
+  return (+m[3])+' '+mo+' '+m[1];
+}
 
 function renderHome(){
   var running = S && S.activeId;
@@ -487,10 +555,7 @@ function renderHome(){
       '<h2>Start a fresh poll</h2>'+
       '<p class="hsub">The counts go back to zero. Everything already collected stays saved '+
         'and can be reopened from the list below.</p>'+
-      '<div class="mgrid">'+META_FIELDS.map(function(f){
-        return '<label><span class="lab">'+f[1]+'</span>'+
-          '<input type="text" id="m_'+f[0]+'" value="'+esc(META[f[0]]||'')+'"></label>';
-      }).join('')+'</div>'+
+      '<div class="mgrid">'+META_FIELDS.map(metaField).join('')+'</div>'+
       '<button class="b2" id="hStart">Start the poll</button>'+
       (running ? '<button class="b2 ghost" id="hCont">Carry on with the poll already running</button>' : '')+
     '</div>'+
@@ -506,9 +571,9 @@ function renderHome(){
         : '<p class="hsub">None saved yet. Run a poll, then press Save this workshop on the report.</p>')+
     '</div></div>';
   barMeta.textContent='Presenter';
+  wireMetaFields();
   on('hStart',function(){
-    META_FIELDS.forEach(function(f){
-      var e=document.getElementById('m_'+f[0]); if(e) META[f[0]]=e.value; });
+    readMetaFields();
     if(!META.company.trim()){ alert('A company name, at least — the report is titled with it.'); return; }
     var q={a:'meta',code:CODE};
     for(var k in META) q[k]=META[k];
@@ -549,7 +614,8 @@ function renderPresenter(){
       (shown.length? shown.map(function(x){
         return '<button class="qbtn'+(q&&x.id===q.id?' on':'')+'" data-id="'+esc(x.id)+'">'+
           '<i>'+(qs.indexOf(x)+1)+'</i><span>'+esc(x.q)+
-          (x.scored?'':'<b class="ns">not scored</b>')+'</span></button>'; }).join('')
+          (wasAsked(x)?'<b class="ns was">asked</b>':(x.scored?'':'<b class="ns">not scored</b>'))+
+          '</span></button>'; }).join('')
         : '<p style="font-size:13px;color:var(--mute);margin:4px 0">Nothing in this topic yet.</p>')+
     '</div></div>'+
     (EDIT!==null ? editor() : '<button class="mini" id="addQ">+ Add a question</button>')+
@@ -559,14 +625,25 @@ function renderPresenter(){
 
   var stage;
   if(!q){
-    stage='<div class="stage"><div class="stagehead"><div><p class="lab">Nothing selected</p></div></div>'+
+    stage='<div class="stage">'+
+      '<div class="ctrl top"><button class="b" id="goHome">Back to the start</button>'+
+        '<span class="done">Polls done <b>'+pollsDone()+'</b></span></div>'+
+      '<div class="meta"><span>Nothing selected</span></div>'+
       '<h1 class="sq">Pick a question on the left. Nothing reaches the room until you press Ask the room.</h1>'+
-      '<div class="ctrl"><button class="b" id="goHome">Back to the start</button></div></div>';
+    '</div>';
   } else if(!isLive(q)){
-    stage='<div class="stage"><div class="stagehead">'+
-      '<div><p class="lab">Question '+(qs.indexOf(q)+1)+' of '+qs.length+' &middot; '+esc(q.topic||'General')+'</p></div>'+
-      '<div class="headright"><div><p class="lab">Status</p>'+
-        '<div class="clock">Not asked</div></div></div></div>'+
+    var already=wasAsked(q);
+    stage='<div class="stage">'+
+      '<div class="ctrl top">'+
+        '<button class="b go" id="askRoom">'+(already?'Ask it again':'Ask the room')+'</button>'+
+        '<button class="b" id="nextQ">Look at the next one</button>'+
+        '<button class="b" id="editQ">Edit this one</button>'+
+        '<button class="b" id="goHome">Back to the start</button>'+
+        '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
+      '</div>'+
+      '<div class="meta"><span>Question '+(qs.indexOf(q)+1)+' of '+qs.length+
+        ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+'</span>'+
+        '<span>Status: <b'+(already?' class="ok"':'')+'>'+(already?'Asked':'Not asked')+'</b></span></div>'+
       '<h1 class="sq">'+esc(q.q)+'</h1>'+
       '<div class="prev">'+q.options.map(function(o,i){
         return '<div class="pv"><span>'+String.fromCharCode(65+i)+'</span>'+esc(o)+
@@ -574,21 +651,24 @@ function renderPresenter(){
       }).join('')+'</div>'+
       '<p class="hidden-note">Only you can see this. The room is still on the waiting screen'+
         (S.activeId?' or the last question':'')+'.</p>'+
-      '<div class="ctrl">'+
-        '<button class="b go" id="askRoom">Ask the room</button>'+
+    '</div>';
+  } else {
+    var t=counts(q), best=Math.max.apply(null,t.counts);
+    stage='<div class="stage">'+
+      '<div class="ctrl top">'+
+        '<button class="b go" id="toggleOpen">'+(S.open?'Close voting':'Open voting')+'</button>'+
+        '<button class="b" id="toggleRev">'+(S.revealed?'Hide results':'Show results to the room')+'</button>'+
+        '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
         '<button class="b" id="nextQ">Look at the next one</button>'+
         '<button class="b" id="editQ">Edit this one</button>'+
         '<button class="b" id="goHome">Back to the start</button>'+
-      '</div></div>';
-  } else {
-    var t=counts(q), best=Math.max.apply(null,t.counts);
-    stage='<div class="stage"><div class="stagehead">'+
-      '<div><p class="lab">Question '+(qs.indexOf(q)+1)+' of '+qs.length+' &middot; '+esc(q.topic||'General')+'</p></div>'+
-      '<div class="headright">'+
-        '<div><p class="lab">Open for</p><div class="clock" id="clk">'+clockText()+'</div></div>'+
-        '<div><p class="lab">Answers in</p><div class="count">'+t.total+
-          '<small>'+(S.open?'voting open':'closed')+'</small></div></div>'+
-      '</div></div>'+
+        '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
+      '</div>'+
+      '<div class="meta"><span>Question '+(qs.indexOf(q)+1)+' of '+qs.length+
+        ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+
+        ' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+clockText()+'</b></span>'+
+        '<span>Status: <b class="ok">'+(S.open?'Asked':'Closed')+'</b>'+
+        ' &nbsp;&middot;&nbsp; <b class="plain">'+t.total+'</b> answers</span></div>'+
       '<h1 class="sq">'+esc(q.q)+'</h1>'+
       '<div class="sres">'+q.options.map(function(o,i){
         var pct=t.total?Math.round(t.counts[i]/t.total*100):0;
@@ -599,13 +679,7 @@ function renderPresenter(){
       }).join('')+'</div>'+
       '<p class="hidden-note">'+(S.revealed?'The room is seeing these results now'
         :'The room sees only the question &mdash; results are hidden')+'</p>'+
-      '<div class="ctrl">'+
-        '<button class="b go" id="toggleOpen">'+(S.open?'Close voting':'Open voting')+'</button>'+
-        '<button class="b" id="toggleRev">'+(S.revealed?'Hide results':'Show results to the room')+'</button>'+
-        '<button class="b" id="nextQ"'+(qs.indexOf(q)>=qs.length-1?' disabled':'')+'>Next question</button>'+
-        '<button class="b" id="editQ">Edit this one</button>'+
-        '<button class="b" id="goHome">Back to the start</button>'+
-      '</div></div>';
+    '</div>';
   }
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Presenter';
@@ -645,6 +719,11 @@ function wire(){
        whatever is live and sends nothing */
     SEL=null;
     send({a:'set',activeId:pick.id,open:1,revealed:0}); });
+  on('refreshNow',function(){
+    var b=document.getElementById('refreshNow');
+    if(b){ b.textContent='Refreshing…'; b.disabled=true; }
+    BUSY=false; refresh().then(function(){ render(true); });
+  });
   on('goHome',function(){ STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
   [].forEach.call(app.querySelectorAll('.chip'),function(b){
     b.addEventListener('click',function(){ FILTER=b.dataset.t; render(true); });
@@ -765,7 +844,7 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, FAILS>2, STAGE, SEL, REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
+    MYANS, FAILS>2, STAGE, SEL, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
 function typing(){
@@ -802,7 +881,7 @@ function bandNote(b){
        : b==='Strong'   ? 'A financially aware group. The value now is in refinement — matching what they hold to what they are saving for.'
        : '';
 }
-function fmtDate(d){ return d || ''; }
+function fmtDate(d){ return prettyDate(d); }
 
 function renderReport(){
   if(!ENDPOINT) return setup();
@@ -814,11 +893,7 @@ function renderReport(){
   }
   var R=REPORT, aw=R.awareness;
 
-  var det='<div class="mgrid">'+
-    META_FIELDS.map(function(f){
-      return '<label><span class="lab">'+f[1]+'</span>'+
-        '<input type="text" id="m_'+f[0]+'" value="'+esc(META[f[0]]||'')+'"></label>';
-    }).join('')+
+  var det='<div class="mgrid">'+META_FIELDS.map(metaField).join('')+
     '<button class="b2" id="mSave">Save these details</button></div>';
 
   var topicRows = R.topics.length ? '<div class="trow">'+R.topics.map(function(t){
@@ -893,6 +968,7 @@ function renderReport(){
       '</div>'+
     '</div>';
   barMeta.textContent='Report';
+  wireMetaFields();
   on('mSave',saveMeta);
   on('repPrint',function(){ window.print(); });
   on('repBack',function(){ STAGE='run'; location.hash='#present'; });
