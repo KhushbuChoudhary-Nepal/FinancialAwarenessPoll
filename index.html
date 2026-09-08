@@ -230,6 +230,9 @@ function call(params){
 
 function refresh(){
   if(BUSY || !ENDPOINT) return Promise.resolve();
+  /* Nothing to fetch until the presenter is in, and refreshing here would
+     redraw the code box and wipe what is being typed. */
+  if(MODE==='pres' && !CODE) return Promise.resolve();
   BUSY=true;
   var p={a:'state'};
   if(MODE==='pres' && CODE) p.code=CODE;
@@ -310,7 +313,7 @@ function vote(qid,i){
 /* ---- presenter ---- */
 function renderPresenter(){
   if(!ENDPOINT) return setup();
-  if(!CODE) return gate();
+  if(!CODE) return document.getElementById('pcode') ? undefined : gate();
   if(!S){ app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
     '<h2>Connecting</h2><p>One moment.</p></div></div>'; return; }
 
