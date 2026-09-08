@@ -303,7 +303,7 @@ function renderAudience(){
 }
 
 function vote(qid,i){
-  MYANS[qid]=i; renderAudience();
+  MYANS[qid]=i; render(true);
   call({a:'vote', s:S.sessionId, q:qid, c:i, v:VID}).catch(function(){
     /* one retry — a dropped vote in a room of 150 must not vanish silently */
     setTimeout(function(){ call({a:'vote',s:S.sessionId,q:qid,c:i,v:VID}).catch(function(){}); },1500);
@@ -379,9 +379,9 @@ function wire(){
     b.addEventListener('click',function(){ EDIT=null;
       send({a:'set',activeId:b.dataset.id,open:1,revealed:0}); });
   });
-  on('addQ',function(){ EDIT={q:'',options:['','']}; renderPresenter(); });
-  on('editQ',function(){ var q=activeQ(); if(q) EDIT={id:q.id,q:q.q,options:q.options.slice()}; renderPresenter(); });
-  on('edCancel',function(){ EDIT=null; renderPresenter(); });
+  on('addQ',function(){ EDIT={q:'',options:['','']}; render(true); });
+  on('editQ',function(){ var q=activeQ(); if(q) EDIT={id:q.id,q:q.q,options:q.options.slice()}; render(true); });
+  on('edCancel',function(){ EDIT=null; render(true); });
   on('edSave',saveEdit);
   on('edDel',function(){
     var qs=questions().filter(function(x){ return x.id!==EDIT.id; });
@@ -422,7 +422,7 @@ function gate(){
     var v=(document.getElementById('pcode').value||'').trim(); if(!v) return;
     call({a:'set',code:v}).then(function(d){
       if(d&&d.ok){ CODE=v; try{sessionStorage.setItem('jugnu.poll.code',v);}catch(e){}
-        refresh(); }
+        render(true); refresh(); }
       else document.getElementById('perr').style.display='block';
     }).catch(function(){ document.getElementById('perr').style.display='block'; });
   };
@@ -438,7 +438,31 @@ function setup(){
   barMeta.textContent='Setup';
 }
 
-function render(){ MODE==='pres' ? renderPresenter() : renderAudience(); }
+/* The screen is rebuilt from scratch on each draw, so drawing on every poll made
+   it flicker and threw away anything half-typed. Redraw only when something the
+   viewer can see has actually changed — and never while a box has focus. */
+var LASTSIG='';
+function signature(){
+  var c=S && S.counts ? S.counts : null;
+  return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
+    S && S.open, S && S.revealed, c && c.total, c && c.by,
+    (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
+    MYANS, FAILS>2]);
+}
+function typing(){
+  var a=document.activeElement;
+  return !!(a && (a.tagName==='INPUT' || a.tagName==='TEXTAREA'));
+}
+function render(force){
+  var sig=signature();
+  if(!force){
+    if(EDIT!==null) return;        // an open editor must not be swept away
+    if(sig===LASTSIG) return;      // nothing changed
+    if(typing()) return;           // someone is mid-word
+  }
+  LASTSIG=sig;
+  MODE==='pres' ? renderPresenter() : renderAudience();
+}
 
 var qrDone='';
 function drawQR(){
@@ -466,7 +490,7 @@ else{
      looking at the audience view and thinks nothing happened. */
   window.addEventListener('hashchange',function(){
     var want = /(^|[#?&])present\b/.test(location.hash+location.search) ? 'pres' : 'aud';
-    if(want!==MODE){ MODE=want; EDIT=null; render(); refresh(); }
+    if(want!==MODE){ MODE=want; EDIT=null; render(true); refresh(); }
   });
 }
 })();
