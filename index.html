@@ -454,6 +454,13 @@ else{
     refresh();
   }, base + Math.round(Math.random()*(MODE==='pres'?400:2500)));
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) refresh(); });
+  /* Typing #present into the address bar does not reload the page, so the mode
+     has to be re-read when the hash changes — otherwise the presenter is left
+     looking at the audience view and thinks nothing happened. */
+  window.addEventListener('hashchange',function(){
+    var want = /(^|[#?&])present\b/.test(location.hash+location.search) ? 'pres' : 'aud';
+    if(want!==MODE){ MODE=want; EDIT=null; render(); refresh(); }
+  });
 }
 })();
 </script>
