@@ -159,7 +159,11 @@ button{font-family:inherit}
 .gate{max-width:380px;margin:70px auto;padding:0 18px;text-align:center}
 .gate h2{font-family:var(--f-d);font-weight:700;font-size:22px;margin:0 0 6px}
 .gate p{margin:0 0 18px;font-size:13.5px;color:var(--mute);line-height:1.6}
-input[type=password],textarea{width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--rule);
+/* A real password field makes the browser offer to save it, and the popup lands
+   on top of the box mid-typing. This is not a login, so it is a plain field that
+   hides what is typed instead. */
+.mask{-webkit-text-security:disc;text-security:disc;letter-spacing:.12em;}
+input[type=text],input[type=password],textarea{width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--rule);
   background:var(--card);color:var(--ink);font-family:var(--f-b);font-size:14.5px}
 textarea{resize:vertical;line-height:1.5}
 .b2{width:100%;margin-top:10px;background:var(--teal);border:none;color:#fff;border-radius:9px;
@@ -407,7 +411,7 @@ function saveEdit(){
 function gate(){
   app.innerHTML='<div class="gate"><h2>Presenter view</h2>'+
     '<p>Enter your presenter code to run the poll.</p>'+
-    '<input type="password" id="pcode" placeholder="Presenter code" autocomplete="off">'+
+    '<input type="text" id="pcode" class="mask" placeholder="Presenter code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="jugnu-code">'+
     '<button class="b2" id="pgo">Open presenter view</button>'+
     '<p class="err" id="perr" style="display:none">That code did not match.</p></div>';
   barMeta.textContent='Presenter';
