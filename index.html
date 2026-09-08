@@ -28,7 +28,10 @@
   --paper:#EDF1F6; --card:#FFFFFF; --sunk:#E3E9F1;
   --ink:#14274A; --ink-2:#3A4E66; --mute:#66788E; --faint:#93A4B8;
   --rule:#D8DFE9; --rule-2:#EAEFF5;
-  --stage:#14274A; --stage-ink:#F2F6FA; --stage-mute:#9DB3CC; --stage-rule:rgba(255,255,255,.14);
+  /* The stage is what gets screen-shared, so it stays white in both themes —
+     a dark block projected into a lit meeting room is hard to read. */
+  --stage:#FFFFFF; --stage-ink:#14274A; --stage-mute:#66788E; --stage-rule:#DBE1E9;
+  --stage-soft:#EDF1F6;
   --f-d:'Sora',system-ui,sans-serif;
   --f-b:'IBM Plex Sans',system-ui,sans-serif;
   --f-m:'IBM Plex Mono',ui-monospace,monospace;
@@ -100,7 +103,7 @@ button{font-family:inherit}
 .rrow{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:baseline}
 .rname{font-size:14.5px;color:var(--ink-2)}
 .rpct{font-family:var(--f-m);font-size:14px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
-.rtrack{grid-column:1/-1;height:9px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.rtrack{grid-column:1/-1;height:13px;border-radius:99px;background:var(--sunk);overflow:hidden}
 .rfill{display:block;height:100%;border-radius:99px;background:var(--teal);
   transition:width .45s cubic-bezier(.22,.8,.3,1)}
 .rrow.top .rfill{background:var(--amber)}
@@ -122,7 +125,7 @@ button{font-family:inherit}
   font-size:12.5px;color:var(--mute);cursor:pointer}
 .mini:hover{border-color:var(--teal);color:var(--teal)}
 
-.stage{background:var(--stage);color:var(--stage-ink);padding:26px 30px 30px;
+.stage{background:var(--stage);color:var(--stage-ink);border-left:1px solid var(--rule);padding:26px 30px 30px;
   display:flex;flex-direction:column;gap:20px}
 .stagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;
   border-bottom:1px solid var(--stage-rule);padding-bottom:14px}
@@ -140,18 +143,19 @@ button{font-family:inherit}
 .sn{font-family:var(--f-m);font-size:14px;color:var(--stage-mute);font-variant-numeric:tabular-nums}
 .spct{font-family:var(--f-m);font-size:clamp(17px,1.9vw,22px);font-weight:600;
   font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
-.strack{grid-column:1/-1;height:14px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}
-.sfill{display:block;height:100%;border-radius:99px;background:var(--teal-lit);
+.strack{grid-column:1/-1;height:20px;border-radius:99px;background:var(--stage-soft);overflow:hidden}
+.sfill{display:block;height:100%;border-radius:99px;background:#0B6F5C;
   transition:width .5s cubic-bezier(.22,.8,.3,1)}
-.srow.top .sfill{background:var(--amber)}
-.srow.top .spct{color:var(--amber)}
+.srow.top .sfill{background:#E8A81C}
+.srow.top .spct{color:#9C7222}
 .hidden-note{font-family:var(--f-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--stage-mute)}
 .ctrl{display:flex;flex-wrap:wrap;gap:9px;margin-top:auto;padding-top:18px;border-top:1px solid var(--stage-rule)}
-.b{border:1px solid var(--stage-rule);background:rgba(255,255,255,.06);color:var(--stage-ink);
+.b{border:1px solid var(--stage-rule);background:var(--stage-soft);color:var(--stage-ink);
   border-radius:9px;padding:11px 16px;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .12s}
-.b:hover{background:rgba(255,255,255,.13)}
-.b.go{background:var(--teal-lit);border-color:var(--teal-lit);color:#04241D}
-.b.warn{color:#F0B4AC}
+.b:hover{background:#E1E8F1}
+.b.go{background:#0B6F5C;border-color:#0B6F5C;color:#fff}
+.b.go:hover{background:#0A5F50}
+.b.warn{color:#C0392B}
 .b:disabled{opacity:.4;cursor:not-allowed}
 
 .join{background:var(--sunk);border:1px solid var(--rule);border-radius:11px;padding:13px}
@@ -199,9 +203,18 @@ textarea{resize:vertical;line-height:1.5}
 .repwrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px;display:flex;flex-direction:column;gap:18px}
 .reptools{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:16px;
   display:flex;flex-direction:column;gap:14px}
-.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
-.mgrid label{display:flex;flex-direction:column;gap:5px}
-.mgrid .b2{margin-top:0}
+/* A fixed three-column grid, with every box bottom-aligned in its row — an
+   auto-fitting grid put the date a line lower than the place beside it. */
+.mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.mgrid label{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mgrid .lab{line-height:1.4}
+/* one height for every box, so the tops line up across the row whatever the
+   browser does with a date or a select */
+.mgrid input,.mgrid select{width:100%;height:44px;padding-top:0;padding-bottom:0}
+
+@media(max-width:720px){ .mgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media(max-width:460px){ .mgrid{grid-template-columns:1fr} }
+.mgrid .b2{margin-top:0;grid-column:1 / -1}
 .past{border-top:1px solid var(--rule);padding-top:12px;display:flex;flex-direction:column;gap:5px}
 .pastrow{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:baseline;text-align:left;
   background:none;border:1px solid transparent;border-radius:8px;padding:7px 9px;cursor:pointer;color:var(--ink-2)}
@@ -249,7 +262,7 @@ textarea{resize:vertical;line-height:1.5}
 .trow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;margin:12px 0 0}
 .tcell span{display:block;font-size:11px;color:#66788E}
 .tcell b{display:block;font-family:var(--f-m);font-size:15px;color:#14274A;margin:2px 0 4px}
-.tbar{display:block;height:5px;border-radius:99px;background:#DBE1E9;overflow:hidden}
+.tbar{display:block;height:7px;border-radius:99px;background:#DBE1E9;overflow:hidden}
 .tbar u{display:block;height:100%;background:#9C7222;border-radius:99px}
 
 .qwrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 0}
@@ -262,7 +275,7 @@ textarea{resize:vertical;line-height:1.5}
 .qbar{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:baseline}
 .qbar .on{font-size:11.5px;color:#3A4E66}
 .qbar .op{font-family:var(--f-m);font-size:11.5px;font-weight:600;color:#14274A}
-.qbar i{grid-column:1/-1;display:block;height:5px;border-radius:99px;background:#EDF1F6;overflow:hidden}
+.qbar i{grid-column:1/-1;display:block;height:7px;border-radius:99px;background:#EDF1F6;overflow:hidden}
 .qbar u{display:block;height:100%;background:#0B6F5C;border-radius:99px}
 .qbar.top u{background:#E8A81C}
 .qbar.top .op{color:#9C7222}
@@ -318,11 +331,11 @@ textarea{resize:vertical;line-height:1.5}
 .prev{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 .pv{display:flex;align-items:center;gap:12px;border:1px solid var(--stage-rule);
   border-radius:10px;padding:11px 14px;font-size:clamp(14px,1.4vw,17px);color:var(--stage-ink)}
-.pv span{flex:0 0 22px;height:22px;border-radius:6px;background:rgba(255,255,255,.1);
+.pv span{flex:0 0 22px;height:22px;border-radius:6px;background:var(--stage-soft);
   font-family:var(--f-m);font-size:11px;display:flex;align-items:center;justify-content:center;
   color:var(--stage-mute)}
 .pv b{margin-left:auto;font-family:var(--f-m);font-size:11px;font-weight:600;
-  color:var(--amber);white-space:nowrap}
+  color:#9C7222;white-space:nowrap}
 .clock{white-space:nowrap}
 
 /* controls sit above the question so nothing needs scrolling to reach */
@@ -333,11 +346,52 @@ textarea{resize:vertical;line-height:1.5}
 .meta{display:flex;justify-content:space-between;align-items:baseline;gap:20px;flex-wrap:wrap;
   font-family:var(--f-m);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
   color:var(--stage-mute);margin:0}
-.meta b{color:var(--amber);font-weight:600}
-.meta b.ok{color:var(--teal-lit)}
+.meta b{color:#9C7222;font-weight:600}
+.meta b.ok{color:#0B6F5C}
 .meta b.plain{color:var(--stage-ink)}
 .qbtn .ns.was{color:var(--teal)}
-.mgrid input.hide{display:none}
+.mgrid input.hide,.mgrid select.hide{display:none}
+
+/* ── lead-in line ─────────────────────────────────────────────── */
+.qcard .lead{font-size:14.5px;color:var(--mute);line-height:1.5;margin:0 0 6px}
+.slead{font-size:clamp(14px,1.5vw,18px);color:var(--stage-mute);margin:0 0 -8px;line-height:1.45}
+
+/* ── the intro block, on a phone ──────────────────────────────── */
+.hello{font-family:var(--f-d);font-weight:700;font-size:20px;line-height:1.35;margin:0 0 6px;text-wrap:balance}
+.priv{margin:0 0 16px;font-size:12.5px;color:var(--mute);line-height:1.5}
+.iq{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:13px 14px;margin-bottom:10px}
+.iqt{font-weight:600;font-size:14.5px;margin:0 0 8px;line-height:1.35}
+.ilead{margin:0 0 3px;font-size:13.5px;color:var(--mute);line-height:1.45}
+/* One option per row — wrapped pills made long options break mid-phrase and the
+   room could not scan them. */
+.iopts{display:flex;flex-direction:column;gap:7px}
+.io{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  border:1.5px solid var(--rule);border-radius:10px;padding:12px 13px;font-size:14.5px;
+  color:var(--ink-2);background:var(--card);cursor:pointer;font-family:var(--f-b);line-height:1.35}
+.io i{flex:0 0 22px;height:22px;border-radius:6px;background:var(--sunk);color:var(--mute);
+  font-style:normal;font-family:var(--f-m);font-size:10.5px;display:flex;align-items:center;justify-content:center}
+.io:hover{border-color:var(--mute)}
+.io.on{border-color:var(--teal);background:rgba(11,111,92,.09);color:var(--ink);font-weight:600}
+.io.on i{background:var(--teal);color:#fff}
+.iqt.sub{font-weight:700;font-size:15.5px;margin:0 0 9px}
+.isub{width:100%;margin-top:4px;background:var(--teal);border:none;color:#fff;border-radius:10px;
+  padding:15px;font-size:15.5px;font-weight:600;cursor:pointer;font-family:var(--f-b)}
+.note.warn{color:#C0392B;font-weight:600}
+.tickbig{width:46px;height:46px;border-radius:50%;background:var(--green-t,#E2F2EE);color:var(--teal);
+  display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 4px}
+
+/* ── the intro panel, on the presenter's screen ───────────────── */
+.pres.onecol{grid-template-columns:1fr}
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.icard{border:1px solid var(--stage-rule);border-radius:10px;padding:13px 15px}
+.icard h4{font-family:var(--f-b);font-weight:600;font-size:14px;margin:0 0 10px;color:var(--stage-ink)}
+.irow{display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-items:baseline;margin-bottom:7px}
+.irow span{font-size:13px;color:var(--stage-mute)}
+.irow em{font-style:normal;font-family:var(--f-m);font-size:13px;font-weight:600;color:var(--stage-ink)}
+.irow i{grid-column:1/-1;display:block;height:13px;border-radius:99px;background:var(--stage-soft);overflow:hidden}
+.irow i u{display:block;height:100%;background:#0B6F5C;border-radius:99px}
+.irow.top i u{background:#E8A81C} .irow.top em{color:#9C7222}
+@media(max-width:760px){ .igrid{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -373,11 +427,11 @@ function modeFor(h){
   return 'aud';
 }
 var MODE = modeFor(location.hash+location.search);
-var CODE='', S=null, EDIT=null, MYANS={}, FAILS=0, BUSY=false;
+var CODE='', S=null, EDIT=null, MYANS={}, FAILS=0, BUSY=false, INTRO_SENT=false;
 /* the same mark as the header, reused on the report */
 var LOGO=(document.querySelector('.blogo img')||{}).src||'';
 var FILTER='All', REPORT=null, SESSIONS=null, METASAVE=null;
-var STAGE='home', SEL=null;
+var STAGE='home', SEL=null, LEVEL='All';
 var META={company:'',title:'',date:'',place:'',participants:'',duration:''};
 var VID=deviceId();
 
@@ -411,7 +465,7 @@ function refresh(){
   return call(p).then(function(d){
     BUSY=false; FAILS=0;
     if(!d || !d.ok) return;
-    if(S && S.sessionId!==d.sessionId) MYANS={};
+    if(S && S.sessionId!==d.sessionId){ MYANS={}; INTRO_SENT=false; }
     S=d; if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
   }).catch(function(){ BUSY=false; FAILS++; render(); });
 }
@@ -432,6 +486,10 @@ function selectedQ(){
 }
 function isLive(q){ return !!(q && S && S.activeId===q.id); }
 function askedList(){ return (S && S.asked) || []; }
+function introTopic(){ return (S && S.introTopic) || 'Intro'; }
+function introQs(){ return questions().filter(function(q){ return q.topic===introTopic(); }); }
+var INTRO_HELLO = "Hi folks — five quick taps, so I know who's in the room 🙂";
+var INTRO_PRIV  = "This info remains anonymous — Khushbu won't know who said what.";
 function wasAsked(q){ return !!q && askedList().indexOf(q.id)>=0; }
 function pollsDone(){ return askedList().length; }
 /* The room counts in the order questions were asked, not their place in the list. */
@@ -452,6 +510,7 @@ function renderAudience(){
                     :'One moment.')+'</p></div></div>';
     barMeta.textContent='Connecting'; return;
   }
+  if(S.intro){ return renderIntroAudience(); }
   var q=activeQ();
   if(!q){
     app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
@@ -480,10 +539,62 @@ function renderAudience(){
   }
   app.innerHTML='<div class="aud"><div class="qcard">'+
     '<p class="qn">Question '+(askedNumber(q)||1)+'</p>'+
+    (q.lead?'<p class="lead">'+esc(q.lead)+'</p>':'')+
     '<h1 class="qtext">'+esc(q.q)+'</h1>'+body+'</div></div>';
   barMeta.textContent = reveal?'Results':(open?'Voting open':'Voting closed');
   [].forEach.call(app.querySelectorAll('.opt'),function(b){
     b.addEventListener('click',function(){ vote(q.id,+b.dataset.i); });
+  });
+}
+
+function renderIntroAudience(){
+  var qs=introQs();
+  if(!qs.length){
+    app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
+      '<h2>Waiting for the next question</h2><p>Keep this page open.</p></div></div>';
+    return;
+  }
+  if(INTRO_SENT){
+    app.innerHTML='<div class="aud"><div class="rest">'+
+      '<div class="tickbig">&#10003;</div><h2>Thank you</h2>'+
+      '<p>That is all for now — keep this page open for the questions.</p></div></div>';
+    barMeta.textContent='Done'; return;
+  }
+  app.innerHTML='<div class="aud">'+
+    '<h1 class="hello">'+esc(INTRO_HELLO)+'</h1>'+
+    '<p class="priv">'+esc(INTRO_PRIV)+'</p>'+
+    qs.map(function(q,n){
+      /* The setting-up sentence comes first, then the question — the same order
+         a person would say them out loud. */
+      return '<div class="iq">'+
+        (q.lead?'<p class="ilead">'+(n+1)+'. '+esc(q.lead)+'</p>'+
+                '<p class="iqt sub">'+esc(q.q)+'</p>'
+              :'<p class="iqt">'+(n+1)+'. '+esc(q.q)+'</p>')+
+        '<div class="iopts">'+q.options.map(function(o,i){
+          return '<button class="io'+(MYANS[q.id]===i?' on':'')+'" data-q="'+esc(q.id)+'" data-i="'+i+'">'+
+            '<i>'+String.fromCharCode(65+i)+'</i><span>'+esc(o)+'</span></button>'; }).join('')+
+        '</div></div>';
+    }).join('')+
+    '<button class="isub" id="iSub">Submit</button>'+
+    '<p class="note" id="iNote">Please answer all '+qs.length+' before you submit.</p>'+
+  '</div>';
+  barMeta.textContent='Intro';
+  [].forEach.call(app.querySelectorAll('.io'),function(b){
+    b.addEventListener('click',function(){
+      MYANS[b.dataset.q]=+b.dataset.i; render(true);
+    });
+  });
+  on('iSub',function(){
+    var missing=qs.filter(function(q){ return MYANS[q.id]===undefined; });
+    if(missing.length){
+      var n=document.getElementById('iNote');
+      n.textContent='Still '+missing.length+' to answer.'; n.className='note warn';
+      return;
+    }
+    INTRO_SENT=true; render(true);
+    qs.forEach(function(q){
+      call({a:'vote', s:S.sessionId, q:q.id, c:MYANS[q.id], v:VID}).catch(function(){});
+    });
   });
 }
 
@@ -509,15 +620,18 @@ function metaField(f){
     return '<label><span class="lab">'+f[1]+'</span>'+
       '<input type="date" id="m_date" value="'+esc(v)+'"></label>';
   if(k==='duration'){
-    var listed = DURATIONS.indexOf(v)>=0 || v==='';
+    /* Custom does not add a second box — the list turns into a text field in the
+       same place, so the row never changes shape. */
+    var known = DURATIONS.indexOf(v)>=0, custom = !!v && !known;
     return '<label><span class="lab">'+f[1]+'</span>'+
-      '<select id="m_duration">'+
+      '<select id="m_duration" class="'+(custom?'hide':'')+'">'+
+        '<option value=""'+(v?'':' selected')+'>Select</option>'+
         DURATIONS.map(function(d){
           return '<option'+(v===d?' selected':'')+'>'+d+'</option>'; }).join('')+
-        '<option value="__other"'+(listed?'':' selected')+'>Something else&hellip;</option>'+
+        '<option value="__other">Custom</option>'+
       '</select>'+
-      '<input type="text" id="m_durationOther" class="'+(listed?'hide':'')+'" '+
-        'placeholder="How long?" value="'+esc(listed?'':v)+'"></label>';
+      '<input type="text" id="m_durationOther" class="'+(custom?'':'hide')+'" '+
+        'placeholder="Type how long" value="'+esc(custom?v:'')+'"></label>';
   }
   return '<label><span class="lab">'+f[1]+'</span>'+
     '<input type="text" id="m_'+k+'" value="'+esc(v)+'"></label>';
@@ -526,17 +640,28 @@ function readMetaFields(){
   META_FIELDS.forEach(function(f){
     var e=document.getElementById('m_'+f[0]); if(e) META[f[0]]=e.value;
   });
-  if(META.duration==='__other'){
-    var o=document.getElementById('m_durationOther');
-    META.duration = o ? o.value.trim() : '';
-  }
+  var sel=document.getElementById('m_duration'), other=document.getElementById('m_durationOther');
+  if(other && !other.classList.contains('hide')) META.duration = other.value.trim();
+  else if(sel) META.duration = sel.value==='__other' ? '' : sel.value;
 }
 function wireMetaFields(){
-  var d=document.getElementById('m_duration');
-  if(d) d.addEventListener('change',function(){
-    var o=document.getElementById('m_durationOther');
-    if(o){ o.classList.toggle('hide', d.value!=='__other'); if(d.value==='__other') o.focus(); }
+  var sel=document.getElementById('m_duration'), other=document.getElementById('m_durationOther');
+  if(!sel||!other) return;
+  sel.addEventListener('change',function(){
+    if(sel.value!=='__other') return;
+    other.value='';
+    sel.classList.add('hide');
+    other.classList.remove('hide');
+    other.focus();
   });
+  /* Left empty, it goes back to the list rather than trapping you in a blank box. */
+  other.addEventListener('blur',function(){
+    if(other.value.trim()) return;
+    other.classList.add('hide');
+    sel.classList.remove('hide');
+    sel.value='';
+  });
+  other.addEventListener('keydown',function(e){ if(e.key==='Escape') other.blur(); });
 }
 /* 2026-09-12 reads badly on a report sent to a company. */
 function prettyDate(v){
@@ -599,16 +724,29 @@ function renderPresenter(){
     '<h2>Connecting</h2><p>One moment.</p></div></div>'; return; }
   if(STAGE==='home'){ if(SESSIONS===null) loadSessions(); return renderHome(); }
 
+  if(S.intro) return renderIntroPresenter();
   var qs=questions(), q=selectedQ();
-  var tops=(S.topics||[]), shown=qs.filter(function(x){
-    return FILTER==='All' || (x.topic||'General')===FILTER; });
+  var tops=(S.topics||[]), levs=(S.levels||[]);
+  var shown=qs.filter(function(x){
+    if((x.topic||'')===introTopic()) return false;   /* the intro is its own block */
+    if(FILTER!=='All' && (x.topic||'General')!==FILTER) return false;
+    /* "Any" questions belong in every audience, so they always show. */
+    if(LEVEL!=='All' && (x.level||'Any')!==LEVEL && (x.level||'Any')!=='Any') return false;
+    return true;
+  });
   var side='<div class="side">'+
     '<div><p class="lab">Topic</p><div class="chips">'+
-      ['All'].concat(tops).map(function(t){
-        var n = t==='All' ? qs.length : qs.filter(function(x){return (x.topic||'General')===t;}).length;
+      ['All'].concat(tops.filter(function(t){ return t!==introTopic(); })).map(function(t){
+        var n = t==='All' ? qs.filter(function(x){return x.topic!==introTopic();}).length
+                          : qs.filter(function(x){return (x.topic||'General')===t;}).length;
         if(t!=='All' && !n) return '';
         return '<button class="chip'+(FILTER===t?' on':'')+'" data-t="'+esc(t)+'">'+
           esc(t)+' <i>'+n+'</i></button>'; }).join('')+
+    '</div></div>'+
+    '<div><p class="lab">Written for</p><div class="chips">'+
+      ['All'].concat(levs).map(function(l){
+        return '<button class="chip lv'+(LEVEL===l?' on':'')+'" data-l="'+esc(l)+'">'+esc(l)+'</button>';
+      }).join('')+
     '</div></div>'+
     '<div><p class="lab">Questions</p><div class="qlist">'+
       (shown.length? shown.map(function(x){
@@ -619,6 +757,7 @@ function renderPresenter(){
         : '<p style="font-size:13px;color:var(--mute);margin:4px 0">Nothing in this topic yet.</p>')+
     '</div></div>'+
     (EDIT!==null ? editor() : '<button class="mini" id="addQ">+ Add a question</button>')+
+    (introQs().length ? '<button class="mini" id="askIntro">Ask the intro block</button>' : '')+
     '<button class="mini" id="goRep">View the workshop report</button>'+
     '<div class="join"><p class="lab">Audience joins here</p>'+
       '<p class="url">'+esc(audienceURL())+'</p><div id="qr"></div></div></div>';
@@ -644,6 +783,7 @@ function renderPresenter(){
       '<div class="meta"><span>Question '+(qs.indexOf(q)+1)+' of '+qs.length+
         ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+'</span>'+
         '<span>Status: <b'+(already?' class="ok"':'')+'>'+(already?'Asked':'Not asked')+'</b></span></div>'+
+      (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
       '<h1 class="sq">'+esc(q.q)+'</h1>'+
       '<div class="prev">'+q.options.map(function(o,i){
         return '<div class="pv"><span>'+String.fromCharCode(65+i)+'</span>'+esc(o)+
@@ -669,6 +809,7 @@ function renderPresenter(){
         ' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+clockText()+'</b></span>'+
         '<span>Status: <b class="ok">'+(S.open?'Asked':'Closed')+'</b>'+
         ' &nbsp;&middot;&nbsp; <b class="plain">'+t.total+'</b> answers</span></div>'+
+      (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
       '<h1 class="sq">'+esc(q.q)+'</h1>'+
       '<div class="sres">'+q.options.map(function(o,i){
         var pct=t.total?Math.round(t.counts[i]/t.total*100):0;
@@ -686,10 +827,50 @@ function renderPresenter(){
   wire(); drawQR();
 }
 
+function renderIntroPresenter(){
+  var qs=introQs(), c=(S.introCounts)||{}, people=S.introPeople||0;
+  app.innerHTML='<div class="pres onecol"><div class="stage">'+
+    '<div class="ctrl top">'+
+      '<button class="b go" id="introClose">Close the intro</button>'+
+      '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
+      '<button class="b" id="goQs">Go to the questions</button>'+
+      '<button class="b" id="goHome">Back to the start</button>'+
+      '<span class="done">Answered <b>'+people+'</b></span>'+
+    '</div>'+
+    '<div class="meta"><span>Intro &nbsp;&middot;&nbsp; '+qs.length+
+      ' question'+(qs.length===1?'':'s')+' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+
+      clockText()+'</b></span><span>Status: <b class="ok">Open</b></span></div>'+
+    '<div class="igrid">'+qs.map(function(q){
+      var t=c[q.id]||{total:0,by:{}}, best=0;
+      q.options.forEach(function(o,i){ var n=+((t.by||{})[i])||0; if(n>best) best=n; });
+      return '<div class="icard"><h4>'+esc(q.q)+'</h4>'+q.options.map(function(o,i){
+        var n=+((t.by||{})[i])||0, pct=t.total?Math.round(n/t.total*100):0;
+        return '<div class="irow'+((t.total&&n===best)?' top':'')+'">'+
+          '<span>'+esc(o)+'</span><em>'+pct+'%</em>'+
+          '<i><u style="width:'+pct+'%"></u></i></div>';
+      }).join('')+'</div>';
+    }).join('')+'</div>'+
+    '<p class="hidden-note">Yours only &mdash; the room never sees this, and it stays out of the report</p>'+
+  '</div></div>';
+  barMeta.textContent='Intro';
+  on('introClose',function(){ send({a:'set',intro:0}); });
+  on('goQs',function(){ send({a:'set',intro:0}); });
+  on('goHome',function(){ STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
+  on('refreshNow',function(){ BUSY=false; refresh().then(function(){ render(true); }); });
+  drawQR();
+}
+
 function editor(){
   var tops=(S.topics||['General']);
+  var levs=(S.levels||['Any']);
   return '<div class="ed"><p class="lab">'+(EDIT.id?'Edit question':'New question')+'</p>'+
+    '<p class="lab">Lead-in line &mdash; optional</p>'+
+    '<textarea id="edL" rows="2" placeholder="A setting-up sentence, if it needs one">'+esc(EDIT.lead||'')+'</textarea>'+
+    '<p class="lab">The question</p>'+
     '<textarea id="edQ" rows="2" placeholder="The question">'+esc(EDIT.q||'')+'</textarea>'+
+    '<p class="lab">Written for</p>'+
+    '<select id="edV">'+levs.map(function(l){
+      return '<option'+((EDIT.level||'Any')===l?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select>'+
     '<p class="lab">Topic</p>'+
     '<select id="edT">'+tops.map(function(t){
       return '<option'+((EDIT.topic||'General')===t?' selected':'')+'>'+esc(t)+'</option>';
@@ -726,14 +907,18 @@ function wire(){
   });
   on('goHome',function(){ STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
   [].forEach.call(app.querySelectorAll('.chip'),function(b){
-    b.addEventListener('click',function(){ FILTER=b.dataset.t; render(true); });
+    b.addEventListener('click',function(){
+      if(b.dataset.l!==undefined) LEVEL=b.dataset.l; else FILTER=b.dataset.t;
+      render(true);
+    });
   });
   on('goRep',function(){ location.hash='#report'; });
-  on('addQ',function(){ EDIT={q:'',options:['',''],topic:(FILTER==='All'?'General':FILTER),
-    scored:true,scores:[]}; render(true); });
+  on('askIntro',function(){ SEL=null; send({a:'set',intro:1}); });
+  on('addQ',function(){ EDIT={q:'',lead:'',options:['',''],topic:(FILTER==='All'?'General':FILTER),
+    level:(LEVEL==='All'?'Any':LEVEL),scored:true,scores:[]}; render(true); });
   on('editQ',function(){ var q=selectedQ();
-    if(q) EDIT={id:q.id,q:q.q,topic:q.topic,options:q.options.slice(),
-                scored:!!q.scored,scores:(q.scores||[]).slice()};
+    if(q) EDIT={id:q.id,q:q.q,lead:q.lead||'',topic:q.topic,level:q.level||'Any',
+                options:q.options.slice(),scored:!!q.scored,scores:(q.scores||[]).slice()};
     render(true); });
   on('edCancel',function(){ EDIT=null; render(true); });
   on('edSave',saveEdit);
@@ -760,6 +945,8 @@ function saveEdit(){
     .map(function(s){return s.trim();}).filter(Boolean);
   if(!qt||opts.length<2){ alert('A question and at least two options, please.'); return; }
   var topic=document.getElementById('edT').value;
+  var lead=(document.getElementById('edL').value||'').trim();
+  var level=document.getElementById('edV').value;
   var scored=document.getElementById('edS').checked;
   var scores=opts.map(function(){ return 0; });
   if(scored){
@@ -771,7 +958,7 @@ function saveEdit(){
     if(!scores.some(function(x){ return x>0; })){
       alert('At least one option needs points above zero, or untick the scoring box.'); return; }
   }
-  var body={q:qt, topic:topic, options:opts, scored:scored, scores:scores};
+  var body={q:qt, lead:lead, topic:topic, level:level, options:opts, scored:scored, scores:scores};
   var qs=questions().slice();
   if(EDIT.id){ body.id=EDIT.id;
     for(var i=0;i<qs.length;i++) if(qs[i].id===EDIT.id) qs[i]=body; }
@@ -844,7 +1031,8 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, FAILS>2, STAGE, SEL, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
+    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, S&&S.intro, INTRO_SENT,
+    S&&S.introPeople, S&&S.introCounts, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
 function typing(){
