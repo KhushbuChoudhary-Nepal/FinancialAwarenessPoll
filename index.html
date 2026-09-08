@@ -127,6 +127,9 @@ button{font-family:inherit}
 .stagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;
   border-bottom:1px solid var(--stage-rule);padding-bottom:14px}
 .stagehead .lab{color:var(--stage-mute)}
+.headright{display:flex;align-items:flex-start;gap:34px;text-align:right}
+.clock{font-family:var(--f-m);font-size:30px;font-weight:600;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--stage-mute)}
 .count{font-family:var(--f-m);font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
 .count small{font-size:12px;font-weight:400;color:var(--stage-mute);margin-left:7px}
 .sq{font-family:var(--f-d);font-weight:700;font-size:clamp(24px,3.1vw,38px);line-height:1.2;margin:0;
@@ -176,6 +179,133 @@ textarea{resize:vertical;line-height:1.5}
 .err{color:#C0392B;font-size:13px;margin:9px 0 0}
 .foot{text-align:center;font-family:var(--f-m);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--faint);padding:22px 16px 30px}
+
+/* ── topic chips ─────────────────────────────────────────────── */
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--rule);background:var(--card);color:var(--ink-2);border-radius:99px;
+  padding:4px 9px;font-family:var(--f-b);font-size:11.5px;cursor:pointer;line-height:1.5}
+.chip i{font-style:normal;font-family:var(--f-m);font-size:10px;color:var(--faint)}
+.chip:hover{border-color:var(--mute)}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+.chip.on i{color:#9DB3CC}
+.qbtn .ns{display:block;font-weight:400;font-family:var(--f-m);font-size:9.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.chk input{margin-top:2px}
+.ed select{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--rule);
+  background:var(--card);color:var(--ink);font-family:var(--f-b);font-size:14px}
+
+/* ── report ──────────────────────────────────────────────────── */
+.repwrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px;display:flex;flex-direction:column;gap:18px}
+.reptools{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:16px;
+  display:flex;flex-direction:column;gap:14px}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+.mgrid label{display:flex;flex-direction:column;gap:5px}
+.mgrid .b2{margin-top:0}
+.past{border-top:1px solid var(--rule);padding-top:12px;display:flex;flex-direction:column;gap:5px}
+.pastrow{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:baseline;text-align:left;
+  background:none;border:1px solid transparent;border-radius:8px;padding:7px 9px;cursor:pointer;color:var(--ink-2)}
+.pastrow:hover{background:var(--rule-2);border-color:var(--rule)}
+.pastrow b{font-size:13px;color:var(--ink)}
+.pastrow span{font-size:11.5px;color:var(--mute)}
+.pastrow i{font-style:normal;font-family:var(--f-m);font-size:12.5px;font-weight:600;color:var(--teal)}
+
+.doc{background:#fff;color:#14274A;border:1px solid var(--rule);border-radius:12px;
+  padding:0 24px;overflow:hidden}
+/* The mark is white artwork, so it needs the navy behind it — the same band the
+   plan tool's report opens with. */
+.doc .dtop{display:grid;grid-template-columns:118px 1fr 128px;align-items:center;gap:16px;
+  background:#14274A;margin:0 -24px;padding:13px 24px}
+.dlogo img{width:96px;height:auto;display:block}
+.dtitle{text-align:center}
+.dtitle h1{font-family:var(--f-d);font-weight:800;font-size:20px;margin:0;letter-spacing:-.01em;color:#fff}
+.dtitle p{margin:4px 0 0;font-size:12px;color:#A9C2DA}
+.dpl{text-align:right}
+.dpl .k{font-family:var(--f-m);font-size:8.5px;letter-spacing:.16em;color:#8FA9C2}
+.dpl .v{font-family:var(--f-d);font-weight:700;font-size:12.5px;color:#E0B65C;margin-top:2px}
+
+.facts{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#DBE1E9;
+  border:1px solid #DBE1E9;margin:14px 0 0}
+.facts div{background:#fff;padding:7px 10px}
+.facts span{display:block;font-family:var(--f-m);font-size:8.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:#95A5B8}
+.facts b{display:block;font-size:14px;margin-top:3px;color:#14274A}
+
+.score{display:grid;grid-template-columns:170px 1fr;gap:22px;align-items:center;
+  background:#EDF1F6;border-radius:10px;padding:13px 16px;margin:12px 0 0}
+.sleft .lab{color:#66788E}
+.big{font-family:var(--f-d);font-weight:800;font-size:46px;line-height:1;color:#0B6F5C;margin-top:4px}
+.big em{font-style:normal;font-size:22px;margin-left:2px}
+.bandname{font-family:var(--f-m);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:#9C7222;margin-top:5px}
+.scale{position:relative;height:12px;border-radius:99px;background:#DBE1E9;overflow:hidden}
+.scale i{display:block;height:100%;background:#0B6F5C;border-radius:99px}
+.scale u{position:absolute;top:0;bottom:0;width:1px;background:#fff}
+.scale u.m40{left:40%} .scale u.m70{left:70%}
+.scalelab{display:flex;justify-content:space-between;font-family:var(--f-m);font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;color:#95A5B8;margin-top:5px}
+.bandnote{margin:9px 0 0;font-size:12.5px;line-height:1.55;color:#3A4E66}
+
+.trow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;margin:12px 0 0}
+.tcell span{display:block;font-size:11px;color:#66788E}
+.tcell b{display:block;font-family:var(--f-m);font-size:15px;color:#14274A;margin:2px 0 4px}
+.tbar{display:block;height:5px;border-radius:99px;background:#DBE1E9;overflow:hidden}
+.tbar u{display:block;height:100%;background:#9C7222;border-radius:99px}
+
+.qwrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 0}
+.qb{border:1px solid #DBE1E9;border-radius:9px;padding:9px 11px;break-inside:avoid}
+.qbh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.qbh h3{font-family:var(--f-d);font-weight:700;font-size:13px;margin:0;line-height:1.3;color:#14274A}
+.tag{font-family:var(--f-m);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:#95A5B8;white-space:nowrap}
+.qbars{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.qbar{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:baseline}
+.qbar .on{font-size:11.5px;color:#3A4E66}
+.qbar .op{font-family:var(--f-m);font-size:11.5px;font-weight:600;color:#14274A}
+.qbar i{grid-column:1/-1;display:block;height:5px;border-radius:99px;background:#EDF1F6;overflow:hidden}
+.qbar u{display:block;height:100%;background:#0B6F5C;border-radius:99px}
+.qbar.top u{background:#E8A81C}
+.qbar.top .op{color:#9C7222}
+.qbn{margin:7px 0 0;font-family:var(--f-m);font-size:9.5px;letter-spacing:.06em;color:#95A5B8}
+.method{margin:12px 0 10px;font-size:9.5px;line-height:1.6;color:#66788E}
+.nodata{margin:14px 0 0;font-size:12.5px;color:#66788E;background:#EDF1F6;padding:12px;border-radius:8px}
+.dend{background:#14274A;color:#fff;text-align:center;padding:8px;margin:0 -24px;
+  font-family:var(--f-d);font-weight:700;font-size:14px}
+.dend span{font-family:var(--f-m);font-weight:600;font-size:8px;letter-spacing:.3em;color:#E8A81C}
+
+@media(max-width:760px){
+  .facts{grid-template-columns:repeat(2,1fr)}
+  .score{grid-template-columns:1fr;gap:14px}
+  .qwrap{grid-template-columns:1fr}
+  .doc .dtop{grid-template-columns:1fr;text-align:center;justify-items:center}
+  .dpl{text-align:center}
+}
+@media print{
+  @page{size:A4;margin:8mm}
+  body{background:#fff}
+  .bar,.reptools,.foot{display:none!important}
+  .repwrap{padding:0;max-width:none}
+  .doc{border:none;border-radius:0;padding:0 4mm}
+  /* An A4 page is narrower than a laptop, so the phone layout above would
+     otherwise take over and stack everything down two pages. */
+  .doc .dtop{grid-template-columns:110px 1fr 120px;text-align:left;margin:0 -4mm;padding:10px 4mm}
+  .dtitle{text-align:center} .dpl{text-align:right}
+  .dtitle h1{font-size:17pt} .dtitle p{font-size:9pt}
+  .facts{grid-template-columns:repeat(5,1fr);margin-top:10px}
+  .facts span{font-size:6pt} .facts b{font-size:10.5pt}
+  .score{grid-template-columns:150px 1fr;gap:16px;padding:11px 13px;margin-top:10px}
+  .big{font-size:34pt} .big em{font-size:15pt}
+  .bandnote{font-size:9pt}
+  .trow{grid-template-columns:repeat(auto-fit,minmax(95px,1fr));margin-top:10px}
+  .tcell b{font-size:11.5pt}
+  .qwrap{grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+  .qbh h3{font-size:9.6pt}
+  .qbar .on,.qbar .op{font-size:8.6pt}
+  .qbn{font-size:7pt}
+  .method{font-size:6.8pt;margin:10px 0 8px}
+  .dend{margin:0 -4mm;padding:7px;font-size:11pt}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 </head>
 <body>
@@ -202,11 +332,20 @@ textarea{resize:vertical;line-height:1.5}
 <script>
 (function(){
 /* ═══════════ paste your Apps Script /exec URL here ═══════════ */
-var ENDPOINT = 'https://script.google.com/macros/s/AKfycbweYBh-bBqL7ppX2a3MsHuetYolyHNMisRPiPsiuLXPBJBHSCa51LgmQp0K3JiRPIfE/exec';
+var ENDPOINT = 'https://script.google.com/macros/s/AKfycbyHEujPijcTTi5g6fUlhN_Ecc9NYx9VAJYAVnkkYVsN4EAfFl9KFK65VH_NeziWwdoX/exec';
 
 var app=document.getElementById('app'), barMeta=document.getElementById('barMeta');
-var MODE = /(^|[#?&])present\b/.test(location.hash+location.search) ? 'pres' : 'aud';
+function modeFor(h){
+  if(/(^|[#?&])report\b/.test(h)) return 'rep';
+  if(/(^|[#?&])present\b/.test(h)) return 'pres';
+  return 'aud';
+}
+var MODE = modeFor(location.hash+location.search);
 var CODE='', S=null, EDIT=null, MYANS={}, FAILS=0, BUSY=false;
+/* the same mark as the header, reused on the report */
+var LOGO=(document.querySelector('.blogo img')||{}).src||'';
+var FILTER='All', REPORT=null, SESSIONS=null, METASAVE=null;
+var META={company:'',title:'',date:'',participants:'',duration:''};
 var VID=deviceId();
 
 function deviceId(){
@@ -232,15 +371,15 @@ function refresh(){
   if(BUSY || !ENDPOINT) return Promise.resolve();
   /* Nothing to fetch until the presenter is in, and refreshing here would
      redraw the code box and wipe what is being typed. */
-  if(MODE==='pres' && !CODE) return Promise.resolve();
+  if(MODE!=='aud' && !CODE) return Promise.resolve();
   BUSY=true;
   var p={a:'state'};
-  if(MODE==='pres' && CODE) p.code=CODE;
+  if(MODE!=='aud' && CODE) p.code=CODE;
   return call(p).then(function(d){
     BUSY=false; FAILS=0;
     if(!d || !d.ok) return;
     if(S && S.sessionId!==d.sessionId) MYANS={};
-    S=d; render();
+    S=d; if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
   }).catch(function(){ BUSY=false; FAILS++; render(); });
 }
 
@@ -318,14 +457,25 @@ function renderPresenter(){
     '<h2>Connecting</h2><p>One moment.</p></div></div>'; return; }
 
   var qs=questions(), q=activeQ();
+  var tops=(S.topics||[]), shown=qs.filter(function(x){
+    return FILTER==='All' || (x.topic||'General')===FILTER; });
   var side='<div class="side">'+
+    '<div><p class="lab">Topic</p><div class="chips">'+
+      ['All'].concat(tops).map(function(t){
+        var n = t==='All' ? qs.length : qs.filter(function(x){return (x.topic||'General')===t;}).length;
+        if(t!=='All' && !n) return '';
+        return '<button class="chip'+(FILTER===t?' on':'')+'" data-t="'+esc(t)+'">'+
+          esc(t)+' <i>'+n+'</i></button>'; }).join('')+
+    '</div></div>'+
     '<div><p class="lab">Questions</p><div class="qlist">'+
-      (qs.length? qs.map(function(x,i){
+      (shown.length? shown.map(function(x){
         return '<button class="qbtn'+(q&&x.id===q.id?' on':'')+'" data-id="'+esc(x.id)+'">'+
-          '<i>'+(i+1)+'</i><span>'+esc(x.q)+'</span></button>'; }).join('')
-        : '<p style="font-size:13px;color:var(--mute);margin:4px 0">No questions yet.</p>')+
+          '<i>'+(qs.indexOf(x)+1)+'</i><span>'+esc(x.q)+
+          (x.scored?'':'<b class="ns">not scored</b>')+'</span></button>'; }).join('')
+        : '<p style="font-size:13px;color:var(--mute);margin:4px 0">Nothing in this topic yet.</p>')+
     '</div></div>'+
     (EDIT!==null ? editor() : '<button class="mini" id="addQ">+ Add a question</button>')+
+    '<button class="mini" id="goRep">View the workshop report</button>'+
     '<div class="join"><p class="lab">Audience joins here</p>'+
       '<p class="url">'+esc(audienceURL())+'</p><div id="qr"></div></div></div>';
 
@@ -338,8 +488,11 @@ function renderPresenter(){
     var t=counts(q), best=Math.max.apply(null,t.counts);
     stage='<div class="stage"><div class="stagehead">'+
       '<div><p class="lab">Question '+(qs.indexOf(q)+1)+' of '+qs.length+'</p></div>'+
-      '<div style="text-align:right"><p class="lab">Answers in</p><div class="count">'+t.total+
-        '<small>'+(S.open?'voting open':'closed')+'</small></div></div></div>'+
+      '<div class="headright">'+
+        '<div><p class="lab">Open for</p><div class="clock" id="clk">'+clockText()+'</div></div>'+
+        '<div><p class="lab">Answers in</p><div class="count">'+t.total+
+          '<small>'+(S.open?'voting open':'closed')+'</small></div></div>'+
+      '</div></div>'+
       '<h1 class="sq">'+esc(q.q)+'</h1>'+
       '<div class="sres">'+q.options.map(function(o,i){
         var pct=t.total?Math.round(t.counts[i]/t.total*100):0;
@@ -364,10 +517,22 @@ function renderPresenter(){
 }
 
 function editor(){
+  var tops=(S.topics||['General']);
   return '<div class="ed"><p class="lab">'+(EDIT.id?'Edit question':'New question')+'</p>'+
     '<textarea id="edQ" rows="2" placeholder="The question">'+esc(EDIT.q||'')+'</textarea>'+
+    '<p class="lab">Topic</p>'+
+    '<select id="edT">'+tops.map(function(t){
+      return '<option'+((EDIT.topic||'General')===t?' selected':'')+'>'+esc(t)+'</option>';
+    }).join('')+'</select>'+
     '<p class="lab">Options, one per line</p>'+
     '<textarea id="edO" rows="4" placeholder="Yes&#10;No">'+esc((EDIT.options||[]).join('\n'))+'</textarea>'+
+    '<label class="chk"><input type="checkbox" id="edS"'+(EDIT.scored?' checked':'')+'> '+
+      'Count this question in the awareness score</label>'+
+    '<div id="edScoreBox" class="'+(EDIT.scored?'':'hide')+'">'+
+      '<p class="lab">Points, one per line &mdash; same order as the options</p>'+
+      '<textarea id="edP" rows="4" placeholder="2&#10;1&#10;0">'+
+        esc((EDIT.scores||[]).join('\n'))+'</textarea>'+
+    '</div>'+
     '<div class="row"><button class="b2" id="edSave">Save</button>'+
     '<button class="b2 ghost" id="edCancel">Cancel</button>'+
     (EDIT.id?'<button class="b2 ghost" id="edDel">Delete</button>':'')+'</div></div>';
@@ -379,10 +544,21 @@ function wire(){
     b.addEventListener('click',function(){ EDIT=null;
       send({a:'set',activeId:b.dataset.id,open:1,revealed:0}); });
   });
-  on('addQ',function(){ EDIT={q:'',options:['','']}; render(true); });
-  on('editQ',function(){ var q=activeQ(); if(q) EDIT={id:q.id,q:q.q,options:q.options.slice()}; render(true); });
+  [].forEach.call(app.querySelectorAll('.chip'),function(b){
+    b.addEventListener('click',function(){ FILTER=b.dataset.t; render(true); });
+  });
+  on('goRep',function(){ location.hash='#report'; });
+  on('addQ',function(){ EDIT={q:'',options:['',''],topic:(FILTER==='All'?'General':FILTER),
+    scored:true,scores:[]}; render(true); });
+  on('editQ',function(){ var q=activeQ();
+    if(q) EDIT={id:q.id,q:q.q,topic:q.topic,options:q.options.slice(),
+                scored:!!q.scored,scores:(q.scores||[]).slice()};
+    render(true); });
   on('edCancel',function(){ EDIT=null; render(true); });
   on('edSave',saveEdit);
+  var chk=document.getElementById('edS');
+  if(chk) chk.addEventListener('change',function(){
+    document.getElementById('edScoreBox').classList.toggle('hide',!chk.checked); });
   on('edDel',function(){
     var qs=questions().filter(function(x){ return x.id!==EDIT.id; });
     EDIT=null; saveQuestions(qs);
@@ -405,9 +581,23 @@ function saveEdit(){
   var opts=(document.getElementById('edO').value||'').split('\n')
     .map(function(s){return s.trim();}).filter(Boolean);
   if(!qt||opts.length<2){ alert('A question and at least two options, please.'); return; }
+  var topic=document.getElementById('edT').value;
+  var scored=document.getElementById('edS').checked;
+  var scores=opts.map(function(){ return 0; });
+  if(scored){
+    var raw=(document.getElementById('edP').value||'').split('\n')
+      .map(function(x){return x.trim();}).filter(function(x){return x!=='';});
+    if(raw.length!==opts.length){
+      alert('Give one number of points for each option — '+opts.length+' lines.'); return; }
+    scores=raw.map(function(x){ return Math.max(0, +x || 0); });
+    if(!scores.some(function(x){ return x>0; })){
+      alert('At least one option needs points above zero, or untick the scoring box.'); return; }
+  }
+  var body={q:qt, topic:topic, options:opts, scored:scored, scores:scores};
   var qs=questions().slice();
-  if(EDIT.id){ for(var i=0;i<qs.length;i++) if(qs[i].id===EDIT.id) qs[i]={id:EDIT.id,q:qt,options:opts}; }
-  else qs.push({id:'q'+Date.now().toString(36),q:qt,options:opts});
+  if(EDIT.id){ body.id=EDIT.id;
+    for(var i=0;i<qs.length;i++) if(qs[i].id===EDIT.id) qs[i]=body; }
+  else { body.id='q'+Date.now().toString(36); qs.push(body); }
   EDIT=null; saveQuestions(qs);
 }
 
@@ -422,7 +612,7 @@ function gate(){
     var v=(document.getElementById('pcode').value||'').trim(); if(!v) return;
     call({a:'set',code:v}).then(function(d){
       if(d&&d.ok){ CODE=v; try{sessionStorage.setItem('jugnu.poll.code',v);}catch(e){}
-        render(true); refresh(); }
+        render(true); refresh(); if(MODE==='rep') loadReport(); }
       else document.getElementById('perr').style.display='block';
     }).catch(function(){ document.getElementById('perr').style.display='block'; });
   };
@@ -441,18 +631,181 @@ function setup(){
 /* The screen is rebuilt from scratch on each draw, so drawing on every poll made
    it flicker and threw away anything half-typed. Redraw only when something the
    viewer can see has actually changed — and never while a box has focus. */
+/* How long this question has been open, on the presenter's screen only.
+   Kept in the page rather than in the sheet: the presenter is the one who opens
+   a question, so her own clock is the honest start time, and it needs no change
+   to the Google script. */
+var OPEN_KEY='', OPEN_AT=0, FROZEN=0;
+function clockText(){
+  var ms = S && S.open ? (Date.now()-OPEN_AT) : FROZEN;
+  var t = Math.max(0, Math.floor(ms/1000));
+  return Math.floor(t/60)+':'+('0'+(t%60)).slice(-2);
+}
+function trackClock(){
+  if(!S || !S.activeId){ OPEN_KEY=''; FROZEN=0; return; }
+  var key = S.sessionId+'|'+S.activeId;
+  if(S.open){
+    if(key!==OPEN_KEY || !OPEN_AT){ OPEN_KEY=key; OPEN_AT=Date.now(); }
+  } else if(key===OPEN_KEY && OPEN_AT){
+    FROZEN = Date.now()-OPEN_AT;
+    OPEN_AT = 0;
+  } else if(key!==OPEN_KEY){
+    OPEN_KEY=key; FROZEN=0;
+  }
+}
+/* Only the digits are rewritten each second — redrawing the page would undo
+   the no-flicker work above. */
+setInterval(function(){
+  var e=document.getElementById('clk');
+  if(e && S) e.textContent=clockText();
+},1000);
+
 var LASTSIG='';
 function signature(){
   var c=S && S.counts ? S.counts : null;
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, FAILS>2]);
+    MYANS, FAILS>2, REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
+    REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
 function typing(){
   var a=document.activeElement;
   return !!(a && (a.tagName==='INPUT' || a.tagName==='TEXTAREA'));
 }
+function loadReport(){
+  if(!CODE) return;
+  call({a:'report',code:CODE}).then(function(d){
+    if(d&&d.ok){ REPORT=d; if(d.meta) META=d.meta; render(true); }
+  }).catch(function(){});
+  call({a:'sessions',code:CODE}).then(function(d){
+    if(d&&d.ok){ SESSIONS=d.sessions; render(true); }
+  }).catch(function(){});
+}
+function saveMeta(){
+  ['company','title','date','participants','duration'].forEach(function(k){
+    var e=document.getElementById('m_'+k); if(e) META[k]=e.value;
+  });
+  var q={a:'meta',code:CODE};
+  for(var k in META) q[k]=META[k];
+  METASAVE=1;
+  call(q).then(function(){ if(REPORT) REPORT.meta=META; render(true); }).catch(function(){});
+}
+function bandNote(b){
+  return b==='Early'    ? 'Most people here are at the beginning. The basics — knowing what goes out, and a fund for emergencies — will move this fastest.'
+       : b==='Building' ? 'The foundations are partly in place. The gap is usually between knowing what to do and having a number to work to.'
+       : b==='Strong'   ? 'A financially aware group. The value now is in refinement — matching what they hold to what they are saving for.'
+       : '';
+}
+function fmtDate(d){ return d || ''; }
+
+function renderReport(){
+  if(!ENDPOINT) return setup();
+  if(!CODE) return document.getElementById('pcode') ? undefined : gate();
+  if(!REPORT){
+    app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
+      '<h2>Building the report</h2><p>One moment.</p></div></div>';
+    barMeta.textContent='Report'; return;
+  }
+  var R=REPORT, aw=R.awareness;
+
+  var det='<div class="mgrid">'+
+    [['company','Company'],['title','Session title'],['date','Date'],
+     ['participants','People in the room'],['duration','Duration']].map(function(f){
+      return '<label><span class="lab">'+f[1]+'</span>'+
+        '<input type="text" id="m_'+f[0]+'" value="'+esc(META[f[0]]||'')+'"></label>';
+    }).join('')+
+    '<button class="b2" id="mSave">Save these details</button></div>';
+
+  var topicRows = R.topics.length ? '<div class="trow">'+R.topics.map(function(t){
+      return '<div class="tcell"><span>'+esc(t.topic)+'</span><b>'+t.pct+'%</b>'+
+             '<i class="tbar"><u style="width:'+t.pct+'%"></u></i></div>';
+    }).join('')+'</div>' : '';
+
+  var qBlocks = R.results.map(function(r){
+    var best=Math.max.apply(null,r.counts);
+    return '<div class="qb">'+
+      '<div class="qbh"><h3>'+esc(r.q)+'</h3>'+
+        '<span class="tag">'+esc(r.topic)+(r.scored?'':' · not scored')+'</span></div>'+
+      '<div class="qbars">'+r.options.map(function(o,i){
+        var pct=r.total?Math.round(r.counts[i]/r.total*100):0;
+        return '<div class="qbar'+((r.total&&r.counts[i]===best)?' top':'')+'">'+
+          '<span class="on">'+esc(o)+'</span><span class="op">'+pct+'%</span>'+
+          '<i><u style="width:'+pct+'%"></u></i></div>';
+      }).join('')+'</div>'+
+      '<p class="qbn">'+r.total+' answered'+(r.scored&&r.pct!=null?' · '+r.pct+'% of the points available':'')+'</p>'+
+    '</div>';
+  }).join('');
+
+  var saved = SESSIONS && SESSIONS.length
+    ? '<div class="past"><p class="lab">Saved workshops</p>'+
+      SESSIONS.map(function(x){
+        return '<button class="pastrow" data-row="'+x.row+'">'+
+          '<b>'+esc(x.company||'Untitled')+'</b>'+
+          '<span>'+esc(x.date||'')+(x.participants?' · '+esc(x.participants)+' people':'')+'</span>'+
+          '<i>'+(x.awareness===''||x.awareness===null?'—':x.awareness+'%')+'</i></button>';
+      }).join('')+'</div>' : '';
+
+  app.innerHTML =
+    '<div class="repwrap">'+
+      '<div class="reptools noprint">'+det+
+        '<div class="row"><button class="b2" id="repSave">Save this workshop</button>'+
+        '<button class="b2 ghost" id="repPrint">Save as PDF</button>'+
+        '<button class="b2 ghost" id="repBack">Back to the poll</button></div>'+
+        saved+
+      '</div>'+
+      '<div class="doc" id="repDoc">'+
+        '<div class="dtop">'+
+          '<div class="dlogo"><img src="'+LOGO+'" alt="Jugnu — See Beyond"></div>'+
+          '<div class="dtitle"><h1>Employee Financial Wellness Snapshot</h1>'+
+            '<p>'+esc(META.company||'—')+(META.title?' &middot; '+esc(META.title):'')+'</p></div>'+
+          '<div class="dpl"><div class="k">PLANNER</div><div class="v">Khushbu Choudhary</div></div>'+
+        '</div>'+
+        '<div class="facts">'+
+          '<div><span>Date</span><b>'+esc(fmtDate(META.date)||'—')+'</b></div>'+
+          '<div><span>In the room</span><b>'+esc(META.participants||'—')+'</b></div>'+
+          '<div><span>Duration</span><b>'+esc(META.duration||'—')+'</b></div>'+
+          '<div><span>Questions asked</span><b>'+R.questionsAnswered+'</b></div>'+
+          '<div><span>Answered by</span><b>'+R.responded+'</b></div>'+
+        '</div>'+
+        (aw===null ? '<p class="nodata">No scored questions were answered in this session, so an awareness level cannot be worked out. The breakdown below still stands.</p>'
+        : '<div class="score">'+
+            '<div class="sleft"><p class="lab">Financial awareness level</p>'+
+              '<div class="big">'+aw+'<em>%</em></div><div class="bandname">'+esc(R.band)+'</div></div>'+
+            '<div class="sright">'+
+              '<div class="scale"><i style="width:'+aw+'%"></i>'+
+                '<u class="m40"></u><u class="m70"></u></div>'+
+              '<div class="scalelab"><span>Early</span><span>Building</span><span>Strong</span></div>'+
+              '<p class="bandnote">'+bandNote(R.band)+'</p>'+
+            '</div></div>')+
+        topicRows+
+        '<div class="qwrap">'+qBlocks+'</div>'+
+        '<p class="method">How this is worked out: each option in a scored question carries points. '+
+          'The level is the points earned across the room divided by the points available. '+
+          'Questions with no right answer are shown as a breakdown and left out of the level. '+
+          'Every answer is anonymous &mdash; no individual response is recorded or shared.</p>'+
+        '<div class="dend">jugnu &nbsp;&mdash;&nbsp; <span>SEE BEYOND</span></div>'+
+      '</div>'+
+    '</div>';
+  barMeta.textContent='Report';
+  on('mSave',saveMeta);
+  on('repPrint',function(){ window.print(); });
+  on('repBack',function(){ location.hash='#present'; });
+  on('repSave',function(){
+    call({a:'save',code:CODE}).then(function(d){
+      if(d&&d.ok){ loadReport(); alert('Saved. You can reopen this workshop from the list.'); }
+    }).catch(function(){});
+  });
+  [].forEach.call(app.querySelectorAll('.pastrow'),function(b){
+    b.addEventListener('click',function(){
+      call({a:'load',code:CODE,row:b.dataset.row}).then(function(d){
+        if(d&&d.ok){ REPORT=d; META=d.meta||META; render(true);
+          window.scrollTo({top:0,behavior:'smooth'}); }
+      }).catch(function(){});
+    });
+  });
+}
+
 function render(force){
   var sig=signature();
   if(!force){
@@ -461,7 +814,7 @@ function render(force){
     if(typing()) return;           // someone is mid-word
   }
   LASTSIG=sig;
-  MODE==='pres' ? renderPresenter() : renderAudience();
+  MODE==='rep' ? renderReport() : MODE==='pres' ? renderPresenter() : renderAudience();
 }
 
 var qrDone='';
@@ -477,7 +830,7 @@ function drawQR(){
 try{ CODE=sessionStorage.getItem('jugnu.poll.code')||''; }catch(e){}
 if(!ENDPOINT){ setup(); }
 else{
-  render(); refresh();
+  render(); refresh(); if(MODE==='rep' && CODE) loadReport();
   /* the presenter needs it snappy; 150 phones must not all knock at once */
   var base = MODE==='pres' ? 2500 : 6000;
   setInterval(function(){
@@ -489,8 +842,9 @@ else{
      has to be re-read when the hash changes — otherwise the presenter is left
      looking at the audience view and thinks nothing happened. */
   window.addEventListener('hashchange',function(){
-    var want = /(^|[#?&])present\b/.test(location.hash+location.search) ? 'pres' : 'aud';
-    if(want!==MODE){ MODE=want; EDIT=null; render(true); refresh(); }
+    var want = modeFor(location.hash+location.search);
+    if(want!==MODE){ MODE=want; EDIT=null; if(want==='rep'){ REPORT=null; loadReport(); }
+      render(true); refresh(); }
   });
 }
 })();
