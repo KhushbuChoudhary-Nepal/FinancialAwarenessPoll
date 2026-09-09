@@ -728,7 +728,9 @@ function renderPresenter(){
   var qs=questions(), q=selectedQ();
   var tops=(S.topics||[]), levs=(S.levels||[]);
   var shown=qs.filter(function(x){
-    if((x.topic||'')===introTopic()) return false;   /* the intro is its own block */
+    /* Intro questions are a block, not part of the running order, so they appear
+       only when you have actually asked for them. */
+    if((x.topic||'')===introTopic() && FILTER!==introTopic()) return false;
     if(FILTER!=='All' && (x.topic||'General')!==FILTER) return false;
     /* "Any" questions belong in every audience, so they always show. */
     if(LEVEL!=='All' && (x.level||'Any')!==LEVEL && (x.level||'Any')!=='Any') return false;
@@ -736,7 +738,7 @@ function renderPresenter(){
   });
   var side='<div class="side">'+
     '<div><p class="lab">Topic</p><div class="chips">'+
-      ['All'].concat(tops.filter(function(t){ return t!==introTopic(); })).map(function(t){
+      ['All'].concat(tops).map(function(t){
         var n = t==='All' ? qs.filter(function(x){return x.topic!==introTopic();}).length
                           : qs.filter(function(x){return (x.topic||'General')===t;}).length;
         if(t!=='All' && !n) return '';
