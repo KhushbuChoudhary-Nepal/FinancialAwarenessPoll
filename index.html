@@ -464,6 +464,9 @@ var CODE='', S=null, EDIT=null, MYANS={}, FAILS=0, BUSY=false, INTRO_SENT=false;
 /* The tick is shown only once Google has confirmed the save. A tick that
    appears before that would hide a lost answer from the presenter. */
 var INTRO_BUSY=false, INTRO_FAIL=false, INTRO_WHY='';
+/* Which answers are already safely with Google. A second tap re-sends only
+   what is missing, so a blocked phone finishes in one second, not nine. */
+var INTRO_DONE={}, INTRO_AT=0;
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
@@ -473,11 +476,18 @@ function versionCheck(){
   /* The room must never see a maintenance note — this is for the presenter. */
   if(MODE==='aud' || !S || S.version===NEEDS_VERSION){ box.hidden=true; return; }
   box.hidden=false;
-  box.textContent='The Google Script is still the old version. Open the Sheet '+
-    '\u2192 Extensions \u2192 Apps Script, paste in the new Code-poll.gs, Save, then '+
-    'Deploy \u2192 Manage deployments \u2192 pencil \u2192 Version: New version \u2192 Deploy. '+
-    'Until then answers can go missing.';
+  /* Which of the two halves is behind decides what needs doing, so say so
+     rather than always blaming the script. */
+  var here=parseInt(String(NEEDS_VERSION).replace(/\D/g,''),10)||0;
+  var there=parseInt(String(S.version||'').replace(/\D/g,''),10)||0;
+  box.textContent = (there>here)
+    ? 'This page is the older one. Upload the newest index.html to GitHub, then '+
+      'press Ctrl+Shift+R here to load it. Google is already up to date.'
+    : 'The Google Script is the older one. Open the Sheet \u2192 Extensions \u2192 Apps '+
+      'Script, paste in the new Code-poll.gs, Save, then Deploy \u2192 Manage deployments '+
+      '\u2192 pencil \u2192 Version: New version \u2192 Deploy. Until then answers can go missing.';
 }
+
 /* the same mark as the header, reused on the report */
 var LOGO=(document.querySelector('.blogo img')||{}).src||'';
 var FILTER='All', REPORT=null, SESSIONS=null, METASAVE=null;
@@ -533,7 +543,7 @@ function fullState(){
     BUSY=false; FAILS=0;
     if(!d || !d.ok) return;
     if(d.v) TICK=d.v;
-    if(S && S.sessionId!==d.sessionId){ MYANS={}; INTRO_SENT=false; INTRO_BUSY=false; INTRO_FAIL=false; }
+    if(S && S.sessionId!==d.sessionId){ MYANS={}; INTRO_SENT=false; INTRO_BUSY=false; INTRO_FAIL=false; INTRO_DONE={}; }
     S=d; if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
   }).catch(function(){ BUSY=false; FAILS++; render(); });
 }
@@ -653,9 +663,10 @@ function renderIntroAudience(){
         '</div></div>';
     }).join('')+
     '<button class="isub" id="iSub"'+(INTRO_BUSY?' disabled':'')+'>'+
-      (INTRO_BUSY?'Sending&hellip;':(INTRO_FAIL?'Tap to send again':'Submit'))+'</button>'+
+      (INTRO_BUSY?('Sending '+INTRO_AT+' of '+qs.length+'&hellip;')
+                 :(INTRO_FAIL?'Tap to send again':'Submit'))+'</button>'+
     '<p class="note'+(INTRO_FAIL?' warn':'')+'" id="iNote">'+
-      (INTRO_FAIL?('That did not go through \u2014 '+(INTRO_WHY||'unknown')+'. Tap to send again.')
+      (INTRO_FAIL?failNote(qs)
                  :'Please answer all '+qs.length+' before you submit.')+'</p>'+
   '</div>';
   barMeta.textContent='Intro';
@@ -693,14 +704,27 @@ function reason(d){
   return 'unknown';
 }
 
+/* How many of the block are already safely stored. */
+function doneCount(qs){ return qs.filter(function(q){ return INTRO_DONE[q.id]; }).length; }
+
+/* Said in the person's own terms: nearly finished beats "it failed", because
+   somebody told they are one tap from done will actually take that tap. */
+function failNote(qs){
+  var n=doneCount(qs), t=qs.length, left=t-n;
+  if(n===0) return 'That did not go through \u2014 '+(INTRO_WHY||'unknown')+'. Tap to send again.';
+  return n+' of '+t+' sent \u2014 tap to send the '+(left===1?'last one':'other '+left)+'.';
+}
+
 function sendIntro(qs){
-  INTRO_BUSY=true; INTRO_FAIL=false; INTRO_WHY=''; render(true);
+  INTRO_BUSY=true; INTRO_FAIL=false; INTRO_WHY=''; INTRO_AT=doneCount(qs); render(true);
   var sid=S.sessionId;
-  /* The block goes in one message when Google accepts it, and one answer at a
-     time when it does not. Sequential is the point: the second answer is not
-     sent until the first is safely written, so nothing can collide. */
-  batchSend(qs,sid)
-    .catch(function(){ return oneByOne(qs,sid); })
+  var pending=qs.filter(function(q){ return !INTRO_DONE[q.id]; });
+  /* Everything in one message when Google accepts it, otherwise one at a time.
+     Sequential is the point: nothing is sent until the one before it is
+     safely written, so two answers can never collide. */
+  var first = (pending.length===qs.length) ? batchSend(qs,sid) : Promise.reject(new Error('resume'));
+  first.then(function(){ qs.forEach(function(q){ INTRO_DONE[q.id]=true; }); })
+    .catch(function(){ return oneByOne(pending,sid,qs); })
     .then(function(){ INTRO_BUSY=false; INTRO_SENT=true; render(true); })
     .catch(function(e){
       INTRO_BUSY=false; INTRO_FAIL=true;
@@ -717,23 +741,34 @@ function batchSend(qs,sid){
   });
 }
 
-/* One at a time, each waiting for the one before it. Two tries per answer. */
-function oneByOne(qs,sid){
-  return qs.reduce(function(chain,q){
-    return chain.then(function(){ return sendOne(q,sid,0); });
+/* One at a time, each waiting for the one before it, counting up on screen so
+   a slow phone looks busy rather than broken. */
+function oneByOne(pending,sid,all){
+  return pending.reduce(function(chain,q){
+    return chain.then(function(){
+      INTRO_AT=doneCount(all)+1; render(true);
+      return sendOne(q,sid,0).then(function(){
+        INTRO_DONE[q.id]=true; INTRO_AT=doneCount(all); render(true);
+      });
+    });
   }, Promise.resolve()).then(function(){ return true; });
 }
 
+/* Three tries, 1s then 2s then 4s apart — long enough to ride out the wifi
+   wobble that a room full of phones will produce. */
 function sendOne(q,sid,tries){
   return call({a:'vote', s:sid, q:q.id, c:MYANS[q.id], v:VID}).then(function(d){
     if(d && d.ok) return true;
-    if(d && d.error==='closed') throw new Error('the intro is not open on the presenter screen');
+    /* A shut question will refuse just as fast next time — everything else,
+       a dropped connection included, is worth another go. */
+    if(d && d.error==='closed') throw new Error('stop:the intro is not open on the presenter screen');
     throw new Error('retry');
   }).catch(function(e){
-    if(String(e.message)!=='retry') throw e;
-    if(tries<2) return new Promise(function(r){ setTimeout(r,900); })
+    var m=String((e && e.message) || e);
+    if(m.indexOf('stop:')===0) throw new Error(m.slice(5));
+    if(tries<2) return new Promise(function(r){ setTimeout(r, 1000*Math.pow(2,tries)); })
                       .then(function(){ return sendOne(q,sid,tries+1); });
-    throw new Error('could not reach Google');
+    throw new Error('the connection dropped');
   });
 }
 
@@ -1267,7 +1302,7 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, S&&S.version,
+    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
     S&&S.introPeople, S&&S.introCounts, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
