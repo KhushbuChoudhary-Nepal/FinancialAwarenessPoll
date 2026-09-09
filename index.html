@@ -741,7 +741,8 @@ function renderPresenter(){
       ['All'].concat(tops).map(function(t){
         var n = t==='All' ? qs.filter(function(x){return x.topic!==introTopic();}).length
                           : qs.filter(function(x){return (x.topic||'General')===t;}).length;
-        if(t!=='All' && !n) return '';
+        /* Intro always shows, even empty — it is where you go to build the block. */
+        if(t!=='All' && !n && t!==introTopic()) return '';
         return '<button class="chip'+(FILTER===t?' on':'')+'" data-t="'+esc(t)+'">'+
           esc(t)+' <i>'+n+'</i></button>'; }).join('')+
     '</div></div>'+
