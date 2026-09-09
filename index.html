@@ -382,6 +382,22 @@ textarea{resize:vertical;line-height:1.5}
 
 /* ── the intro panel, on the presenter's screen ───────────────── */
 .pres.onecol{grid-template-columns:1fr}
+.opt.pending{opacity:.62}
+.opt.failed{border-color:#E4B4AE;background:#FDECEA}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:4px 0 16px}
+.bstat{border:1px solid var(--rule);border-radius:10px;padding:11px 13px}
+.bstat span{display:block;font-family:var(--f-m);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:5px}
+.bstat b{font-family:var(--f-m);font-size:21px;font-variant-numeric:tabular-nums}
+.brows{display:grid;gap:7px}
+.brow{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
+.brow .bq{font-size:14px}
+.brow .bq em{font-family:var(--f-m);font-style:normal;font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--faint);margin-left:6px}
+.brow .bn{font-family:var(--f-m);font-size:14px;font-variant-numeric:tabular-nums}
+.brow i{grid-column:1/-1;height:6px;border-radius:99px;background:var(--stage-soft);overflow:hidden;display:block}
+.brow i u{display:block;height:100%;background:var(--amber);text-decoration:none}
+.brow.lag .bn{color:#B5541F}
 .ownblk{margin-top:18px;padding-top:16px;border-top:1px solid var(--rule)}
 .ownblk .ownnote{margin:2px 0 12px;font-size:12px;color:var(--mute)}
 .owngrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
@@ -477,10 +493,14 @@ var INTRO_BUSY=false, INTRO_FAIL=false, INTRO_WHY='';
 /* Which answers are already safely with Google. A second tap re-sends only
    what is missing, so a blocked phone finishes in one second, not nine. */
 var INTRO_DONE={}, INTRO_AT=0;
+/* For single questions: 'busy' while it is on its way, 'ok' once Google has
+   confirmed the exact option, 'fail' when it never landed. A tap that quietly
+   went nowhere is the worst outcome — the person believes they answered. */
+var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v7';
+var NEEDS_VERSION='v9';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -636,12 +656,17 @@ function renderAudience(){
     }).join('')+'</div><p class="note">'+t.total+' '+(t.total===1?'answer':'answers')+' from the room.</p>';
   } else {
     body='<div class="opts">'+q.options.map(function(o,i){
-      return '<button class="opt'+(mine===i?' on':'')+'" data-i="'+i+'"'+(open?'':' disabled')+'>'+
+      var st=(mine===i)?(VSTATE[q.id]||'ok'):'';
+      return '<button class="opt'+(mine===i?' on':'')+(st==='busy'?' pending':'')+
+        (st==='fail'?' failed':'')+'" data-i="'+i+'"'+(open?'':' disabled')+'>'+
         '<span class="key">'+String.fromCharCode(65+i)+'</span><span>'+esc(o)+'</span></button>';
-    }).join('')+'</div><p class="note">'+(open
+    }).join('')+'</div><p class="note'+(VSTATE[q.id]==='fail'?' warn':'')+'">'+(open
       ? (mine==null ? 'Anonymous &mdash; nobody sees your answer, not even Khushbu.'
-                    : 'Answer saved. You can change it while voting is open.')
-      : 'Voting is closed for this question.')+'</p>';
+        : VSTATE[q.id]==='busy' ? 'Saving your answer&hellip;'
+        : VSTATE[q.id]==='fail' ? 'That did not reach us &mdash; tap your answer again.'
+        : 'Answer saved. You can change it while voting is open.')
+      : (mine==null ? 'Voting is closed for this question.'
+                    : 'Voting is closed. Your answer is saved.'))+'</p>';
   }
   app.innerHTML='<div class="aud"><div class="qcard">'+
     '<p class="qn">Question '+(askedNumber(q)||1)+'</p>'+
@@ -811,18 +836,33 @@ function sendOne(q,sid,tries){
 }
 
 function vote(qid,i){
-  MYANS[qid]=i; render(true);
+  MYANS[qid]=i; VSTATE[qid]='busy'; render(true);
   var sid=S.sessionId, tries=0;
-  /* a dropped vote in a room of 150 must not vanish silently */
   (function go(){
     tries++;
     call({a:'vote', s:sid, q:qid, c:i, v:VID}).then(function(d){
-      if(d && d.ok) return;
-      if(retryable(d)) throw new Error('retry');
+      /* Only a reply naming the option counts. Anything vaguer might be an
+         older script, or a reply that never described what was written. */
+      if(d && d.ok && (d.c===undefined || +d.c===i)) return settle(qid,i,'ok');
+      if(d && d.error==='closed') return settle(qid,i,'fail');
+      throw new Error('retry');
     }).catch(function(){
-      if(tries<3 && MYANS[qid]===i) setTimeout(go, 1200*tries);
+      /* a dropped vote in a room of 150 must not vanish silently */
+      if(MYANS[qid]!==i) return;                       // they have moved on
+      if(tries<3){ setTimeout(go, 1000*tries); return; }
+      /* The write may have landed even though the reply was lost, so ask
+         before telling them it failed. */
+      call({a:'mine', s:sid, v:VID}).then(function(d){
+        var at=d && d.ok && d.at ? d.at[qid] : undefined;
+        settle(qid,i, (at!==undefined && +at===i) ? 'ok' : 'fail');
+      }).catch(function(){ settle(qid,i,'fail'); });
     });
   })();
+}
+
+function settle(qid,i,how){
+  if(MYANS[qid]!==i) return;      // a newer tap owns the answer now
+  VSTATE[qid]=how; render(true);
 }
 
 /* ---- presenter ---- */
@@ -892,9 +932,43 @@ function prettyDate(v){
   return (+m[3])+' '+mo+' '+m[1];
 }
 
+/* Everything collected today on one screen: how many people are with us, and
+   how many answered each question. A row well below the rest is the signal
+   that somebody's phone is not getting through. */
+function liveBoard(){
+  if(!S || !S.totals) return '';
+  var tot=S.totals, ids=askedList(), it=introTopic();
+  if(!ids.length) return '';
+  var rows=ids.map(function(id){
+    var q=questions().filter(function(x){ return x.id===id; })[0];
+    if(!q) return null;
+    return { q:q, n:+(tot[id]||0), intro:q.topic===it };
+  }).filter(Boolean);
+  if(!rows.length) return '';
+  var most=Math.max.apply(null,rows.map(function(r){ return r.n; }));
+  return '<div class="hcard">'+
+    '<h2>Responses so far</h2>'+
+    '<div class="board">'+
+      '<div class="bstat"><span>People who answered</span><b>'+ofRoom(S.people||0)+'</b></div>'+
+      '<div class="bstat"><span>Polls done</span><b>'+pollsDone()+'</b></div>'+
+      '<div class="bstat"><span>Questions out</span><b>'+rows.length+'</b></div>'+
+    '</div>'+
+    '<div class="brows">'+rows.map(function(r){
+      var pct=most?Math.round(r.n/most*100):0;
+      return '<div class="brow'+((most&&r.n<most)?' lag':'')+'">'+
+        '<span class="bq">'+esc(r.q.q)+(r.intro?' <em>intro</em>':'')+'</span>'+
+        '<span class="bn">'+r.n+'</span>'+
+        '<i><u style="width:'+pct+'%"></u></i></div>';
+    }).join('')+'</div>'+
+    '<p class="hsub">Every answer collected today is already saved. Press '+
+      '<b>Save this workshop</b> on the report before you start the next one.</p>'+
+  '</div>';
+}
+
 function renderHome(){
   var running = S && S.activeId;
   app.innerHTML='<div class="homewrap">'+
+    liveBoard()+
     '<div class="hcard">'+
       '<h2>Start a fresh poll</h2>'+
       '<p class="hsub">The counts go back to zero. Everything already collected stays saved '+
@@ -1352,8 +1426,8 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
-    S&&S.introPeople, S&&S.introCounts, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
+    MYANS, JSON.stringify(VSTATE), FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
+    S&&S.introPeople, S&&S.introCounts, S&&S.people, S&&S.totals, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
 function typing(){
