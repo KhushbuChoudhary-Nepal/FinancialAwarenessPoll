@@ -467,7 +467,7 @@ var INTRO_BUSY=false, INTRO_FAIL=false, INTRO_WHY='';
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v3';
+var NEEDS_VERSION='v4';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -504,23 +504,46 @@ function call(params){
     .then(function(r){ return r.json(); });
 }
 
+/* The room asks a tiny question on a loop — "has anything changed?" — and pays
+   for a full reply only when the answer is different. While results are on
+   show the bars must move, so that case always fetches in full. */
+var TICK=null;
+
 function refresh(){
   if(BUSY || !ENDPOINT) return Promise.resolve();
   /* Nothing to fetch until the presenter is in, and refreshing here would
      redraw the code box and wipe what is being typed. */
   if(MODE!=='aud' && !CODE) return Promise.resolve();
+  if(MODE==='aud' && S && !S.revealed && TICK){
+    BUSY=true;
+    return call({a:'tick'}).then(function(d){
+      BUSY=false; FAILS=0;
+      if(d && d.ok && d.v===TICK) return;      // nothing new — stop here
+      return fullState();
+    }).catch(function(){ BUSY=false; FAILS++; render(); });
+  }
+  return fullState();
+}
+
+function fullState(){
   BUSY=true;
   var p={a:'state'};
   if(MODE!=='aud' && CODE) p.code=CODE;
   return call(p).then(function(d){
     BUSY=false; FAILS=0;
     if(!d || !d.ok) return;
+    if(d.v) TICK=d.v;
     if(S && S.sessionId!==d.sessionId){ MYANS={}; INTRO_SENT=false; INTRO_BUSY=false; INTRO_FAIL=false; }
     S=d; if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
   }).catch(function(){ BUSY=false; FAILS++; render(); });
 }
 
 /* ---- shared helpers ---- */
+/* "43 of 150" is the presenter's own check that nobody is being dropped —
+   the room size comes from what was typed when the poll was started. */
+function roomSize(){ var n=parseInt(META&&META.participants,10); return (n>0)?n:0; }
+function ofRoom(n){ var r=roomSize(); return r?(n+' of '+r):String(n); }
+
 function questions(){ return (S && S.questions) || []; }
 function activeQ(){
   var qs=questions(); if(!S || !S.activeId) return null;
@@ -903,7 +926,7 @@ function renderPresenter(){
         ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+
         ' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+clockText()+'</b></span>'+
         '<span>Status: <b class="ok">'+(S.open?'Asked':'Closed')+'</b>'+
-        ' &nbsp;&middot;&nbsp; <b class="plain">'+t.total+'</b> answers</span></div>'+
+        ' &nbsp;&middot;&nbsp; <b class="plain">'+ofRoom(t.total)+'</b> answered</span></div>'+
       (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
       '<h1 class="sq">'+esc(q.q)+'</h1>'+
       '<div class="sres">'+q.options.map(function(o,i){
@@ -1040,7 +1063,7 @@ function renderIntroPresenter(){
       '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
       '<button class="b" id="goQs">Go to the questions</button>'+
       '<button class="b" id="goHome">Back to the start</button>'+
-      '<span class="done">Answered <b>'+people+'</b></span>'+
+      '<span class="done">Answered <b>'+ofRoom(people)+'</b></span>'+
     '</div>'+
     '<div class="meta"><span>Intro &nbsp;&middot;&nbsp; '+qs.length+
       ' question'+(qs.length===1?'':'s')+' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+
@@ -1415,11 +1438,11 @@ if(!ENDPOINT){ setup(); }
 else{
   render(); refresh(); if(MODE==='rep' && CODE) loadReport();
   /* the presenter needs it snappy; 150 phones must not all knock at once */
-  var base = MODE==='pres' ? 2500 : 6000;
+  var base = MODE==='pres' ? 2500 : 3000;
   setInterval(function(){
     if(document.hidden) return;
     refresh();
-  }, base + Math.round(Math.random()*(MODE==='pres'?400:2500)));
+  }, base + Math.round(Math.random()*(MODE==='pres'?400:1500)));
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) refresh(); });
   /* Typing #present into the address bar does not reload the page, so the mode
      has to be re-read when the hash changes — otherwise the presenter is left
