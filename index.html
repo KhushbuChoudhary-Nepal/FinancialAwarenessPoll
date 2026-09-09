@@ -470,7 +470,8 @@ var INTRO_BUSY=false, INTRO_FAIL=false;
 var NEEDS_VERSION='v3';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
-  if(!S || S.version===NEEDS_VERSION){ box.hidden=true; return; }
+  /* The room must never see a maintenance note — this is for the presenter. */
+  if(MODE==='aud' || !S || S.version===NEEDS_VERSION){ box.hidden=true; return; }
   box.hidden=false;
   box.textContent='The Google Script is still the old version. Open the Sheet '+
     '\u2192 Extensions \u2192 Apps Script, paste in the new Code-poll.gs, Save, then '+
