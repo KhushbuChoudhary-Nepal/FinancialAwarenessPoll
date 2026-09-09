@@ -392,6 +392,30 @@ textarea{resize:vertical;line-height:1.5}
 .irow i u{display:block;height:100%;background:#0B6F5C;border-radius:99px}
 .irow.top i u{background:#E8A81C} .irow.top em{color:#9C7222}
 @media(max-width:760px){ .igrid{grid-template-columns:1fr} }
+
+/* the intro block, previewed whole on the presenter's screen */
+.blk{display:flex;flex-direction:column;gap:10px}
+.bq{display:grid;grid-template-columns:26px 1fr;gap:12px;align-items:start;
+  border:1px solid var(--stage-rule);border-radius:10px;padding:12px 14px}
+.bqn{margin:2px 0 0;font-family:var(--f-m);font-size:12px;color:var(--stage-mute);text-align:center}
+.bq h3{font-family:var(--f-d);font-weight:700;font-size:17px;margin:0;line-height:1.3}
+.blead{margin:0 0 3px;font-size:13.5px;color:var(--stage-mute);line-height:1.4}
+.bopts{margin:6px 0 0;font-size:13.5px;color:var(--stage-mute);line-height:1.5}
+.tiny{margin-top:8px;border:1px solid var(--stage-rule);background:var(--stage-soft);
+  color:var(--stage-ink);border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;
+  cursor:pointer;font-family:var(--f-b)}
+.tiny:hover{background:#E1E8F1}
+
+/* in or out of today's poll — the library is not touched */
+.qrow{display:grid;grid-template-columns:1fr 26px;align-items:start;gap:2px}
+.qrow .qbtn{width:100%}
+.tog{background:none;border:1px solid transparent;border-radius:7px;color:var(--faint);
+  font-size:15px;line-height:1;cursor:pointer;padding:6px 0;width:24px;margin-top:7px;font-family:var(--f-b)}
+.tog:hover{border-color:var(--rule);color:var(--ink-2);background:var(--rule-2)}
+.qrow.out .qbtn span{color:var(--faint);text-decoration:line-through}
+.qrow.out .tog{color:var(--teal)}
+.bq.out{opacity:.45}
+.bq.out h3{text-decoration:line-through}
 </style>
 </head>
 <body>
@@ -486,8 +510,12 @@ function selectedQ(){
 }
 function isLive(q){ return !!(q && S && S.activeId===q.id); }
 function askedList(){ return (S && S.asked) || []; }
+function offList(){ return (S && S.off) || []; }
+function isOn(q){ return !!q && offList().indexOf(q.id)<0; }
+function setOn(id,on){ send({a:'set', off:id, on: on?1:0}); }
 function introTopic(){ return (S && S.introTopic) || 'Intro'; }
 function introQs(){ return questions().filter(function(q){ return q.topic===introTopic(); }); }
+function introLive(){ return introQs().filter(isOn); }
 var INTRO_HELLO = "Hi folks — five quick taps, so I know who's in the room 🙂";
 var INTRO_PRIV  = "This info remains anonymous — Khushbu won't know who said what.";
 function wasAsked(q){ return !!q && askedList().indexOf(q.id)>=0; }
@@ -548,7 +576,7 @@ function renderAudience(){
 }
 
 function renderIntroAudience(){
-  var qs=introQs();
+  var qs=introLive();
   if(!qs.length){
     app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
       '<h2>Waiting for the next question</h2><p>Keep this page open.</p></div></div>';
@@ -726,7 +754,96 @@ function renderPresenter(){
 
   if(S.intro) return renderIntroPresenter();
   var qs=questions(), q=selectedQ();
-  var tops=(S.topics||[]), levs=(S.levels||[]);
+  /* Choosing Intro shows the whole block, because that is how it goes out —
+     five questions on one screen, asked in one press. */
+  if(FILTER===introTopic() && !SEL) return renderIntroPreview();
+  var side=sidebar(q);
+
+  var stage;
+  if(!q){
+    stage='<div class="stage">'+
+      '<div class="ctrl top"><button class="b" id="goHome">Back to the start</button>'+
+        '<span class="done">Polls done <b>'+pollsDone()+'</b></span></div>'+
+      '<div class="meta"><span>Nothing selected</span></div>'+
+      '<h1 class="sq">Pick a question on the left. Nothing reaches the room until you press Ask the room.</h1>'+
+    '</div>';
+  } else if(!isLive(q)){
+    var already=wasAsked(q), inToday=isOn(q);
+    stage='<div class="stage">'+
+      '<div class="ctrl top">'+
+        (inToday
+          ? '<button class="b go" id="askRoom">'+(already?'Ask it again':'Ask the room')+'</button>'
+          : '<button class="b go" id="putBack">Put back into today\'s poll</button>')+
+        '<button class="b" id="nextQ">Look at the next one</button>'+
+        '<button class="b" id="editQ">Edit this one</button>'+
+        '<button class="b" id="goHome">Back to the start</button>'+
+        '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
+      '</div>'+
+      '<div class="meta"><span>'+numberOf(q)+
+        ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+'</span>'+
+        '<span>Status: <b'+(already?' class="ok"':'')+'>'+
+          (inToday?(already?'Asked':'Not asked'):'Left out of today')+'</b></span></div>'+
+      (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
+      '<h1 class="sq">'+esc(q.q)+'</h1>'+
+      '<div class="prev">'+q.options.map(function(o,i){
+        return '<div class="pv"><span>'+String.fromCharCode(65+i)+'</span>'+esc(o)+
+          (q.scored?'<b>'+(q.scores[i]||0)+' pt'+((q.scores[i]||0)===1?'':'s')+'</b>':'')+'</div>';
+      }).join('')+'</div>'+
+      '<p class="hidden-note">Only you can see this. The room is still on the waiting screen'+
+        (S.activeId?' or the last question':'')+'.</p>'+
+    '</div>';
+  } else {
+    var t=counts(q), best=Math.max.apply(null,t.counts);
+    stage='<div class="stage">'+
+      '<div class="ctrl top">'+
+        '<button class="b go" id="toggleOpen">'+(S.open?'Close voting':'Open voting')+'</button>'+
+        '<button class="b" id="toggleRev">'+(S.revealed?'Hide results':'Show results to the room')+'</button>'+
+        '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
+        '<button class="b" id="nextQ">Look at the next one</button>'+
+        '<button class="b" id="editQ">Edit this one</button>'+
+        '<button class="b" id="goHome">Back to the start</button>'+
+        '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
+      '</div>'+
+      '<div class="meta"><span>'+numberOf(q)+
+        ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+
+        ' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+clockText()+'</b></span>'+
+        '<span>Status: <b class="ok">'+(S.open?'Asked':'Closed')+'</b>'+
+        ' &nbsp;&middot;&nbsp; <b class="plain">'+t.total+'</b> answers</span></div>'+
+      (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
+      '<h1 class="sq">'+esc(q.q)+'</h1>'+
+      '<div class="sres">'+q.options.map(function(o,i){
+        var pct=t.total?Math.round(t.counts[i]/t.total*100):0;
+        return '<div class="srow'+((t.total&&t.counts[i]===best)?' top':'')+'">'+
+          '<span class="sname">'+esc(o)+'</span><span class="sn">'+t.counts[i]+'</span>'+
+          '<span class="spct">'+pct+'%</span>'+
+          '<span class="strack"><i class="sfill" style="width:'+pct+'%"></i></span></div>';
+      }).join('')+'</div>'+
+      '<p class="hidden-note">'+(S.revealed?'The room is seeing these results now'
+        :'The room sees only the question &mdash; results are hidden')+'</p>'+
+    '</div>';
+  }
+  app.innerHTML='<div class="pres">'+side+stage+'</div>';
+  barMeta.textContent='Presenter';
+  wire(); drawQR();
+}
+
+/* Where a question sits in the list you are looking at, not in the master list. */
+function VISIBLE(){
+  var qs=questions();
+  return qs.filter(function(x){
+    if((x.topic||'')===introTopic() && FILTER!==introTopic()) return false;
+    if(FILTER!=='All' && (x.topic||'General')!==FILTER) return false;
+    if(LEVEL!=='All' && (x.level||'Any')!==LEVEL && (x.level||'Any')!=='Any') return false;
+    return true;
+  });
+}
+function numberOf(q){
+  var v=VISIBLE(), i=v.indexOf(q);
+  return i<0 ? 'Question' : 'Question '+(i+1)+' of '+v.length;
+}
+
+function sidebar(q){
+  var qs=questions(), tops=(S.topics||[]), levs=(S.levels||[]);
   var shown=qs.filter(function(x){
     /* Intro questions are a block, not part of the running order, so they appear
        only when you have actually asked for them. */
@@ -752,11 +869,17 @@ function renderPresenter(){
       }).join('')+
     '</div></div>'+
     '<div><p class="lab">Questions</p><div class="qlist">'+
-      (shown.length? shown.map(function(x){
-        return '<button class="qbtn'+(q&&x.id===q.id?' on':'')+'" data-id="'+esc(x.id)+'">'+
-          '<i>'+(qs.indexOf(x)+1)+'</i><span>'+esc(x.q)+
-          (wasAsked(x)?'<b class="ns was">asked</b>':(x.scored?'':'<b class="ns">not scored</b>'))+
-          '</span></button>'; }).join('')
+      (shown.length? shown.map(function(x,ix){
+        var on=isOn(x);
+        return '<div class="qrow'+(on?'':' out')+'">'+
+          '<button class="qbtn'+(q&&x.id===q.id?' on':'')+'" data-id="'+esc(x.id)+'">'+
+            '<i>'+(ix+1)+'</i><span>'+esc(x.q)+
+            (wasAsked(x)?'<b class="ns was">asked</b>':(x.scored?'':'<b class="ns">not scored</b>'))+
+            '</span></button>'+
+          '<button class="tog" data-tog="'+esc(x.id)+'" title="'+
+            (on?'Leave this one out of today\'s poll':'Put this one back into today\'s poll')+'">'+
+            (on?'&minus;':'+')+'</button>'+
+        '</div>'; }).join('')
         : '<p style="font-size:13px;color:var(--mute);margin:4px 0">Nothing in this topic yet.</p>')+
     '</div></div>'+
     (EDIT!==null ? editor() : '<button class="mini" id="addQ">+ Add a question</button>')+
@@ -765,69 +888,53 @@ function renderPresenter(){
     '<div class="join"><p class="lab">Audience joins here</p>'+
       '<p class="url">'+esc(audienceURL())+'</p><div id="qr"></div></div></div>';
 
-  var stage;
-  if(!q){
-    stage='<div class="stage">'+
-      '<div class="ctrl top"><button class="b" id="goHome">Back to the start</button>'+
-        '<span class="done">Polls done <b>'+pollsDone()+'</b></span></div>'+
-      '<div class="meta"><span>Nothing selected</span></div>'+
-      '<h1 class="sq">Pick a question on the left. Nothing reaches the room until you press Ask the room.</h1>'+
-    '</div>';
-  } else if(!isLive(q)){
-    var already=wasAsked(q);
-    stage='<div class="stage">'+
-      '<div class="ctrl top">'+
-        '<button class="b go" id="askRoom">'+(already?'Ask it again':'Ask the room')+'</button>'+
-        '<button class="b" id="nextQ">Look at the next one</button>'+
-        '<button class="b" id="editQ">Edit this one</button>'+
-        '<button class="b" id="goHome">Back to the start</button>'+
-        '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
-      '</div>'+
-      '<div class="meta"><span>Question '+(qs.indexOf(q)+1)+' of '+qs.length+
-        ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+'</span>'+
-        '<span>Status: <b'+(already?' class="ok"':'')+'>'+(already?'Asked':'Not asked')+'</b></span></div>'+
-      (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
-      '<h1 class="sq">'+esc(q.q)+'</h1>'+
-      '<div class="prev">'+q.options.map(function(o,i){
-        return '<div class="pv"><span>'+String.fromCharCode(65+i)+'</span>'+esc(o)+
-          (q.scored?'<b>'+(q.scores[i]||0)+' pt'+((q.scores[i]||0)===1?'':'s')+'</b>':'')+'</div>';
-      }).join('')+'</div>'+
-      '<p class="hidden-note">Only you can see this. The room is still on the waiting screen'+
-        (S.activeId?' or the last question':'')+'.</p>'+
-    '</div>';
-  } else {
-    var t=counts(q), best=Math.max.apply(null,t.counts);
-    stage='<div class="stage">'+
-      '<div class="ctrl top">'+
-        '<button class="b go" id="toggleOpen">'+(S.open?'Close voting':'Open voting')+'</button>'+
-        '<button class="b" id="toggleRev">'+(S.revealed?'Hide results':'Show results to the room')+'</button>'+
-        '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
-        '<button class="b" id="nextQ">Look at the next one</button>'+
-        '<button class="b" id="editQ">Edit this one</button>'+
-        '<button class="b" id="goHome">Back to the start</button>'+
-        '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
-      '</div>'+
-      '<div class="meta"><span>Question '+(qs.indexOf(q)+1)+' of '+qs.length+
-        ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+
-        ' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+clockText()+'</b></span>'+
-        '<span>Status: <b class="ok">'+(S.open?'Asked':'Closed')+'</b>'+
-        ' &nbsp;&middot;&nbsp; <b class="plain">'+t.total+'</b> answers</span></div>'+
-      (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
-      '<h1 class="sq">'+esc(q.q)+'</h1>'+
-      '<div class="sres">'+q.options.map(function(o,i){
-        var pct=t.total?Math.round(t.counts[i]/t.total*100):0;
-        return '<div class="srow'+((t.total&&t.counts[i]===best)?' top':'')+'">'+
-          '<span class="sname">'+esc(o)+'</span><span class="sn">'+t.counts[i]+'</span>'+
-          '<span class="spct">'+pct+'%</span>'+
-          '<span class="strack"><i class="sfill" style="width:'+pct+'%"></i></span></div>';
-      }).join('')+'</div>'+
-      '<p class="hidden-note">'+(S.revealed?'The room is seeing these results now'
-        :'The room sees only the question &mdash; results are hidden')+'</p>'+
-    '</div>';
-  }
+  return side;
+}
+
+function renderIntroPreview(){
+  var qs=introQs();
+  var side=sidebar(null);
+  var stage='<div class="stage">'+
+    '<div class="ctrl top">'+
+      (qs.length?'<button class="b go" id="askIntro2">Ask the room</button>':'')+
+      '<button class="b" id="addQ2">Add a question to the block</button>'+
+      '<button class="b" id="goHome">Back to the start</button>'+
+      '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
+    '</div>'+
+    '<div class="meta"><span>Intro block &nbsp;&middot;&nbsp; '+
+      qs.filter(isOn).length+' of '+qs.length+' going out'+
+      ' &nbsp;&middot;&nbsp; one screen</span>'+
+      '<span>Status: <b>Not asked</b></span></div>'+
+    (qs.length ? '<div class="blk">'+qs.map(function(x,n){
+        return '<div class="bq'+(isOn(x)?'':' out')+'"><p class="bqn">'+(n+1)+'</p><div>'+
+          (x.lead?'<p class="blead">'+esc(x.lead)+'</p>':'')+
+          '<h3>'+esc(x.q)+'</h3>'+
+          '<p class="bopts">'+x.options.map(esc).join(' &nbsp;·&nbsp; ')+'</p>'+
+          '<button class="tiny" data-edit="'+esc(x.id)+'">Edit</button>'+
+          '<button class="tiny" data-tog="'+esc(x.id)+'">'+
+            (isOn(x)?'Leave out today':'Put back in')+'</button></div></div>';
+      }).join('')+'</div>'
+      : '<h1 class="sq">Nothing in the block yet. Add a question to start it.</h1>')+
+    '<p class="hidden-note">All of these go to the room together, on one screen with one Submit</p>'+
+  '</div>';
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Presenter';
-  wire(); drawQR();
+  wire();
+  on('askIntro2',function(){ SEL=null; send({a:'set',intro:1}); });
+  on('addQ2',function(){ EDIT={q:'',lead:'',options:['',''],topic:introTopic(),
+    level:'Any',scored:false,scores:[]}; render(true); });
+  [].forEach.call(app.querySelectorAll('[data-tog]'),function(b){
+    b.addEventListener('click',function(){ setOn(b.dataset.tog, offList().indexOf(b.dataset.tog)>=0); });
+  });
+  [].forEach.call(app.querySelectorAll('[data-edit]'),function(b){
+    b.addEventListener('click',function(){
+      var x=introQs().filter(function(y){return y.id===b.dataset.edit;})[0];
+      if(x) EDIT={id:x.id,q:x.q,lead:x.lead||'',topic:x.topic,level:x.level||'Any',
+                  options:x.options.slice(),scored:false,scores:(x.scores||[]).slice()};
+      render(true);
+    });
+  });
+  drawQR();
 }
 
 function renderIntroPresenter(){
@@ -897,6 +1004,14 @@ function wire(){
   [].forEach.call(app.querySelectorAll('.qbtn'),function(b){
     b.addEventListener('click',function(){ EDIT=null; SEL=b.dataset.id; render(true); });
   });
+  [].forEach.call(app.querySelectorAll('.tog'),function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var id=b.dataset.tog;
+      setOn(id, offList().indexOf(id)>=0);
+    });
+  });
+  on('putBack',function(){ var p2=selectedQ(); if(p2) setOn(p2.id,true); });
   on('askRoom',function(){
     var pick=selectedQ(); if(!pick) return;
     /* read the id BEFORE clearing the preview, or the lookup falls back to
@@ -1034,7 +1149,7 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, S&&S.intro, INTRO_SENT,
+    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT,
     S&&S.introPeople, S&&S.introCounts, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
