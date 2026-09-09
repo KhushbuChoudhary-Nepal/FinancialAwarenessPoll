@@ -382,15 +382,22 @@ textarea{resize:vertical;line-height:1.5}
 
 /* ── the intro panel, on the presenter's screen ───────────────── */
 .pres.onecol{grid-template-columns:1fr}
-.igrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.igrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .icard{border:1px solid var(--stage-rule);border-radius:10px;padding:13px 15px}
-.icard h4{font-family:var(--f-b);font-weight:600;font-size:14px;margin:0 0 10px;color:var(--stage-ink)}
+.icard h4{font-family:var(--f-b);font-weight:600;font-size:14px;margin:0 0 10px;
+  color:var(--stage-ink);display:flex;gap:10px;align-items:baseline;justify-content:space-between}
+/* A question that fewer people answered is the one to look at, so its own
+   count sits on its own card rather than only in the total at the top. */
+.icard h4 em{font-family:var(--f-m);font-style:normal;font-size:11px;letter-spacing:.04em;
+  color:var(--stage-mute);white-space:nowrap;font-weight:500}
+.icard h4 em.short{color:#B5541F}
 .irow{display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-items:baseline;margin-bottom:7px}
 .irow span{font-size:13px;color:var(--stage-mute)}
 .irow em{font-style:normal;font-family:var(--f-m);font-size:13px;font-weight:600;color:var(--stage-ink)}
 .irow i{grid-column:1/-1;display:block;height:13px;border-radius:99px;background:var(--stage-soft);overflow:hidden}
 .irow i u{display:block;height:100%;background:#0B6F5C;border-radius:99px}
 .irow.top i u{background:#E8A81C} .irow.top em{color:#9C7222}
+@media(max-width:1180px){ .igrid{grid-template-columns:1fr 1fr} }
 @media(max-width:760px){ .igrid{grid-template-columns:1fr} }
 
 /* the intro block, previewed whole on the presenter's screen */
@@ -470,7 +477,7 @@ var INTRO_DONE={}, INTRO_AT=0;
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v4';
+var NEEDS_VERSION='v5';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -727,9 +734,28 @@ function sendIntro(qs){
     .catch(function(){ return oneByOne(pending,sid,qs); })
     .then(function(){ INTRO_BUSY=false; INTRO_SENT=true; render(true); })
     .catch(function(e){
-      INTRO_BUSY=false; INTRO_FAIL=true;
-      INTRO_WHY=String((e && e.message) || e || 'unknown'); render(true);
+      /* The answers may be safely stored even when the reply never came back —
+         office networks drop the return trip often enough that assuming the
+         worst would scare people whose answers are already in the sheet. Ask
+         Google what it actually has before saying anything failed. */
+      var why=String((e && e.message) || e || 'unknown');
+      return confirmStored(qs,sid).then(function(complete){
+        INTRO_BUSY=false;
+        if(complete){ INTRO_SENT=true; INTRO_FAIL=false; }
+        else { INTRO_FAIL=true; INTRO_WHY=why; }
+        render(true);
+      });
     });
+}
+
+/* Asks which of this device's answers Google already holds, and ticks them
+   off. Returns true when the whole block is safely stored. */
+function confirmStored(qs,sid){
+  return call({a:'mine', s:sid, v:VID}).then(function(d){
+    if(!d || !d.ok || !d.have) return false;
+    d.have.forEach(function(id){ INTRO_DONE[id]=true; });
+    return doneCount(qs)===qs.length;
+  }).catch(function(){ return false; });
 }
 
 function batchSend(qs,sid){
@@ -1106,7 +1132,9 @@ function renderIntroPresenter(){
     '<div class="igrid">'+qs.map(function(q){
       var t=c[q.id]||{total:0,by:{}}, best=0;
       q.options.forEach(function(o,i){ var n=+((t.by||{})[i])||0; if(n>best) best=n; });
-      return '<div class="icard"><h4>'+esc(q.q)+'</h4>'+q.options.map(function(o,i){
+      return '<div class="icard"><h4><span>'+esc(q.q)+'</span>'+
+        '<em'+((people && t.total<people)?' class="short"':'')+'>'+t.total+'</em></h4>'+
+        q.options.map(function(o,i){
         var n=+((t.by||{})[i])||0, pct=t.total?Math.round(n/t.total*100):0;
         return '<div class="irow'+((t.total&&n===best)?' top':'')+'">'+
           '<span>'+esc(o)+'</span><em>'+pct+'%</em>'+
