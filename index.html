@@ -500,7 +500,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v9';
+var NEEDS_VERSION='v12';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -537,11 +537,43 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
 function audienceURL(){ return location.origin+location.pathname; }
 
 /* ---- talking to the sheet ---- */
-function call(params){
-  var q=Object.keys(params).map(function(k){
+/* Two roads to Google. The normal one reads the reply directly. Some office
+   laptops and privacy settings allow the request out but block the page from
+   reading what comes back — on those, loading the answer as a script still
+   works. Once the first road is known to be shut, we stop trying it. */
+var VIA_SCRIPT=false, CBN=0;
+
+function qstr(params){
+  return Object.keys(params).map(function(k){
     return encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }).join('&');
-  return fetch(ENDPOINT+'?'+q,{method:'GET',redirect:'follow'})
-    .then(function(r){ return r.json(); });
+}
+
+function call(params){
+  if(VIA_SCRIPT) return callScript(params);
+  return fetch(ENDPOINT+'?'+qstr(params),{method:'GET',redirect:'follow'})
+    .then(function(r){ return r.json(); })
+    .catch(function(e){
+      return callScript(params).then(function(d){ VIA_SCRIPT=true; return d; });
+    });
+}
+
+function callScript(params){
+  return new Promise(function(res,rej){
+    var cb='jgnu'+(++CBN)+'_'+Math.floor(Math.random()*1e6);
+    var el=document.createElement('script'), done=false;
+    var t=setTimeout(function(){ finish(); rej(new Error('timed out')); },15000);
+    function finish(){
+      if(done) return; done=true; clearTimeout(t);
+      try{ delete window[cb]; }catch(e){ window[cb]=undefined; }
+      if(el.parentNode) el.parentNode.removeChild(el);
+    }
+    window[cb]=function(d){ finish(); res(d); };
+    el.onerror=function(){ finish(); rej(new Error('could not reach Google')); };
+    var p={}; for(var k in params) p[k]=params[k];
+    p.jsfn=cb;
+    el.src=ENDPOINT+'?'+qstr(p);
+    document.head.appendChild(el);
+  });
 }
 
 /* The room asks a tiny question on a loop — "has anything changed?" — and pays
@@ -556,7 +588,7 @@ function refresh(){
   if(MODE!=='aud' && !CODE) return Promise.resolve();
   if(MODE==='aud' && S && !S.revealed && TICK){
     BUSY=true;
-    return call({a:'tick'}).then(function(d){
+    return call({act:'tick'}).then(function(d){
       BUSY=false; FAILS=0;
       if(d && d.ok && d.v===TICK) return;      // nothing new — stop here
       return fullState();
@@ -567,7 +599,7 @@ function refresh(){
 
 function fullState(){
   BUSY=true;
-  var p={a:'state'};
+  var p={act:'state'};
   if(MODE!=='aud' && CODE) p.code=CODE;
   return call(p).then(function(d){
     BUSY=false; FAILS=0;
@@ -601,7 +633,7 @@ function isLive(q){ return !!(q && S && S.activeId===q.id); }
 function askedList(){ return (S && S.asked) || []; }
 function offList(){ return (S && S.off) || []; }
 function isOn(q){ return !!q && offList().indexOf(q.id)<0; }
-function setOn(id,on){ send({a:'set', off:id, on: on?1:0}); }
+function setOn(id,on){ send({act:'set', off:id, on: on?1:0}); }
 function introTopic(){ return (S && S.introTopic) || 'Intro'; }
 function introQs(){ return questions().filter(function(q){ return q.topic===introTopic(); }); }
 function introLive(){ return introQs().filter(isOn); }
@@ -788,7 +820,7 @@ function sendIntro(qs){
 /* Asks which of this device's answers Google already holds, and ticks them
    off. Returns true when the whole block is safely stored. */
 function confirmStored(qs,sid){
-  return call({a:'mine', s:sid, v:VID}).then(function(d){
+  return call({act:'mine', sess:sid, dev:VID}).then(function(d){
     if(!d || !d.ok || !d.have) return false;
     d.have.forEach(function(id){ INTRO_DONE[id]=true; });
     return doneCount(qs)===qs.length;
@@ -798,7 +830,7 @@ function confirmStored(qs,sid){
 function batchSend(qs,sid){
   var ids=qs.map(function(q){ return q.id; }).join(',');
   var cs =qs.map(function(q){ return MYANS[q.id]; }).join(',');
-  return call({a:'votes', s:sid, q:ids, c:cs, v:VID}).then(function(d){
+  return call({act:'votes', sess:sid, qid:ids, opt:cs, dev:VID}).then(function(d){
     if(d && d.ok && d.saved===qs.length) return true;
     throw new Error('batch refused');
   });
@@ -820,7 +852,7 @@ function oneByOne(pending,sid,all){
 /* Three tries, 1s then 2s then 4s apart — long enough to ride out the wifi
    wobble that a room full of phones will produce. */
 function sendOne(q,sid,tries){
-  return call({a:'vote', s:sid, q:q.id, c:MYANS[q.id], v:VID}).then(function(d){
+  return call({act:'vote', sess:sid, qid:q.id, opt:MYANS[q.id], dev:VID}).then(function(d){
     if(d && d.ok) return true;
     /* A shut question will refuse just as fast next time — everything else,
        a dropped connection included, is worth another go. */
@@ -835,29 +867,48 @@ function sendOne(q,sid,tries){
   });
 }
 
+/* One question, one answer in the air at a time. Two taps sent together are
+   written in whatever order Google gets to them, so a quick change of mind
+   could be overwritten by the answer it replaced. Each question therefore has
+   its own queue, and what goes out is always the latest choice at the moment
+   of sending — not the choice that was made when the tap happened. */
+var VQ={}, VSENT={};
+
 function vote(qid,i){
   MYANS[qid]=i; VSTATE[qid]='busy'; render(true);
+  var run=function(){ return sendVote(qid); };
+  VQ[qid]=(VQ[qid]||Promise.resolve()).then(run,run);
+  return VQ[qid];
+}
+
+function sendVote(qid){
+  var i=MYANS[qid];
+  if(i===undefined) return Promise.resolve();
+  if(VSENT[qid]===i && VSTATE[qid]==='ok') return Promise.resolve();   // already stored
   var sid=S.sessionId, tries=0;
-  (function go(){
-    tries++;
-    call({a:'vote', s:sid, q:qid, c:i, v:VID}).then(function(d){
-      /* Only a reply naming the option counts. Anything vaguer might be an
-         older script, or a reply that never described what was written. */
-      if(d && d.ok && (d.c===undefined || +d.c===i)) return settle(qid,i,'ok');
-      if(d && d.error==='closed') return settle(qid,i,'fail');
-      throw new Error('retry');
-    }).catch(function(){
-      /* a dropped vote in a room of 150 must not vanish silently */
-      if(MYANS[qid]!==i) return;                       // they have moved on
-      if(tries<3){ setTimeout(go, 1000*tries); return; }
-      /* The write may have landed even though the reply was lost, so ask
-         before telling them it failed. */
-      call({a:'mine', s:sid, v:VID}).then(function(d){
-        var at=d && d.ok && d.at ? d.at[qid] : undefined;
-        settle(qid,i, (at!==undefined && +at===i) ? 'ok' : 'fail');
-      }).catch(function(){ settle(qid,i,'fail'); });
-    });
-  })();
+  return new Promise(function(done){
+    (function go(){
+      tries++;
+      call({act:'vote', sess:sid, qid:qid, opt:i, dev:VID}).then(function(d){
+        /* Only a reply naming the option counts. Anything vaguer might be an
+           older script, or a reply that never described what was written. */
+        if(d && d.ok && (d.c===undefined || +d.c===i)){ VSENT[qid]=i; return fin('ok'); }
+        if(d && d.error==='closed') return fin('fail');
+        throw new Error('retry');
+      }).catch(function(){
+        if(MYANS[qid]!==i) return done();          // they have changed it again
+        if(tries<3){ setTimeout(go, 1000*tries); return; }
+        /* The write may have landed even though the reply was lost, so ask
+           before telling them it failed. */
+        call({act:'mine', sess:sid, dev:VID}).then(function(d){
+          var at=d && d.ok && d.at ? d.at[qid] : undefined;
+          if(at!==undefined && +at===i) VSENT[qid]=i;
+          fin((at!==undefined && +at===i) ? 'ok' : 'fail');
+        }).catch(function(){ fin('fail'); });
+      });
+      function fin(how){ settle(qid,i,how); done(); }
+    })();
+  });
 }
 
 function settle(qid,i,how){
@@ -993,17 +1044,17 @@ function renderHome(){
   on('hStart',function(){
     readMetaFields();
     if(!META.company.trim()){ alert('A company name, at least — the report is titled with it.'); return; }
-    var q={a:'meta',code:CODE};
+    var q={act:'meta',code:CODE};
     for(var k in META) q[k]=META[k];
     METASAVE=1;
-    call(q).then(function(){ return call({a:'reset',code:CODE}); })
+    call(q).then(function(){ return call({act:'reset',code:CODE}); })
       .then(function(){ STAGE='run'; SEL=null; refresh(); render(true); })
       .catch(function(){ alert('Could not reach Google. Check your connection and try again.'); });
   });
   on('hCont',function(){ STAGE='run'; SEL=S.activeId; render(true); });
   [].forEach.call(app.querySelectorAll('.pastrow'),function(b){
     b.addEventListener('click',function(){
-      call({a:'load',code:CODE,row:b.dataset.row}).then(function(d){
+      call({act:'load',code:CODE,row:b.dataset.row}).then(function(d){
         if(d&&d.ok){ REPORT=d; META=d.meta||META; location.hash='#report'; }
       }).catch(function(){});
     });
@@ -1191,7 +1242,7 @@ function renderIntroPreview(){
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Presenter';
   wire();
-  on('askIntro2',function(){ SEL=null; send({a:'set',intro:1}); });
+  on('askIntro2',function(){ SEL=null; send({act:'set',intro:1}); });
   on('addQ2',function(){ EDIT={q:'',lead:'',options:['',''],topic:introTopic(),
     level:'Any',scored:false,scores:[]}; render(true); });
   [].forEach.call(app.querySelectorAll('[data-tog]'),function(b){
@@ -1240,8 +1291,8 @@ function renderIntroPresenter(){
     '<p class="hidden-note">Yours only &mdash; the room never sees this, and it stays out of the report</p>'+
   '</div></div>';
   barMeta.textContent='Intro';
-  on('introClose',function(){ send({a:'set',intro:0}); });
-  on('goQs',function(){ send({a:'set',intro:0}); });
+  on('introClose',function(){ send({act:'set',intro:0}); });
+  on('goQs',function(){ send({act:'set',intro:0}); });
   on('goHome',function(){ STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
   on('refreshNow',function(){ BUSY=false; refresh().then(function(){ render(true); }); });
   drawQR();
@@ -1294,7 +1345,7 @@ function wire(){
     /* read the id BEFORE clearing the preview, or the lookup falls back to
        whatever is live and sends nothing */
     SEL=null;
-    send({a:'set',activeId:pick.id,open:1,revealed:0}); });
+    send({act:'set',activeId:pick.id,open:1,revealed:0}); });
   on('refreshNow',function(){
     var b=document.getElementById('refreshNow');
     if(b){ b.textContent='Refreshing…'; b.disabled=true; }
@@ -1308,7 +1359,7 @@ function wire(){
     });
   });
   on('goRep',function(){ location.hash='#report'; });
-  on('askIntro',function(){ SEL=null; send({a:'set',intro:1}); });
+  on('askIntro',function(){ SEL=null; send({act:'set',intro:1}); });
   on('addQ',function(){ EDIT={q:'',lead:'',options:['',''],topic:(FILTER==='All'?'General':FILTER),
     level:(LEVEL==='All'?'Any':LEVEL),scored:true,scores:[]}; render(true); });
   on('editQ',function(){ var q=selectedQ();
@@ -1324,15 +1375,15 @@ function wire(){
     var qs=questions().filter(function(x){ return x.id!==EDIT.id; });
     EDIT=null; saveQuestions(qs);
   });
-  on('toggleOpen',function(){ send({a:'set',open:S.open?0:1}); });
-  on('toggleRev',function(){ send({a:'set',revealed:S.revealed?0:1}); });
+  on('toggleOpen',function(){ send({act:'set',open:S.open?0:1}); });
+  on('toggleRev',function(){ send({act:'set',revealed:S.revealed?0:1}); });
   on('nextQ',function(){ var qs=questions(), i=qs.indexOf(selectedQ());
     if(i>=0&&i<qs.length-1){ SEL=qs[i+1].id; render(true); } });
 
 }
 function send(p){ p.code=CODE; call(p).then(refresh).catch(function(){}); }
 function saveQuestions(qs){
-  call({a:'config',code:CODE,questions:JSON.stringify(qs)}).then(refresh).catch(function(){});
+  call({act:'config',code:CODE,questions:JSON.stringify(qs)}).then(refresh).catch(function(){});
 }
 function saveEdit(){
   var qt=(document.getElementById('edQ').value||'').trim();
@@ -1370,7 +1421,7 @@ function gate(){
   barMeta.textContent='Presenter';
   var go=function(){
     var v=(document.getElementById('pcode').value||'').trim(); if(!v) return;
-    call({a:'set',code:v}).then(function(d){
+    call({act:'set',code:v}).then(function(d){
       if(d&&d.ok){ CODE=v; try{sessionStorage.setItem('jugnu.poll.code',v);}catch(e){}
         render(true); refresh(); if(MODE==='rep') loadReport(); }
       else document.getElementById('perr').style.display='block';
@@ -1436,16 +1487,16 @@ function typing(){
 }
 function loadSessions(){
   if(!CODE) return;
-  call({a:'sessions',code:CODE}).then(function(d){
+  call({act:'sessions',code:CODE}).then(function(d){
     if(d&&d.ok){ SESSIONS=d.sessions; render(true); }
   }).catch(function(){ SESSIONS=[]; render(true); });
 }
 function loadReport(){
   if(!CODE) return;
-  call({a:'report',code:CODE}).then(function(d){
+  call({act:'report',code:CODE}).then(function(d){
     if(d&&d.ok){ REPORT=d; if(d.meta) META=d.meta; render(true); }
   }).catch(function(){});
-  call({a:'sessions',code:CODE}).then(function(d){
+  call({act:'sessions',code:CODE}).then(function(d){
     if(d&&d.ok){ SESSIONS=d.sessions; render(true); }
   }).catch(function(){});
 }
@@ -1453,7 +1504,7 @@ function saveMeta(){
   ['company','title','date','participants','duration'].forEach(function(k){
     var e=document.getElementById('m_'+k); if(e) META[k]=e.value;
   });
-  var q={a:'meta',code:CODE};
+  var q={act:'meta',code:CODE};
   for(var k in META) q[k]=META[k];
   METASAVE=1;
   call(q).then(function(){ if(REPORT) REPORT.meta=META; render(true); }).catch(function(){});
@@ -1575,13 +1626,13 @@ function renderReport(){
   on('repPrint',function(){ window.print(); });
   on('repBack',function(){ STAGE='run'; location.hash='#present'; });
   on('repSave',function(){
-    call({a:'save',code:CODE}).then(function(d){
+    call({act:'save',code:CODE}).then(function(d){
       if(d&&d.ok){ loadReport(); alert('Saved. You can reopen this workshop from the list.'); }
     }).catch(function(){});
   });
   [].forEach.call(app.querySelectorAll('.pastrow'),function(b){
     b.addEventListener('click',function(){
-      call({a:'load',code:CODE,row:b.dataset.row}).then(function(d){
+      call({act:'load',code:CODE,row:b.dataset.row}).then(function(d){
         if(d&&d.ok){ REPORT=d; META=d.meta||META; render(true);
           window.scrollTo({top:0,behavior:'smooth'}); }
       }).catch(function(){});
