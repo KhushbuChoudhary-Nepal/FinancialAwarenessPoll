@@ -463,7 +463,7 @@ var MODE = modeFor(location.hash+location.search);
 var CODE='', S=null, EDIT=null, MYANS={}, FAILS=0, BUSY=false, INTRO_SENT=false;
 /* The tick is shown only once Google has confirmed the save. A tick that
    appears before that would hide a lost answer from the presenter. */
-var INTRO_BUSY=false, INTRO_FAIL=false;
+var INTRO_BUSY=false, INTRO_FAIL=false, INTRO_WHY='';
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
@@ -632,7 +632,7 @@ function renderIntroAudience(){
     '<button class="isub" id="iSub"'+(INTRO_BUSY?' disabled':'')+'>'+
       (INTRO_BUSY?'Sending&hellip;':(INTRO_FAIL?'Tap to send again':'Submit'))+'</button>'+
     '<p class="note'+(INTRO_FAIL?' warn':'')+'" id="iNote">'+
-      (INTRO_FAIL?'That did not go through. Tap to send again.'
+      (INTRO_FAIL?('That did not go through \u2014 '+(INTRO_WHY||'unknown')+'. Tap to send again.')
                  :'Please answer all '+qs.length+' before you submit.')+'</p>'+
   '</div>';
   barMeta.textContent='Intro';
@@ -657,27 +657,61 @@ function renderIntroAudience(){
    malformed answer will fail again just as fast. */
 function retryable(d){ return !d || (!d.ok && (!d.error || d.error==='busy')); }
 
+/* Plain words for what Google actually said, so a failure on the day can be
+   read off the phone instead of guessed at. */
+function reason(d){
+  if(!d) return 'could not reach Google';
+  if(d.error==='closed')   return 'the intro is not open on the presenter screen';
+  if(d.error==='busy')     return 'Google was busy';
+  if(d.error==='bad vote') return 'the answers were not understood';
+  if(d.error)              return String(d.error);
+  if(d.ok && d.saved===undefined) return 'the link points at an old copy of the script';
+  if(d.ok) return 'only '+d.saved+' of the answers were saved';
+  return 'unknown';
+}
+
 function sendIntro(qs){
-  INTRO_BUSY=true; INTRO_FAIL=false; render(true);
+  INTRO_BUSY=true; INTRO_FAIL=false; INTRO_WHY=''; render(true);
+  var sid=S.sessionId;
+  /* The block goes in one message when Google accepts it, and one answer at a
+     time when it does not. Sequential is the point: the second answer is not
+     sent until the first is safely written, so nothing can collide. */
+  batchSend(qs,sid)
+    .catch(function(){ return oneByOne(qs,sid); })
+    .then(function(){ INTRO_BUSY=false; INTRO_SENT=true; render(true); })
+    .catch(function(e){
+      INTRO_BUSY=false; INTRO_FAIL=true;
+      INTRO_WHY=String((e && e.message) || e || 'unknown'); render(true);
+    });
+}
+
+function batchSend(qs,sid){
   var ids=qs.map(function(q){ return q.id; }).join(',');
   var cs =qs.map(function(q){ return MYANS[q.id]; }).join(',');
-  var sid=S.sessionId, tries=0;
-  (function go(){
-    tries++;
-    call({a:'votes', s:sid, q:ids, c:cs, v:VID}).then(function(d){
-      /* An older script does not know this message and quietly answers with
-         the state instead — ok, but nothing written. Only a reply that says
-         how many rows were saved counts as saved. */
-      if(d && d.ok && d.saved===ids.split(',').length){
-        INTRO_BUSY=false; INTRO_SENT=true; render(true); return;
-      }
-      if(!retryable(d)) throw new Error('stop');
-      throw new Error('retry');
-    }).catch(function(e){
-      if(String(e.message)==='retry' && tries<3){ setTimeout(go, 1200*tries); return; }
-      INTRO_BUSY=false; INTRO_FAIL=true; render(true);
-    });
-  })();
+  return call({a:'votes', s:sid, q:ids, c:cs, v:VID}).then(function(d){
+    if(d && d.ok && d.saved===qs.length) return true;
+    throw new Error('batch refused');
+  });
+}
+
+/* One at a time, each waiting for the one before it. Two tries per answer. */
+function oneByOne(qs,sid){
+  return qs.reduce(function(chain,q){
+    return chain.then(function(){ return sendOne(q,sid,0); });
+  }, Promise.resolve()).then(function(){ return true; });
+}
+
+function sendOne(q,sid,tries){
+  return call({a:'vote', s:sid, q:q.id, c:MYANS[q.id], v:VID}).then(function(d){
+    if(d && d.ok) return true;
+    if(d && d.error==='closed') throw new Error('the intro is not open on the presenter screen');
+    throw new Error('retry');
+  }).catch(function(e){
+    if(String(e.message)!=='retry') throw e;
+    if(tries<2) return new Promise(function(r){ setTimeout(r,900); })
+                      .then(function(){ return sendOne(q,sid,tries+1); });
+    throw new Error('could not reach Google');
+  });
 }
 
 function vote(qid,i){
@@ -1210,7 +1244,7 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, S&&S.version,
+    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, S&&S.version,
     S&&S.introPeople, S&&S.introCounts, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
