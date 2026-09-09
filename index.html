@@ -452,6 +452,9 @@ function modeFor(h){
 }
 var MODE = modeFor(location.hash+location.search);
 var CODE='', S=null, EDIT=null, MYANS={}, FAILS=0, BUSY=false, INTRO_SENT=false;
+/* The tick is shown only once Google has confirmed the save. A tick that
+   appears before that would hide a lost answer from the presenter. */
+var INTRO_BUSY=false, INTRO_FAIL=false;
 /* the same mark as the header, reused on the report */
 var LOGO=(document.querySelector('.blogo img')||{}).src||'';
 var FILTER='All', REPORT=null, SESSIONS=null, METASAVE=null;
@@ -489,7 +492,7 @@ function refresh(){
   return call(p).then(function(d){
     BUSY=false; FAILS=0;
     if(!d || !d.ok) return;
-    if(S && S.sessionId!==d.sessionId){ MYANS={}; INTRO_SENT=false; }
+    if(S && S.sessionId!==d.sessionId){ MYANS={}; INTRO_SENT=false; INTRO_BUSY=false; INTRO_FAIL=false; }
     S=d; if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
   }).catch(function(){ BUSY=false; FAILS++; render(); });
 }
@@ -603,8 +606,11 @@ function renderIntroAudience(){
             '<i>'+String.fromCharCode(65+i)+'</i><span>'+esc(o)+'</span></button>'; }).join('')+
         '</div></div>';
     }).join('')+
-    '<button class="isub" id="iSub">Submit</button>'+
-    '<p class="note" id="iNote">Please answer all '+qs.length+' before you submit.</p>'+
+    '<button class="isub" id="iSub"'+(INTRO_BUSY?' disabled':'')+'>'+
+      (INTRO_BUSY?'Sending&hellip;':(INTRO_FAIL?'Tap to send again':'Submit'))+'</button>'+
+    '<p class="note'+(INTRO_FAIL?' warn':'')+'" id="iNote">'+
+      (INTRO_FAIL?'That did not go through. Tap to send again.'
+                 :'Please answer all '+qs.length+' before you submit.')+'</p>'+
   '</div>';
   barMeta.textContent='Intro';
   [].forEach.call(app.querySelectorAll('.io'),function(b){
@@ -613,25 +619,52 @@ function renderIntroAudience(){
     });
   });
   on('iSub',function(){
+    if(INTRO_BUSY) return;
     var missing=qs.filter(function(q){ return MYANS[q.id]===undefined; });
     if(missing.length){
       var n=document.getElementById('iNote');
       n.textContent='Still '+missing.length+' to answer.'; n.className='note warn';
       return;
     }
-    INTRO_SENT=true; render(true);
-    qs.forEach(function(q){
-      call({a:'vote', s:S.sessionId, q:q.id, c:MYANS[q.id], v:VID}).catch(function(){});
-    });
+    sendIntro(qs);
   });
+}
+
+/* Worth retrying only when nothing was decided — a closed question or a
+   malformed answer will fail again just as fast. */
+function retryable(d){ return !d || (!d.ok && (!d.error || d.error==='busy')); }
+
+function sendIntro(qs){
+  INTRO_BUSY=true; INTRO_FAIL=false; render(true);
+  var ids=qs.map(function(q){ return q.id; }).join(',');
+  var cs =qs.map(function(q){ return MYANS[q.id]; }).join(',');
+  var sid=S.sessionId, tries=0;
+  (function go(){
+    tries++;
+    call({a:'votes', s:sid, q:ids, c:cs, v:VID}).then(function(d){
+      if(d && d.ok){ INTRO_BUSY=false; INTRO_SENT=true; render(true); return; }
+      if(!retryable(d)) throw new Error('stop');
+      throw new Error('retry');
+    }).catch(function(e){
+      if(String(e.message)==='retry' && tries<3){ setTimeout(go, 1200*tries); return; }
+      INTRO_BUSY=false; INTRO_FAIL=true; render(true);
+    });
+  })();
 }
 
 function vote(qid,i){
   MYANS[qid]=i; render(true);
-  call({a:'vote', s:S.sessionId, q:qid, c:i, v:VID}).catch(function(){
-    /* one retry — a dropped vote in a room of 150 must not vanish silently */
-    setTimeout(function(){ call({a:'vote',s:S.sessionId,q:qid,c:i,v:VID}).catch(function(){}); },1500);
-  });
+  var sid=S.sessionId, tries=0;
+  /* a dropped vote in a room of 150 must not vanish silently */
+  (function go(){
+    tries++;
+    call({a:'vote', s:sid, q:qid, c:i, v:VID}).then(function(d){
+      if(d && d.ok) return;
+      if(retryable(d)) throw new Error('retry');
+    }).catch(function(){
+      if(tries<3 && MYANS[qid]===i) setTimeout(go, 1200*tries);
+    });
+  })();
 }
 
 /* ---- presenter ---- */
@@ -1149,7 +1182,7 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT,
+    MYANS, FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL,
     S&&S.introPeople, S&&S.introCounts, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
