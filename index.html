@@ -814,6 +814,41 @@ textarea{resize:vertical;line-height:1.5}
 .ctrl.top .done{margin-left:0}
 .navpair{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px}
 .navpair .dashbtn{font-size:13px}
+.navsep{height:1px;background:var(--rule);margin:0 0 11px}
+.dashbtn.wide{display:flex;align-items:center;justify-content:center;gap:8px}
+.dashbtn.wide em{font-style:normal;font-family:var(--f-m);font-size:11px;font-weight:700;
+  background:var(--teal);color:#fff;border-radius:99px;padding:1px 7px}
+.dashbtn.wide.on em{background:#fff;color:var(--navy)}
+
+/* the + on each row of the question list */
+.pipbtn{border:1px solid var(--rule);background:var(--card);border-radius:7px;
+  width:26px;height:26px;font-size:14px;line-height:1;color:var(--mute);cursor:pointer;
+  flex:0 0 auto}
+.pipbtn:hover{border-color:var(--teal);color:var(--teal)}
+.pipbtn.in{background:var(--teal);border-color:var(--teal);color:#fff}
+.b.inpipe{background:#EEF7F4;border-color:#9AC9BC;color:#0B6F5C}
+
+/* today pipeline */
+.pipnote{margin:0 0 18px;font-size:12.5px;line-height:1.65;color:var(--stage-mute);max-width:720px}
+.piptop{border:1px solid var(--stage-rule);border-radius:11px;padding:14px 16px;
+  margin-bottom:11px;background:#fff}
+.piph{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  margin-bottom:9px}
+.piph h4{margin:0;font-family:var(--f-d);font-weight:700;font-size:15px;color:var(--stage-ink)}
+.piph span{font-family:var(--f-m);font-size:10.5px;color:var(--stage-mute)}
+.piprow{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:stretch;
+  border-top:1px solid var(--stage-rule)}
+.piprow:first-of-type{border-top:none}
+.pipgo{display:block;text-align:left;background:none;border:none;cursor:pointer;
+  padding:9px 4px;color:var(--stage-ink)}
+.pipgo:hover span{color:var(--teal)}
+.pipgo span{display:block;font-size:13px;line-height:1.45}
+.pipgo em{display:block;font-style:normal;font-family:var(--f-m);font-size:9.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--stage-mute);margin-top:3px}
+.piprow.done .pipgo span{color:var(--stage-mute)}
+.pipdel{border:1px solid transparent;background:none;border-radius:7px;width:30px;
+  font-size:17px;line-height:1;color:var(--faint);cursor:pointer}
+.pipdel:hover{background:#FDF2F1;border-color:#EBC9C6;color:#B5341F}
 .navpair .dashbtn{margin-bottom:0;text-align:center;padding:9px 6px}
 .dashbtn{width:100%;text-align:left;background:var(--card);border:1px solid var(--rule);
   border-radius:9px;padding:10px 13px;font-family:var(--f-b);font-weight:600;font-size:14px;
@@ -871,7 +906,7 @@ textarea{resize:vertical;line-height:1.5}
 .tiny:hover{background:#E1E8F1}
 
 /* in or out of today's poll — the library is not touched */
-.qrow{display:grid;grid-template-columns:1fr 22px;align-items:start;gap:2px}
+.qrow{display:grid;grid-template-columns:1fr 22px 26px;align-items:start;gap:2px}
 .lvtag{font-family:var(--f-m);font-size:10px;font-weight:600;color:var(--faint);
   text-align:center;padding-top:9px;letter-spacing:.02em}
 .lv-Early{color:#2E7D57}.lv-Mid{color:#9C7222}.lv-Senior{color:#8A4B2A}
@@ -965,7 +1000,34 @@ var FILTER='All', REPORT=null, SESSIONS=null, METASAVE=null;
 var STAGE='home', SEL=null, LEVEL='All', BOARD=false, BFILT='All';
 /* The Library — every question with the line each answer prints in the report.
    Fetched once, when the screen is first opened. */
-var LIB=false, LIBDATA=null, LIBBUSY=false;
+var LIB=false, LIBDATA=null, LIBBUSY=false, PIPE=false;
+/* Today's running order. Held locally until Google confirms it, for the same
+   reason the topic ticks are — a reply in flight would otherwise undo a tap. */
+var RUNWANT=null, RUNQ=Promise.resolve();
+function runList(){ return RUNWANT || (S && S.run) || []; }
+function inRun(id){ return runList().indexOf(id)>=0; }
+function setRun(list){
+  RUNWANT=list.slice();
+  if(S) S.run=list.slice();
+  render(true);
+  var go=function(){
+    var send=RUNWANT.slice();
+    return call({act:'set', code:CODE, run:send.join('|')}).then(function(d){
+      if(d && d.state) d.state.run=RUNWANT.slice();
+      if(RUNWANT.join('|')===send.join('|')){
+        if(S) S.run=RUNWANT.slice();
+        RUNWANT=null;
+      }
+    });
+  };
+  RUNQ=RUNQ.then(go,go).catch(function(){});
+  return RUNQ;
+}
+function toggleRun(id){
+  var l=runList().slice(), at=l.indexOf(id);
+  if(at>=0) l.splice(at,1); else l.push(id);
+  setRun(l);
+}
 function loadLib(){
   if(LIBDATA||LIBBUSY) return;
   LIBBUSY=true;
@@ -1105,6 +1167,7 @@ function fullState(){
     /* A reply that left before your last tick still carries the old list —
        your choice wins until Google has confirmed it. */
     if(PLANWANT) d.plan=PLANWANT.slice();
+    if(RUNWANT) d.run=RUNWANT.slice();
     S=d; if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
   }).catch(function(){ BUSY=false; FAILS++; render(); });
 }
@@ -1620,6 +1683,7 @@ function renderPresenter(){
     app.innerHTML='<div class="pres">'+sidebar(selectedQ())+editor()+'</div>';
     barMeta.textContent='Presenter'; wire(); wireEditor(); drawQR(); return;
   }
+  if(PIPE) return renderPipeline();
   if(LIB) return renderLibrary();
   if(BOARD) return renderBoard();
   if(openBlock()) return renderBlockPresenter(openBlock());
@@ -1672,6 +1736,8 @@ function renderPresenter(){
         '<button class="b" id="prevQ">Previous one</button>'+
         '<button class="b" id="nextQ">Next one</button>'+
         '<button class="b" id="editQ">Edit this one</button>'+
+        '<button class="b'+(inRun(q.id)?' inpipe':'')+'" data-pipe="'+esc(q.id)+'">'+
+          (inRun(q.id)?'Added &middot; remove':'Add to pipeline')+'</button>'+
         clockBox()+
       '</div>'+
       /* Polls done moved down here: the button row stays one line, and the
@@ -1768,8 +1834,11 @@ function sidebar(q){
       '<button class="dashbtn" id="goHomeSide">Home</button>'+
       '<button class="dashbtn'+(BOARD?' on':'')+'" id="goBoard">Dashboard</button>'+
       '<button class="dashbtn'+(LIB?' on':'')+'" id="goLib">Library</button>'+
-      '<button class="dashbtn'+((!BOARD&&!LIB)?' on':'')+'" id="goRun">Current session</button>'+
+      '<button class="dashbtn'+((!BOARD&&!LIB&&!PIPE)?' on':'')+'" id="goRun">Current session</button>'+
     '</div>'+
+    '<div class="navsep"></div>'+
+    '<button class="dashbtn wide'+(PIPE?' on':'')+'" id="goPipe">Today Pipeline'+
+      (runList().length?'<em>'+runList().length+'</em>':'')+'</button>'+
     /* Who you are speaking to comes first — it decides which questions are
        worth looking at, so it belongs above them, not below. */
     '<div><p class="lab">Audience type</p><div class="chips">'+
@@ -1794,6 +1863,10 @@ function sidebar(q){
             (wasAsked(x)?'<b class="ns was">asked</b>':(x.scored?'':'<b class="ns">not scored</b>'))+
             '</span></button>'+
           '<span class="lvtag lv-'+esc(lv)+'" title="'+esc(lv)+'">'+tag+'</span>'+
+          '<button class="pipbtn'+(inRun(x.id)?' in':'')+'" data-pipe="'+esc(x.id)+'" '+
+            'title="'+(inRun(x.id)?'In today\u2019s pipeline — tap to remove'
+                                  :'Add to today\u2019s pipeline')+'">'+
+            (inRun(x.id)?'&#10003;':'+')+'</button>'+
         '</div>'; }).join('')
         : '<p style="font-size:13px;color:var(--mute);margin:4px 0">Nothing in this topic yet.</p>')+
     '</div></div>'+
@@ -1810,6 +1883,78 @@ function sidebar(q){
 /* Everything the room has said today, in the order it was asked, so the intro
    comes first when the intro went first. A look-back only — nothing here can
    ask, open or close anything. */
+/* Today's running order, grouped the way a session is planned: by topic, so the
+   shape of the hour is visible before it starts. Order within a topic is the
+   order they were added. */
+function renderPipeline(){
+  var side=sidebar(null);
+  var ids=runList(), all=(S.questions||[]);
+  var byId={}; all.forEach(function(q){ byId[q.id]=q; });
+  var picked=ids.map(function(i){ return byId[i]; }).filter(Boolean);
+
+  var stage;
+  if(!picked.length){
+    stage='<div class="stage">'+topbar()+
+      '<div class="meta"><span>Today Pipeline</span><span>Nothing added yet</span></div>'+
+      '<h1 class="sq">Nothing in today\u2019s pipeline yet.</h1>'+
+      '<p class="pipnote">Open a topic and press <b>Add to pipeline</b> on the '+
+      'questions you mean to ask. They gather here, grouped by topic, so you can '+
+      'see the shape of the session before you stand up.</p></div>';
+  } else {
+    /* topics in the order the library holds them, so the list reads the way the
+       session is built rather than the order things happened to be tapped */
+    var seen=[], byTop={};
+    picked.forEach(function(q){
+      var t=q.topic||'General';
+      if(!byTop[t]){ byTop[t]=[]; seen.push(t); }
+      byTop[t].push(q);
+    });
+    var order=(S.topics||[]);
+    seen.sort(function(a,b){
+      var ia=order.indexOf(a), ib=order.indexOf(b);
+      return (ia<0?99:ia)-(ib<0?99:ib);
+    });
+    var blocks=seen.map(function(t){
+      var qs=byTop[t];
+      return '<div class="piptop">'+
+        '<div class="piph"><h4>'+esc(t)+'</h4>'+
+          '<span>'+qs.length+' question'+(qs.length===1?'':'s')+'</span></div>'+
+        qs.map(function(q){
+          var lv=(q.level||'Any');
+          return '<div class="piprow'+(wasAsked(q)?' done':'')+'">'+
+            '<button class="pipgo" data-id="'+esc(q.id)+'">'+
+              '<span>'+esc(q.q)+'</span>'+
+              '<em>'+esc(lv)+(wasAsked(q)?' &middot; asked':'')+'</em></button>'+
+            '<button class="pipdel" data-pipe="'+esc(q.id)+'" '+
+              'title="Take out of the pipeline">&times;</button></div>';
+        }).join('')+'</div>';
+    }).join('');
+    var done=picked.filter(wasAsked).length;
+    stage='<div class="stage">'+topbar()+
+      '<div class="meta"><span>Today Pipeline &nbsp;&middot;&nbsp; '+picked.length+
+        ' question'+(picked.length===1?'':'s')+' across '+seen.length+' topic'+
+        (seen.length===1?'':'s')+'</span>'+
+        '<span>'+done+' asked &nbsp;&middot;&nbsp; '+(picked.length-done)+' to go</span></div>'+
+      '<p class="pipnote">Tap any question to go straight to it. '+
+        'The rest of the tool still works as it does &mdash; this is a shortcut, '+
+        'not a fixed order.</p>'+
+      blocks+'</div>';
+  }
+  app.innerHTML='<div class="pres">'+side+stage+'</div>';
+  barMeta.textContent='Today Pipeline';
+  wire();
+  [].forEach.call(app.querySelectorAll('.pipgo'),function(b){
+    b.addEventListener('click',function(){
+      PIPE=false; BOARD=false; LIB=false; EDIT=null;
+      SEL=b.dataset.id;
+      var q=(S.questions||[]).filter(function(x){ return x.id===SEL; })[0];
+      if(q) FILTER=q.topic||FILTER;
+      render(true);
+    });
+  });
+  drawQR();
+}
+
 /* What each answer will say in the report, beside the answer itself. This is a
    reference screen, not a working one — nothing here is editable, so a wrong
    line is something to tell me about rather than something to fix in a hurry. */
@@ -2145,8 +2290,14 @@ function wireEditor(){
 }
 function wire(){
   on('goBoard',function(){ BOARD=true; LIB=false; EDIT=null; render(true); });
-  on('goLib',function(){ LIB=true; BOARD=false; EDIT=null; loadLib(); render(true); });
-  on('goRun',function(){ LIB=false; BOARD=false; EDIT=null; render(true); });
+  on('goLib',function(){ LIB=true; BOARD=false; PIPE=false; EDIT=null; loadLib(); render(true); });
+  on('goRun',function(){ LIB=false; BOARD=false; PIPE=false; EDIT=null; render(true); });
+  on('goPipe',function(){ PIPE=true; LIB=false; BOARD=false; EDIT=null; render(true); });
+  [].forEach.call(app.querySelectorAll('[data-pipe]'),function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation(); toggleRun(b.dataset.pipe);
+    });
+  });
   on('goHomeSide',function(){
     if(EDIT!==null && !confirm('Discard the changes to this question?')) return;
     BOARD=false; EDIT=null; STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true);
