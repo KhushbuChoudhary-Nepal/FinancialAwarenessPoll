@@ -229,6 +229,12 @@ textarea{resize:vertical;line-height:1.5}
   column-gap:9px;row-gap:2px;align-items:baseline;text-align:left;
   background:none;border:1px solid var(--rule-2);border-radius:9px;padding:9px 11px;
   cursor:pointer;color:var(--ink-2)}
+/* the cross sits outside the row's own button — a button inside a button is
+   not something a browser will honour */
+.pastwrap{display:grid;grid-template-columns:1fr auto;gap:4px;align-items:stretch}
+.pastdel{border:1px solid transparent;background:none;border-radius:8px;width:34px;
+  font-size:19px;line-height:1;color:var(--faint);cursor:pointer}
+.pastdel:hover{background:#FDF2F1;border-color:#EBC9C6;color:#B5341F}
 .pastrow:hover{background:var(--rule-2);border-color:var(--rule)}
 .pastrow b{grid-area:co;font-size:13.5px;color:var(--ink);white-space:nowrap}
 .pastrow em{grid-area:name;font-style:normal;font-size:12.5px;color:var(--ink-2);
@@ -281,9 +287,11 @@ textarea{resize:vertical;line-height:1.5}
 
 /* Section label inside the document. It was grey on white and disappeared —
    now it is navy, heavier, and sits on its own rule. */
-.lab2{font-family:var(--f-d);font-weight:700;font-size:14px;letter-spacing:.02em;
-  text-transform:none;color:#14274A;margin:26px 0 11px;padding-bottom:6px;
+.lab2{font-family:var(--f-d);font-weight:700;font-size:17px;letter-spacing:-.005em;
+  text-transform:none;color:#14274A;margin:34px 0 20px;padding-bottom:9px;
   border-bottom:2px solid #14274A}
+/* the number belongs to the title, so it is the same colour as the title */
+.lab2 i{font-style:normal;color:#14274A;margin-right:8px;font-variant-numeric:tabular-nums}
 .tlead{margin:0 0 9px;font-size:12px;line-height:1.6;color:#4A5E76}
 
 /* who was in the room */
@@ -297,6 +305,41 @@ textarea{resize:vertical;line-height:1.5}
 .wbar i{grid-column:1/-1;display:block;height:5px;border-radius:99px;background:#EDF1F6;overflow:hidden}
 .wbar u{display:block;height:100%;background:#9FB4CC;border-radius:99px}
 .wbar.top u{background:#14274A}
+
+/* The row an executive reads first. */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tiles.three{grid-template-columns:repeat(3,1fr)}
+.tiles{gap:13px}
+.tile{border:1px solid #DBE1E9;border-radius:12px;padding:18px 18px 20px;break-inside:avoid}
+.tile b{display:block;font-family:var(--f-d);font-weight:800;font-size:38px;
+  line-height:1;color:#14274A;letter-spacing:-.02em}
+.tile b em{font-style:normal;font-size:22px;margin-left:1px}
+.tile span{display:block;margin-top:11px;font-family:var(--f-b);font-weight:700;
+  font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:#14274A}
+.tile s{display:block;margin-top:8px;text-decoration:none;font-size:11.5px;
+  line-height:1.55;color:#7C8DA4}
+/* All four are gaps, so all four are warm — the shade follows the rank, so the
+   eye starts at the largest without the colour claiming anything extra. */
+.tile.r1 b{color:#D93025} .tile.r2 b{color:#E8710A}
+.tile.r3 b{color:#C79A3A} .tile.r4 b{color:#5A6E88}
+.tile.ok b{color:#0B6F5C} .tile.gold b{color:#B8862B}
+
+/* the one line HR takes away from the row of figures */
+.hrint{margin:16px 0 0;font-family:var(--f-b);font-weight:700;font-size:13.5px;
+  line-height:1.6;color:#14274A;background:#FDF6E4;border:1px solid #EBD9A8;
+  border-radius:12px;padding:15px 18px;break-inside:avoid}
+.hrint span{display:block;font-family:var(--f-m);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:#C79A3A;font-weight:700;margin-bottom:7px}
+
+/* what they will do next, drawn */
+.nbars{display:flex;flex-direction:column;gap:22px;padding:8px 6px 4px}
+.nbar{display:grid;grid-template-columns:230px minmax(0,1fr) 54px;gap:26px;align-items:center}
+.nbar span{font-family:var(--f-b);font-weight:700;font-size:12.5px;color:#14274A;line-height:1.4}
+.nbar i{display:block;height:17px;border-radius:99px;background:#EEF3F8;overflow:hidden}
+.nbar u{display:block;height:100%;background:#0B6F5C;border-radius:99px;text-decoration:none}
+.nbar em{font-style:normal;font-family:var(--f-b);font-weight:700;font-size:13px;
+  color:#0B6F5C;text-align:right}
+.fbrow.nonum{grid-template-columns:1fr;gap:0}
 
 /* About the employees — two sentences, no charts. */
 .whoblk{border:1px solid #DBE1E9;border-left:4px solid #14274A;border-radius:10px;
@@ -340,17 +383,20 @@ textarea{resize:vertical;line-height:1.5}
   color:#8496AC;text-align:center}
 
 /* one block per topic taught */
-.tblocks{display:flex;flex-direction:column;gap:11px}
-.tblock{display:grid;grid-template-columns:26px 1fr;gap:13px;align-items:start;
-  border:1px solid #DBE1E9;border-radius:10px;padding:14px 16px;break-inside:avoid}
+.tblocks{display:flex;flex-direction:column;gap:13px}
+.tblock{display:grid;grid-template-columns:28px 1fr;gap:15px;align-items:start;
+  border:1px solid #DBE1E9;border-radius:10px;padding:17px 19px;break-inside:avoid}
 .tnum{display:block;width:26px;height:26px;border-radius:99px;background:#14274A;color:#fff;
   font-family:var(--f-m);font-size:12px;font-weight:700;text-align:center;line-height:26px}
 /* The topic name above each finding — it was almost invisible in grey. */
 .ttop{margin:0;font-family:var(--f-m);font-weight:700;font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;color:#0B6F5C}
-.tbody h3{font-family:var(--f-d);font-weight:700;font-size:15px;margin:3px 0 0;
-  line-height:1.35;color:#14274A}
-.tnums{margin:6px 0 0;font-size:12px;line-height:1.6;color:#4A5E76}
+.tbody h3{font-family:var(--f-d);font-weight:700;font-size:15.5px;margin:4px 0 0;
+  line-height:1.4;color:#14274A}
+.tsay{margin:6px 0 0;font-size:12.5px;line-height:1.6;color:#4A5E76}
+.tsig{margin:13px 0 5px;font-family:var(--f-m);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:#8496AC;font-weight:700}
+.tnums{margin:0;font-size:12px;line-height:1.75;color:#4A5E76}
 .tnums b{font-family:var(--f-m);font-weight:700;color:#0B6F5C}
 
 /* session feedback — two cards side by side, then the closing line */
@@ -374,13 +420,51 @@ textarea{resize:vertical;line-height:1.5}
 .fbline b{font-family:var(--f-m);font-weight:700;color:#0B6F5C}
 /* The observation: a finding, so it carries a little more weight than the
    numbers above it, but it still sits inside the feedback section. */
-.obs{margin:11px 0 0;border:1px solid #C6D5EA;border-left:4px solid #14274A;
-  border-radius:10px;padding:12px 15px;background:#F7FAFD;break-inside:avoid}
-.obsk{margin:0;font-family:var(--f-m);font-size:9px;letter-spacing:.16em;
-  text-transform:uppercase;color:#7C93B4;font-weight:700}
-.obsh{margin:4px 0 0;font-family:var(--f-d);font-weight:700;font-size:14px;color:#14274A}
-.obsl{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:#4A5E76}
-.obsl b{font-family:var(--f-m);font-weight:700;color:#14274A}
+.obs{margin:0;border:1px solid #DBE1E9;border-radius:12px;padding:18px 20px;
+  background:#F7FAFB;break-inside:avoid}
+.obsk{margin:0 0 9px;font-family:var(--f-b);font-weight:700;font-size:11.5px;
+  letter-spacing:.04em;text-transform:uppercase;color:#0B6F5C}
+.obsl{margin:0;font-size:12.5px;line-height:1.7;color:#5A6E88}
+.obsl b{font-family:var(--f-b);font-weight:700;color:#5A6E88}
+.obsn{margin:12px 0 0;font-family:var(--f-b);font-weight:700;font-size:12.5px;
+  line-height:1.6;color:#14274A}
+.obsn b{color:#14274A}
+
+.pbreak{height:0}
+@media print{ .pbreak{break-before:page;page-break-before:always} }
+
+/* the library — a reference screen, so it reads as a list rather than a tool */
+.lbnote{margin:0 0 20px;font-size:12.5px;line-height:1.65;color:var(--stage-mute);
+  max-width:760px}
+.lbpil{margin-bottom:26px}
+.lbpname{margin:0 0 10px;font-family:var(--f-m);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--stage-mute);font-weight:700}
+.lbtopic{border:1px solid var(--stage-rule);border-radius:11px;padding:15px 17px;
+  margin-bottom:11px;background:#fff}
+.lbtop{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.lbtop h4{margin:0;font-family:var(--f-d);font-weight:700;font-size:15px;color:var(--stage-ink)}
+.lbtop span{font-family:var(--f-m);font-size:10.5px;color:var(--stage-mute)}
+.lbtheme{margin:5px 0 0;font-size:12.5px;line-height:1.5;color:#0B6F5C;font-weight:600}
+.lbverd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:11px 0 4px}
+.lbverd div{border:1px solid var(--stage-rule);border-radius:8px;padding:8px 10px;
+  font-size:11.5px;line-height:1.5;color:var(--stage-ink-2)}
+.lbverd span{display:block;font-family:var(--f-m);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--stage-mute);font-weight:700;margin-bottom:4px}
+.lbq{border-top:1px solid var(--stage-rule);margin-top:13px;padding-top:12px}
+.lbqh{margin:0;font-family:var(--f-d);font-weight:700;font-size:13.5px;
+  color:var(--stage-ink);display:flex;justify-content:space-between;gap:12px}
+.lbqh em{font-style:normal;font-family:var(--f-m);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--stage-mute);white-space:nowrap;padding-top:3px}
+.lblead{margin:4px 0 0;font-size:12px;color:var(--stage-mute);line-height:1.5}
+.lbopts{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+.lbo{display:grid;grid-template-columns:26px 1fr 1fr;gap:12px;align-items:start;
+  font-size:12px;line-height:1.55}
+.lbo b{font-family:var(--f-m);font-weight:700;font-size:12px;color:#0B6F5C;text-align:center;
+  background:#EEF7F4;border-radius:6px;padding:2px 0}
+.lbo span{color:var(--stage-ink-2)}
+.lbo i{font-style:normal;color:var(--stage-mute)}
+.lbo i.none{color:#B5541F}
+.lbo i.na{color:var(--faint);font-style:italic}
 
 /* the storeroom — screen only */
 .hw{display:flex;flex-direction:column;gap:16px}
@@ -429,7 +513,7 @@ textarea{resize:vertical;line-height:1.5}
 
 /* This one line is the company's own credit. It should not look like every
    other box on the page. */
-.fbclose{margin:11px 0 0;font-size:13.5px;line-height:1.6;color:#5A4A22;
+.fbclose{margin:24px 0 0;font-size:13.5px;line-height:1.6;color:#5A4A22;
   background:#FCF3DF;border:1px solid #E3C77E;border-left:4px solid #C79A3A;
   border-radius:10px;padding:12px 15px}
 .fbclose b{font-family:var(--f-m);font-weight:700;color:#8A6216}
@@ -439,8 +523,8 @@ textarea{resize:vertical;line-height:1.5}
 /* Its own card. Text first, face on the right — the reader finishes on the
    words, not the picture. */
 .bio{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;
-  background:#fff;border:1px solid #DBE1E9;border-radius:11px;padding:15px 18px;
-  margin-top:22px;break-inside:avoid;page-break-inside:avoid}
+  background:#fff;border:1px solid #DBE1E9;border-radius:11px;padding:17px 20px;
+  margin-top:34px;break-inside:avoid;page-break-inside:avoid}
 .bio.nopic{grid-template-columns:1fr}
 .biopic img{width:104px;height:104px;border-radius:50%;object-fit:cover;
   border:3px solid #C79A3A;display:block}
@@ -467,7 +551,7 @@ textarea{resize:vertical;line-height:1.5}
 .qbar.top u{background:#E8A81C}
 .qbar.top .op{color:#9C7222}
 .qbn{margin:7px 0 0;font-family:var(--f-m);font-size:9.5px;letter-spacing:.06em;color:#95A5B8}
-.method{margin:10px 0 12px;font-size:10px;line-height:1.7;color:#66788E;
+.method{margin:16px 0 14px;font-size:10px;line-height:1.7;color:#66788E;
   background:#F6F8FB;border:1px solid #E4EAF1;border-radius:10px;padding:11px 14px;
   break-inside:avoid;page-break-inside:avoid}
 .nodata{margin:14px 0 0;font-size:12.5px;color:#66788E;background:#EDF1F6;padding:12px;border-radius:8px}
@@ -503,7 +587,7 @@ textarea{resize:vertical;line-height:1.5}
   /* Sizes only — the page is allowed to run to a second sheet rather than be
      squeezed. A cramped report reads as a cheap one. */
   /* a heading never sits alone at the foot of a page */
-  .lab2{font-size:11.5pt;margin:16px 0 8px;padding-bottom:5px;
+  .lab2{font-size:13pt;margin:22px 0 14px;padding-bottom:7px;
     break-after:avoid;page-break-after:avoid}
   .fbwrap,.gwrap,.whoblk{break-inside:avoid;page-break-inside:avoid}
   .tlead{font-size:9pt;margin-bottom:9px}
@@ -516,19 +600,30 @@ textarea{resize:vertical;line-height:1.5}
   .sp{margin-top:10px;padding-top:9px}
   .sphead{font-size:6.4pt;margin-bottom:6px}
   .spbar{height:30px} .spbar i{font-size:10pt}
-  .tblock{padding:10px 13px;gap:11px}
-  .tbody h3{font-size:11.5pt} .tnums{font-size:9pt} .ttop{font-size:6.8pt}
+  .tblocks{gap:9px}
+  .tblock{padding:12px 15px;gap:12px}
+  .tbody h3{font-size:11pt;line-height:1.4} .tnums{font-size:8.6pt;line-height:1.7}
+  .ttop{font-size:6.8pt}
+  .tiles{gap:9px} .tile{padding:13px 13px 15px}
+  .tile b{font-size:25pt} .tile b em{font-size:14pt}
+  .tile span{font-size:8pt;margin-top:8px} .tile s{font-size:8pt;margin-top:6px}
+  .hrint{font-size:9.6pt;padding:12px 15px;margin-top:12px} .hrint span{font-size:6.4pt}
+  .tsay{font-size:8.8pt} .tsig{font-size:6pt;margin:9px 0 4px}
+  .nbars{gap:17px;padding:6px 4px 2px}
+  .nbar{grid-template-columns:185px minmax(0,1fr) 46px;gap:20px}
+  .nbar span{font-size:9pt} .nbar em{font-size:9.4pt} .nbar i{height:13px}
   .fbrow{grid-template-columns:80px 1fr;gap:20px;padding:11px 14px;margin-bottom:8px}
   .fbnum{font-size:29pt} .fbnum em{font-size:14pt} .fbnum s{font-size:6.4pt}
   .fbcard{padding:10px 12px}
   .fbbig{padding:10px} .fbnum{font-size:29pt} .fbnum em{font-size:14pt}
   .fbcap{font-size:6.8pt;margin-top:5px}
   .fbk{font-size:6.6pt} .fblead{font-size:9.6pt} .fbline{font-size:9pt}
-  .fbclose{font-size:10pt;padding:9px 13px;margin-top:8px}
+  .fbclose{font-size:10pt;padding:10px 13px;margin-top:18px}
   .fbmiss{font-size:8.6pt;padding:8px 12px;margin-top:8px}
-  .obs{padding:9px 12px;margin-top:8px}
-  .obsk{font-size:6.4pt} .obsh{font-size:10.4pt} .obsl{font-size:8.6pt}
-  .bio{margin-top:14px;padding-top:11px;gap:16px}
+  .obs{padding:14px 16px}
+  .obsk{font-size:8pt;margin-bottom:7px} .obsl{font-size:8.8pt}
+  .obsn{font-size:8.8pt;margin-top:9px}
+  .bio{margin-top:24px;padding:14px 16px;gap:16px}
   .bio p{font-size:8.6pt} .bio p.biohi{font-size:9pt}
   .bio p.bioquote{font-size:9.6pt;margin-top:7px}
   .biopic img{width:88px;height:88px}
@@ -718,6 +813,7 @@ textarea{resize:vertical;line-height:1.5}
 .clk.late small{color:#B5541F}.clk.late b{color:#B5341F}
 .ctrl.top .done{margin-left:0}
 .navpair{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px}
+.navpair .dashbtn{font-size:13px}
 .navpair .dashbtn{margin-bottom:0;text-align:center;padding:9px 6px}
 .dashbtn{width:100%;text-align:left;background:var(--card);border:1px solid var(--rule);
   border-radius:9px;padding:10px 13px;font-family:var(--f-b);font-weight:600;font-size:14px;
@@ -845,7 +941,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v21';
+var NEEDS_VERSION='v22';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -867,6 +963,17 @@ function versionCheck(){
 var LOGO=(document.querySelector('.blogo img')||{}).src||'';
 var FILTER='All', REPORT=null, SESSIONS=null, METASAVE=null;
 var STAGE='home', SEL=null, LEVEL='All', BOARD=false, BFILT='All';
+/* The Library — every question with the line each answer prints in the report.
+   Fetched once, when the screen is first opened. */
+var LIB=false, LIBDATA=null, LIBBUSY=false;
+function loadLib(){
+  if(LIBDATA||LIBBUSY) return;
+  LIBBUSY=true;
+  call({act:'lib', code:CODE}).then(function(d){
+    LIBBUSY=false;
+    if(d&&d.ok){ LIBDATA=d; render(true); }
+  }).catch(function(){ LIBBUSY=false; });
+}
 /* Which pillars are open in the sidebar. Closed by default except the one you
    are looking at, so the list stays short as more pillars are written. */
 var OPEN_P={};
@@ -1481,6 +1588,25 @@ function renderHome(){
       }).catch(function(){});
     });
   });
+  wireDrop();
+}
+
+/* Removing a saved workshop. It names what is going before it goes, because the
+   rows look alike and one mis-tap would otherwise lose a session. */
+function wireDrop(){
+  [].forEach.call(app.querySelectorAll('.pastdel'),function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!confirm('Remove '+b.dataset.name+' from the list?\n\n'+
+        'The report is deleted. The answers stay in the Votes sheet, and Google '+
+        'keeps its own version history if this was a mistake.')) return;
+      b.disabled=true;
+      call({act:'drop',code:CODE,row:b.dataset.drop}).then(function(d){
+        if(d&&d.ok){ SESSIONS=null; loadSessions(); render(true); }
+        else { b.disabled=false; alert('Could not remove it. Try again.'); }
+      }).catch(function(){ b.disabled=false; });
+    });
+  });
 }
 
 function renderPresenter(){
@@ -1494,6 +1620,7 @@ function renderPresenter(){
     app.innerHTML='<div class="pres">'+sidebar(selectedQ())+editor()+'</div>';
     barMeta.textContent='Presenter'; wire(); wireEditor(); drawQR(); return;
   }
+  if(LIB) return renderLibrary();
   if(BOARD) return renderBoard();
   if(openBlock()) return renderBlockPresenter(openBlock());
   var qs=questions(), q=selectedQ();
@@ -1640,6 +1767,8 @@ function sidebar(q){
     '<div class="navpair">'+
       '<button class="dashbtn" id="goHomeSide">Home</button>'+
       '<button class="dashbtn'+(BOARD?' on':'')+'" id="goBoard">Dashboard</button>'+
+      '<button class="dashbtn'+(LIB?' on':'')+'" id="goLib">Library</button>'+
+      '<button class="dashbtn'+((!BOARD&&!LIB)?' on':'')+'" id="goRun">Current session</button>'+
     '</div>'+
     /* Who you are speaking to comes first — it decides which questions are
        worth looking at, so it belongs above them, not below. */
@@ -1681,6 +1810,67 @@ function sidebar(q){
 /* Everything the room has said today, in the order it was asked, so the intro
    comes first when the intro went first. A look-back only — nothing here can
    ask, open or close anything. */
+/* What each answer will say in the report, beside the answer itself. This is a
+   reference screen, not a working one — nothing here is editable, so a wrong
+   line is something to tell me about rather than something to fix in a hurry. */
+function renderLibrary(){
+  var side=sidebar(null);
+  var stage;
+  if(!LIBDATA){
+    stage='<div class="stage">'+topbar()+
+      '<h1 class="sq">Loading the library&hellip;</h1></div>';
+  } else {
+    var says=LIBDATA.says||{}, verds=LIBDATA.verdicts||{}, themes=LIBDATA.themes||{};
+    var qs=(S.questions||[]);
+    var body=pillars().map(function(pl){
+      var rows=pl.topics.map(function(t){
+        var mine=qs.filter(function(q){ return (q.topic||'')===t; });
+        if(!mine.length) return '';
+        var v=verds[t]||{};
+        var head='<div class="lbtop"><h4>'+esc(t)+'</h4>'+
+          '<span>'+mine.length+' question'+(mine.length===1?'':'s')+'</span></div>'+
+          (themes[t]?'<p class="lbtheme">'+esc(themes[t])+'</p>':'')+
+          ((v.Low||v.Moderate||v.High)
+            ? '<div class="lbverd">'+['Low','Moderate','High'].map(function(b){
+                return v[b]?'<div><span>'+b+'</span>'+esc(v[b])+'</div>':''; }).join('')+
+              '</div>' : '');
+        var isIntro=(t===introTopic());
+        var list=mine.map(function(q){
+          var sy=says[q.id]||[];
+          return '<div class="lbq"><p class="lbqh">'+esc(q.q)+
+            '<em>'+esc(q.level||'Any')+'</em></p>'+
+            (q.lead?'<p class="lblead">'+esc(q.lead)+'</p>':'')+
+            '<div class="lbopts">'+q.options.map(function(o,i){
+              var sc=(q.scores&&q.scores[i])||0;
+              return '<div class="lbo">'+
+                '<b>'+(q.scored?sc:'&mdash;')+'</b>'+
+                '<span>'+esc(o)+'</span>'+
+                /* The intro is never quoted as a line in the report — it builds
+                   the profile sentence — so a missing phrase there is normal. */
+                '<i'+(sy[i]?'':(isIntro?' class="na"':' class="none"'))+'>'+
+                  (sy[i]?esc(sy[i])
+                       :(isIntro?'not quoted in the report'
+                               :'no written line &mdash; the report would print the answer itself'))+
+                '</i></div>';
+            }).join('')+'</div></div>';
+        }).join('');
+        return '<div class="lbtopic">'+head+list+'</div>';
+      }).join('');
+      return rows ? '<div class="lbpil"><p class="lbpname">'+esc(pl.name)+'</p>'+rows+'</div>' : '';
+    }).join('');
+    stage='<div class="stage">'+topbar()+
+      '<div class="meta"><span>Library &nbsp;&middot;&nbsp; '+qs.length+' questions</span>'+
+        '<span>Reference only &mdash; nothing here prints</span></div>'+
+      '<p class="lbnote">Every answer and the line it puts in the report. '+
+      'The number on the left is the points that answer carries. '+
+      'Tell me about anything that reads wrong and I will change it.</p>'+
+      body+'</div>';
+  }
+  app.innerHTML='<div class="pres">'+side+stage+'</div>';
+  barMeta.textContent='Library';
+  wire(); drawQR();
+}
+
 function renderBoard(){
   var side=sidebar(null), all=(S.all)||{}, it=introTopic();
   var rows=askedList().map(function(id){
@@ -1954,7 +2144,9 @@ function wireEditor(){
     b.addEventListener('click',function(){ var i=+b.dataset.dn; move(i,i+1); }); });
 }
 function wire(){
-  on('goBoard',function(){ BOARD=true; EDIT=null; render(true); });
+  on('goBoard',function(){ BOARD=true; LIB=false; EDIT=null; render(true); });
+  on('goLib',function(){ LIB=true; BOARD=false; EDIT=null; loadLib(); render(true); });
+  on('goRun',function(){ LIB=false; BOARD=false; EDIT=null; render(true); });
   on('goHomeSide',function(){
     if(EDIT!==null && !confirm('Discard the changes to this question?')) return;
     BOARD=false; EDIT=null; STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true);
@@ -2294,18 +2486,28 @@ function howItWorks(){
    beside "I knew this already" is knowledge that has not become action. */
 function observation(R, nothing){
   var I=R.insight;
-  if(!I || !I.show) return '';
-  return '<div class="obs">'+
-    '<p class="obsk">An important observation</p>'+
-    '<p class="obsh">Knowing is not the same as doing.</p>'+
-    '<p class="obsl"><b>'+I.pct+'%</b> felt the session had little new to teach them '+
-      '&mdash; but their answers say otherwise. The information is there; '+
-      'the action is missing.</p>'+
-    /* The same people, so it belongs in the same block rather than repeated
-       three lines above under a different figure. */
-    (nothing?'<p class="obsl"><b>'+nothing+'%</b> do not plan to change anything '+
-      '&mdash; the group worth reaching next time.</p>':'')+
-  '</div>';
+  /* The section always appears once there is feedback to draw on — only the
+     claim inside it is held back when the answers do not support it. */
+  var said = I && I.pct;
+  var claim = (I && I.show)
+    ? '<b>'+I.pct+'%</b> said the session had little new to teach them &mdash; but '+
+      'their answers place them below the room average. The information is there; '+
+      'the action is missing.'
+    : (said
+      ? '<b>'+said+'%</b> said the session had little new to teach them. The poll '+
+        'still shows gaps across the topics covered &mdash; the opportunity is to '+
+        'turn what people already know into defined actions.'
+      : '');
+  var next = nothing
+    ? '<b>'+nothing+'%</b> do not plan to change anything &mdash; a group for '+
+      'targeted follow-up.' : '';
+  if(!claim && !next) return '';
+  return SECHEAD('The knowledge-to-action gap')+
+    '<div class="obs">'+
+      '<p class="obsk">Knowing is not the same as doing</p>'+
+      (claim?'<p class="obsl">'+claim+'</p>':'')+
+      (next?'<p class="obsn">'+next+'</p>':'')+
+    '</div>';
 }
 
 /* The same group, in full, for the planner's own screen. Never printed. */
@@ -2430,11 +2632,15 @@ function pastRow(x){
   var head = x.attended || x.responded || '';
   bits.push((head?head:'\u2014')+' attended');
   var aw = (x.awareness===''||x.awareness===null);
-  return '<button class="pastrow" data-row="'+x.row+'">'+
-    '<b>'+esc(x.company||'Untitled')+'</b>'+
-    '<i>'+(aw?'&mdash;':x.awareness+'%')+'<u>awareness</u></i>'+
-    '<em>'+esc(x.title||'Workshop')+'</em>'+
-    '<span>'+esc(bits.join(' \u00b7 '))+'</span></button>';
+  return '<div class="pastwrap">'+
+    '<button class="pastrow" data-row="'+x.row+'">'+
+      '<b>'+esc(x.company||'Untitled')+'</b>'+
+      '<i>'+(aw?'&mdash;':x.awareness+'%')+'<u>awareness</u></i>'+
+      '<em>'+esc(x.title||'Workshop')+'</em>'+
+      '<span>'+esc(bits.join(' \u00b7 '))+'</span></button>'+
+    '<button class="pastdel" data-drop="'+x.row+'" '+
+      'data-name="'+esc((x.company||'this workshop')+(x.date?' \u00b7 '+shortDate(x.date):''))+'" '+
+      'title="Remove this workshop">&times;</button></div>';
 }
 
 /* ── the report ──────────────────────────────────────────────── */
@@ -2500,6 +2706,43 @@ function findCard(f,kind){
     '<p class="fq">'+esc(f.q)+'</p></div>';
 }
 
+/* Four numbers an executive can take in at a glance, before any of the detail.
+   Nothing new is measured — the strongest figure from each topic, plus the one
+   from the intro that matters most. */
+function noPlanPct(R){
+  var pl=null; (R.intro||[]).forEach(function(r){ if(r.id==='in_plan') pl=r; });
+  if(!pl || !pl.total) return null;
+  var none=0;
+  pl.options.forEach(function(o,i){ if(!/^yes/i.test(o)) none+=pl.counts[i]; });
+  return Math.round(none/pl.total*100);
+}
+function tiles(R, sec){
+  var out=[], np=noPlanPct(R);
+  if(np) out.push({ pct:np, lab:'No financial plan',
+                    say:'Planning is the clearest gap.' });
+  (R.session_topics||[]).forEach(function(t){
+    if(t.band==='High') return;            /* nothing for HR to act on */
+    var l=(t.lines||[])[0]; if(!l) return;
+    out.push({ pct:l.pct, lab:t.topic, say:l.say });
+  });
+  out=out.slice(0,4);
+  if(out.length<2) return '';
+  /* red for the worst, amber for the rest — a row of identical numbers tells
+     the reader nothing about which one to look at first */
+  var rank=out.slice().sort(function(a,b){ return b.pct-a.pct; });
+  return sec('What HR should notice first')+
+    '<div class="tiles">'+out.map(function(x){
+      return '<div class="tile r'+(rank.indexOf(x)+1)+'">'+
+        '<b>'+x.pct+'<em>%</em></b>'+
+        '<span>'+esc(x.lab)+'</span>'+
+        '<s>'+esc(x.say)+'</s></div>';
+    }).join('')+'</div>'+
+    '<p class="hrint"><span>HR interpretation</span>'+
+      'The priority is not more information alone. Employees need a structured '+
+      'path from knowledge to financial resilience, protection and long-term '+
+      'planning.</p>';
+}
+
 /* The company already knows its own age spread. What it does not know is
    whether those people have anything behind them — so the intro is written out
    as two sentences: who is in the room, and the thing that makes it matter. */
@@ -2562,6 +2805,16 @@ var REPORT_LABELS = {
 function reportLabel(r){ return REPORT_LABELS[r.id] || r.q; }
 
 /* Who the report is signed by. One place to change it. */
+/* The sections are assembled in a different order from the order they appear
+   in, so they are numbered afterwards by walking the finished page. */
+function SECHEAD(t){ return '<p class="lab2"><i data-n></i>'+esc(t)+'</p>'; }
+function numberSections(){
+  var n=0;
+  [].forEach.call(document.querySelectorAll('.doc .lab2 i[data-n]'),function(el){
+    el.textContent=(++n)+'.';
+  });
+}
+
 var PLANNER = {
   name : 'Khushbu Choudhary',
   role : 'Financial Planner',
@@ -2587,6 +2840,9 @@ function renderReport(){
     barMeta.textContent='Report'; return;
   }
   var R=REPORT, aw=R.awareness;
+  /* Sections are numbered as they are written, so removing one never leaves a
+     gap in the sequence. */
+  var sec=SECHEAD;
   var head = META.attended || META.participants || R.responded || '—';
 
   var introBars = aboutEmployees(R);
@@ -2597,9 +2853,11 @@ function renderReport(){
       return '<div class="tblock">'+
         '<span class="tnum">'+(n+1)+'</span>'+
         '<div class="tbody"><p class="ttop">'+esc(t.topic)+'</p>'+
-        '<h3>'+esc(t.verdict||'')+'</h3>'+
+        '<h3>'+esc(t.theme||t.verdict||'')+'</h3>'+
+        (t.theme&&t.verdict?'<p class="tsay">'+esc(t.verdict)+'</p>':'')+
+        '<p class="tsig">Key poll signals</p>'+
         '<p class="tnums">'+t.lines.map(function(l){
-            return '<b>'+l.pct+'%</b> '+esc(l.say); }).join(' &nbsp;&middot;&nbsp; ')+
+            return '<b>'+l.pct+'%</b> '+esc(l.say); }).join('<br>')+
         '</p></div></div>';
     }).join('') : '';
 
@@ -2628,31 +2886,50 @@ function renderReport(){
     /* Two rows, each led by its own figure, so the second reads with the same
        weight as the first. */
     var actPct = (F.acted && F.actedOf) ? Math.round(F.acted/F.actedOf*100) : null;
+    /* 6 — what they will do next, drawn rather than listed */
+    function bars(list){
+      return '<div class="nbars">'+list.map(function(l){
+        /* the phrases are written to follow a percentage; as a label they read
+           better as the action itself, and short enough not to wrap */
+        var lab=String(l.say).replace(/^will\s+/i,'').replace(/\btheir\s+/i,'');
+        lab=lab.charAt(0).toUpperCase()+lab.slice(1);
+        /* the track is the whole room, so 28% fills 28% of it. Scaling to the
+           longest bar made 28% look like everybody. */
+        return '<div class="nbar"><span>'+esc(lab)+'</span>'+
+          '<i><u style="width:'+l.pct+'%"></u></i>'+
+          '<em>'+l.pct+'%</em></div>'; }).join('')+'</div>';
+    }
     function row(num, cap, key, lead, body){
-      return '<div class="fbrow">'+
-        '<div class="fbnum">'+
-          ((num!==null&&num!==undefined) ? num+'<em>%</em>' : '')+
-          '<s>'+cap+'</s></div>'+
+      return '<div class="fbrow'+((num===null||num===undefined)?' nonum':'')+'">'+
+        ((num!==null&&num!==undefined)
+          ? '<div class="fbnum">'+num+'<em>%</em><s>'+cap+'</s></div>' : '')+
         '<div class="fbtext"><p class="fbk">'+key+'</p>'+
         (lead?'<p class="fblead">'+lead+'</p>':'')+
         '<p class="fbline">'+body+'</p></div></div>';
     }
+    /* Three figures across the top, the detail underneath — the section reads
+       as a result before it reads as a breakdown. */
+    var three=[];
+    if(F.useful!==null&&F.useful!==undefined)
+      three.push([F.useful,'Found session useful',
+        (L[0]?L[0].pct+'% '+L[0].say+(L[1]?'; '+L[1].pct+'% '+L[1].say:'')+'.':''),'ok']);
+    if(actPct!==null) three.push([actPct,'Intend to take action',
+      'A strong signal that the session created momentum.','ok']);
+    if(F.more!==null&&F.more!==undefined)
+      three.push([F.more,'Want more sessions',
+        'Supports a continuing financial-wellness programme.','gold']);
     fbBlock='<div class="fbwrap">'+
-      '<p class="lab2">Session feedback</p>'+
-      (l1 ? row(F.useful,'found the session useful','How it landed',helpful,l1) : '')+
-      (nx.length ? row(actPct,'will take action',
-        'What they will do next','',nx.join(' &nbsp;&middot;&nbsp; ')) : '')+
+      SECHEAD('Did the session land?')+
+      (three.length?'<div class="tiles three">'+three.map(function(t){
+        return '<div class="tile '+t[3]+'"><b>'+t[0]+'<em>%</em></b>'+
+          '<span>'+esc(t[1])+'</span>'+
+          (t[2]?'<s>'+esc(t[2])+'</s>':'')+'</div>'; }).join('')+'</div>':'')+
+      (nx.length ? SECHEAD('What employees say they will do next')+
+        bars(F.next) : '')+
       /* The other half, said plainly and without a heading that announces it. */
       /* One or the other, never both: the observation already describes these
          people, and its figure is drawn from the same answers. */
-      ((R.insight && R.insight.show) ? observation(R, F.nothing)
-        : (((F.weak&&F.weak.length)||F.nothing)
-        ? '<p class="fbmiss">'+
-          (F.nothing?'<b>'+F.nothing+'%</b> do not plan to change anything':'')+
-          ((F.weak&&F.weak.length&&F.nothing)?', and ':'')+
-          ((F.weak&&F.weak.length)?'<b>'+F.weak[0].pct+
-            '%</b> already knew most of the information':'')+
-          ' &mdash; the group worth reaching next time.</p>' : ''))+
+      /* Everything about that group is said once, in its own section above. */
       ((F.closing&&META.company)?'<p class="fbclose">Overall it was '+esc(F.closing)+
         ' initiative taken by <b>'+esc(META.company)+'</b>'+
         (F.more!==null&&F.more!==undefined ? ', and <b>'+F.more+
@@ -2727,12 +3004,12 @@ function renderReport(){
           '<div><span>Total attendees</span><b>'+esc(head)+'</b></div>'+
         '</div>'+
 
-        (introBars?'<p class="lab2">About the employees</p>'+introBars:'')+
+        (introBars?sec('Employee profile')+introBars:'')+
 
         (aw===null
           ? '<p class="nodata">No scored questions were answered, so an awareness '+
             'level cannot be worked out.</p>'
-          : '<p class="lab2">Financial Awareness Level</p>'+
+          : sec('Financial awareness level')+
             '<div class="gwrap">'+
               '<div class="gleft">'+gaugeSVG(aw)+'</div>'+
               '<div class="gright">'+
@@ -2745,10 +3022,14 @@ function renderReport(){
                 missedLine(R)+'</p>'+
             '</div>')+
 
-        (topicBlocks?'<p class="lab2">Topics discussed</p>'+
+        tiles(R, sec)+
+
+        (topicBlocks?'<div class="pbreak"></div>'+sec('Financial knowledge and actions')+
           '<p class="tlead">'+ST.length+' topic'+(ST.length===1?' was':'s were')+
             ' covered. A brief synopsis of the responses received on each.</p>'+
           '<div class="tblocks">'+topicBlocks+'</div>':'')+
+
+        observation(R, (R.feedback||{}).nothing)+
 
         fbBlock+
 
@@ -2770,6 +3051,7 @@ function renderReport(){
       '</div>'+
     '</div>';
 
+  numberSections();
   barMeta.textContent='Report';
   wireMetaFields();
   on('mSave',saveMeta);
