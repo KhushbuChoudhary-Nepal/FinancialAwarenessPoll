@@ -467,6 +467,9 @@ textarea{resize:vertical;line-height:1.5}
   cursor:pointer;font-size:13px;color:var(--stage-ink);margin-top:4px;align-self:flex-start}
 .addo:hover{border-color:var(--stage-mute)}
 .edhint{font-family:var(--f-m);font-size:11px;letter-spacing:.06em;color:var(--faint);margin:16px 0 0}
+.planbox{margin:16px 0 18px;padding-top:16px;border-top:1px solid var(--rule)}
+.planbox .lab{margin:0 0 4px}
+.hsub.tight{margin:0 0 12px;font-size:13px}
 .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
 .pick.tight{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:6px}
 .pk{display:flex;align-items:center;gap:9px;border:1px solid var(--rule);border-radius:9px;
@@ -481,6 +484,19 @@ textarea{resize:vertical;line-height:1.5}
 .pk u{text-decoration:none;font-family:var(--f-m);font-size:11px;color:var(--faint)}
 .planfoot{margin:13px 0 0;font-family:var(--f-m);font-size:11px;letter-spacing:.06em;color:var(--faint)}
 .planstrip{margin-top:22px;padding-top:16px;border-top:1px solid var(--stage-rule)}
+.clk{border:2px solid #C6D5EA;background:#F4F8FD;border-radius:10px;padding:5px 15px 7px;
+  text-align:center;min-width:112px;margin-left:auto}
+.clk small{display:block;font-family:var(--f-m);font-size:9.5px;letter-spacing:.13em;
+  color:#7C93B4;margin-bottom:1px}
+.clk b{display:block;font-family:var(--f-m);font-size:28px;font-weight:700;line-height:1.05;
+  font-variant-numeric:tabular-nums;color:var(--stage-ink)}
+.clk.warm{border-color:#E0A030;background:#FDF6E9}
+.clk.warm small{color:#9C7222}.clk.warm b{color:#8A6216}
+.clk.late{border-color:#D9534F;background:#FDF2F1}
+.clk.late small{color:#B5541F}.clk.late b{color:#B5341F}
+.ctrl.top .done{margin-left:0}
+.navpair{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px}
+.navpair .dashbtn{margin-bottom:0;text-align:center;padding:9px 6px}
 .dashbtn{width:100%;text-align:left;background:var(--card);border:1px solid var(--rule);
   border-radius:9px;padding:10px 13px;font-family:var(--f-b);font-weight:600;font-size:14px;
   color:var(--ink);cursor:pointer}
@@ -607,7 +623,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v18';
+var NEEDS_VERSION='v19';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -635,7 +651,13 @@ var OPEN_P={};
 function pillars(){ return (S && S.pillars) || [{name:'All', topics:(S&&S.topics)||[]}]; }
 function planList(){ return (S && S.plan) || []; }
 function inPlan(name){ return planList().indexOf(name)>=0; }
-function setPlan(list){ send({act:'set', plan:list.join('|')}); }
+/* Shown at once, told to Google after. Waiting for the reply made ticking
+   feel slow, and two quick clicks overwrote each other. */
+function setPlan(list){
+  if(S) S.plan=list.slice();
+  render(true);
+  call({act:'set', code:CODE, plan:list.join('|')}).then(refresh).catch(function(){});
+}
 
 function pillarOf(t){
   var ps=pillars();
@@ -745,7 +767,12 @@ function clockOf(v){
   try{ var d=new Date(v); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
   catch(e){ return ''; }
 }
-function roomSize(){ var n=parseInt(META&&META.participants,10); return (n>0)?n:0; }
+function roomSize(){
+  var a=parseInt(META&&META.attended,10);
+  if(a>0) return a;
+  var n=parseInt(META&&META.participants,10);
+  return (n>0)?n:0;
+}
 function ofRoom(n){ var r=roomSize(); return r?(n+' of '+r):String(n); }
 
 function questions(){ return (S && S.questions) || []; }
@@ -1070,6 +1097,9 @@ function settle(qid,i,how){
 /* ---- presenter ---- */
 var META_FIELDS=[['company','Company'],['title','Session title'],['date','Date'],
                  ['place','Place'],['participants','People in the room'],['duration','Duration']];
+/* The start screen asks for an estimate. The report asks what actually
+   happened, so "43 of 150" is measured against the real room, not a guess. */
+var REPORT_FIELDS=META_FIELDS.concat([['attended','Actually attended']]);
 var DURATIONS=['30 minutes','1 hour','90 minutes','2 hours'];
 
 /* Date and duration are the two fields people mistype, so neither is a free
@@ -1098,7 +1128,8 @@ function metaField(f){
     '<input type="text" id="m_'+k+'" value="'+esc(v)+'"></label>';
 }
 function readMetaFields(){
-  META_FIELDS.forEach(function(f){
+  /* the report has one extra field, so read whichever set is on screen */
+  REPORT_FIELDS.forEach(function(f){
     var e=document.getElementById('m_'+f[0]); if(e) META[f[0]]=e.value;
   });
   var sel=document.getElementById('m_duration'), other=document.getElementById('m_durationOther');
@@ -1136,12 +1167,12 @@ function prettyDate(v){
 
 /* A note to the presenter about what she means to cover. It restricts
    nothing — anything not ticked is still one click away during the session. */
-function planCard(){
+function planPick(){
   var qs=questions(), ps=pillars(), n=planList().length;
-  return '<div class="hcard">'+
-    '<h2>Topics for today</h2>'+
-    '<p class="hsub">Optional. Whatever you tick is marked in gold while you present, '+
-      'so you can see your plan at a glance. Leave it empty and nothing is marked.</p>'+
+  return '<div class="planbox">'+
+    '<p class="lab">Topics for today &mdash; optional</p>'+
+    '<p class="hsub tight">Whatever you tick is marked in gold while you present. '+
+      'Leave it empty and nothing is marked.</p>'+
     '<div class="pick">'+ps.map(function(p){
       var c=qs.filter(function(x){ return p.topics.indexOf(x.topic||'')>=0; }).length;
       var on=inPlan(p.name);
@@ -1172,10 +1203,10 @@ function renderHome(){
       '<p class="hsub">The counts go back to zero. Everything already collected stays saved '+
         'and can be reopened from the list below.</p>'+
       '<div class="mgrid">'+META_FIELDS.map(metaField).join('')+'</div>'+
+      planPick()+
       '<button class="b2" id="hStart">Start the poll</button>'+
       (running ? '<button class="b2 ghost" id="hCont">Carry on with the poll already running</button>' : '')+
     '</div>'+
-    planCard()+
     '<div class="hcard">'+
       '<h2>Past workshops</h2>'+
       (SESSIONS===null ? '<p class="hsub">Loading&hellip;</p>'
@@ -1244,9 +1275,9 @@ function renderPresenter(){
         (inToday
           ? '<button class="b go" id="askRoom">'+(already?'Ask it again':'Ask the room')+'</button>'
           : '<button class="b go" id="putBack">Put back into today\'s poll</button>')+
-        '<button class="b" id="nextQ">Look at the next one</button>'+
+        '<button class="b" id="prevQ">Previous one</button>'+
+        '<button class="b" id="nextQ">Next one</button>'+
         '<button class="b" id="editQ">Edit this one</button>'+
-        '<button class="b" id="goHome">Back to the start</button>'+
         '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
       '</div>'+
       '<div class="meta"><span>'+numberOf(q)+
@@ -1269,14 +1300,15 @@ function renderPresenter(){
         '<button class="b go" id="toggleOpen">'+(S.open?'Close voting':'Open voting')+'</button>'+
         '<button class="b" id="toggleRev">'+(S.revealed?'Hide results':'Show results to the room')+'</button>'+
         '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
-        '<button class="b" id="nextQ">Look at the next one</button>'+
+        '<button class="b" id="prevQ">Previous one</button>'+
+        '<button class="b" id="nextQ">Next one</button>'+
         '<button class="b" id="editQ">Edit this one</button>'+
-        '<button class="b" id="goHome">Back to the start</button>'+
+        clockBox()+
         '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
       '</div>'+
       '<div class="meta"><span>'+numberOf(q)+
         ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+
-        ' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+clockText()+'</b></span>'+
+        '</span>'+
         '<span>Status: <b class="ok">'+(S.open?'Asked':'Closed')+'</b>'+
         ' &nbsp;&middot;&nbsp; <b class="plain">'+ofRoom(t.total)+'</b> answered</span></div>'+
       (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
@@ -1361,7 +1393,10 @@ function sidebar(q){
     return true;
   });
   var side='<div class="side">'+
-    '<button class="dashbtn'+(BOARD?' on':'')+'" id="goBoard">Dashboard</button>'+
+    '<div class="navpair">'+
+      '<button class="dashbtn" id="goHomeSide">Home</button>'+
+      '<button class="dashbtn'+(BOARD?' on':'')+'" id="goBoard">Dashboard</button>'+
+    '</div>'+
     /* Who you are speaking to comes first — it decides which questions are
        worth looking at, so it belongs above them, not below. */
     '<div><p class="lab">Audience type</p><div class="chips">'+
@@ -1402,18 +1437,6 @@ function sidebar(q){
 /* Everything the room has said today, in the order it was asked, so the intro
    comes first when the intro went first. A look-back only — nothing here can
    ask, open or close anything. */
-/* The same choice, reachable mid-session — rooms drift, and re-planning
-   should not mean starting the poll again. */
-function planStrip(){
-  var ps=pillars();
-  return '<div class="planstrip"><p class="lab">Topics for today</p><div class="pick tight">'+
-    ps.map(function(p){
-      var on=inPlan(p.name);
-      return '<button class="pk'+(on?' sel':'')+'" data-plan="'+esc(p.name)+'">'+
-        '<span class="tick">'+(on?'&#10003;':'')+'</span><b>'+esc(p.name)+'</b></button>';
-    }).join('')+'</div></div>';
-}
-
 function renderBoard(){
   var side=sidebar(null), all=(S.all)||{}, it=introTopic();
   var rows=askedList().map(function(id){
@@ -1449,14 +1472,12 @@ function renderBoard(){
           }).join('')+'</div>';
       }).join('')+'</div>'
       : '<h1 class="sq">Nothing asked yet.</h1>')+
-    planStrip()+
     '<p class="hidden-note">Yours only &mdash; the room never sees this</p>'+
   '</div>';
 
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Dashboard';
   wire();
-  wirePlan();
   on('refreshNow',function(){ BUSY=false; refresh().then(function(){ render(true); }); });
   on('goRep2',function(){ location.hash='#report'; });
   on('goHome',function(){ BOARD=false; STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
@@ -1537,12 +1558,12 @@ function renderBlockPresenter(topic){
       '<button class="b go" id="introClose">Close this block</button>'+
       '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
       '<button class="b" id="goQs">Go to the questions</button>'+
-      '<button class="b" id="goHome">Back to the start</button>'+
+      clockBox()+
       '<span class="done">Answered <b>'+ofRoom(people)+'</b></span>'+
     '</div>'+
     '<div class="meta"><span>'+esc(topic)+' &nbsp;&middot;&nbsp; '+qs.length+
-      ' question'+(qs.length===1?'':'s')+' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+
-      clockText()+'</b></span><span>Status: <b class="ok">Open</b></span></div>'+
+      ' question'+(qs.length===1?'':'s')+'</span>'+
+      '<span>Status: <b class="ok">Open</b></span></div>'+
     introCards(qs,c,people)+
     '<p class="hidden-note">Yours only &mdash; the room never sees this, and it stays out of the report</p>'+
   '</div></div>';
@@ -1666,6 +1687,10 @@ function wireEditor(){
 }
 function wire(){
   on('goBoard',function(){ BOARD=true; EDIT=null; render(true); });
+  on('goHomeSide',function(){
+    if(EDIT!==null && !confirm('Discard the changes to this question?')) return;
+    BOARD=false; EDIT=null; STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true);
+  });
   [].forEach.call(app.querySelectorAll('.qbtn'),function(b){
     b.addEventListener('click',function(){
       if(EDIT!==null && !confirm('Discard the changes to this question?')) return;
@@ -1742,8 +1767,25 @@ function wire(){
     render(true); });
   on('toggleOpen',function(){ send({act:'set',open:S.open?0:1}); });
   on('toggleRev',function(){ send({act:'set',revealed:S.revealed?0:1}); });
-  on('nextQ',function(){ var qs=questions(), i=qs.indexOf(selectedQ());
-    if(i>=0&&i<qs.length-1){ SEL=qs[i+1].id; render(true); } });
+  function visibleHere(){
+    var it=introTopic();
+    return questions().filter(function(x){
+      if((x.topic||'')===it && FILTER!==it) return false;
+      if(FILTER && FILTER!=='All' && (x.topic||'')!==FILTER) return false;
+      if(LEVEL!=='All' && (x.level||'Any')!==LEVEL && (x.level||'Any')!=='Any') return false;
+      return true;
+    });
+  }
+  /* Steps through what is actually on the left, so Next never lands on a
+     question the audience filter is hiding. */
+  function step(d){
+    var list=visibleHere(), cur=selectedQ();
+    var i=cur?list.map(function(x){return x.id;}).indexOf(cur.id):-1;
+    var j=i+d;
+    if(j>=0 && j<list.length){ SEL=list[j].id; EDIT=null; render(true); }
+  }
+  on('prevQ',function(){ step(-1); });
+  on('nextQ',function(){ step(1); });
 
 }
 function send(p){ p.code=CODE; call(p).then(refresh).catch(function(){}); }
@@ -1806,9 +1848,21 @@ function setup(){
    a question, so her own clock is the honest start time, and it needs no change
    to the Google script. */
 var OPEN_KEY='', OPEN_AT=0, FROZEN=0;
-function clockText(){
+/* Calm under a minute, orange past one, red past two — a glance tells you
+   whether the question is running long, without any arithmetic. */
+function clockBox(){
+  var s2=clockSecs();
+  var cls = s2>=120 ? ' late' : (s2>=60 ? ' warm' : '');
+  return '<span class="clk'+cls+'" id="clkBox"><small>OPEN FOR</small>'+
+    '<b id="clk">'+clockText()+'</b></span>';
+}
+
+function clockSecs(){
   var ms = S && S.open ? (Date.now()-OPEN_AT) : FROZEN;
-  var t = Math.max(0, Math.floor(ms/1000));
+  return Math.max(0, Math.floor(ms/1000));
+}
+function clockText(){
+  var t=clockSecs();
   return Math.floor(t/60)+':'+('0'+(t%60)).slice(-2);
 }
 function trackClock(){
@@ -1827,7 +1881,15 @@ function trackClock(){
    the no-flicker work above. */
 setInterval(function(){
   var e=document.getElementById('clk');
-  if(e && S) e.textContent=clockText();
+  if(!e || !S) return;
+  e.textContent=clockText();
+  /* The colour is changed in place too — a redraw would undo the no-flicker
+     work above. */
+  var box=document.getElementById('clkBox');
+  if(box){
+    var t=clockSecs();
+    box.className='clk'+(t>=120?' late':(t>=60?' warm':''));
+  }
 },1000);
 
 var LASTSIG='';
@@ -1886,7 +1948,7 @@ function renderReport(){
   }
   var R=REPORT, aw=R.awareness;
 
-  var det='<div class="mgrid">'+META_FIELDS.map(metaField).join('')+
+  var det='<div class="mgrid">'+REPORT_FIELDS.map(metaField).join('')+
     '<button class="b2" id="mSave">Save these details</button></div>';
 
   var topicRows = R.topics.length ? '<div class="trow">'+R.topics.map(function(t){
@@ -1957,7 +2019,7 @@ function renderReport(){
         '<div class="facts">'+
           '<div><span>Date</span><b>'+esc(fmtDate(META.date)||'—')+'</b></div>'+
           '<div><span>Place</span><b>'+esc(META.place||'—')+'</b></div>'+
-          '<div><span>In the room</span><b>'+esc(META.participants||'—')+'</b></div>'+
+          '<div><span>In the room</span><b>'+esc(META.attended||META.participants||'—')+'</b></div>'+
           '<div><span>Duration</span><b>'+esc(META.duration||'—')+'</b></div>'+
           '<div><span>Questions asked</span><b>'+R.questionsAnswered+'</b></div>'+
           '<div><span>Answered by</span><b>'+R.responded+'</b></div>'+
