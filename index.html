@@ -206,7 +206,7 @@ textarea{resize:vertical;line-height:1.5}
   background:var(--card);color:var(--ink);font-family:var(--f-b);font-size:14px}
 
 /* ── report ──────────────────────────────────────────────────── */
-.repwrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px;display:flex;flex-direction:column;gap:18px}
+.repwrap{max-width:1120px;margin:0 auto;padding:20px 16px 60px;display:flex;flex-direction:column;gap:18px}
 .reptools{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:16px;
   display:flex;flex-direction:column;gap:14px}
 /* A fixed three-column grid, with every box bottom-aligned in its row — an
@@ -235,21 +235,28 @@ textarea{resize:vertical;line-height:1.5}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pastrow span{grid-area:when;font-size:11.5px;color:var(--mute)}
 .pastrow i{grid-area:pct;align-self:center;font-style:normal;font-family:var(--f-m);
-  font-size:14px;font-weight:600;color:var(--teal);white-space:nowrap}
+  font-size:16px;font-weight:600;color:var(--teal);white-space:nowrap;text-align:right}
+/* The figure needs its name beside it — 56% on its own says nothing. */
+.pastrow i u{display:block;text-decoration:none;font-family:var(--f-m);font-size:9px;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--mute);font-weight:600}
 
 .doc{background:#fff;color:#14274A;border:1px solid var(--rule);border-radius:12px;
   padding:0 24px;overflow:hidden}
 /* The mark is white artwork, so it needs the navy behind it — the same band the
    plan tool's report opens with. */
-.doc .dtop{display:grid;grid-template-columns:118px 1fr 128px;align-items:center;gap:16px;
+.doc .dtop{display:grid;grid-template-columns:104px 1fr 132px;align-items:center;gap:14px;
   background:#14274A;margin:0 -24px;padding:13px 24px}
 .dlogo img{width:96px;height:auto;display:block}
 .dtitle{text-align:center}
-.dtitle h1{font-family:var(--f-d);font-weight:800;font-size:20px;margin:0;letter-spacing:-.01em;color:#fff}
+/* Two deliberate lines rather than one long one — it centres better against
+   the mark on the left and the name on the right. */
+.dtitle h1{font-family:var(--f-d);font-weight:800;font-size:21px;margin:0;
+  line-height:1.16;letter-spacing:-.015em;color:#fff}
 .dtitle p{margin:4px 0 0;font-size:12px;color:#A9C2DA}
 .dpl{text-align:right}
 .dpl .k{font-family:var(--f-m);font-size:8.5px;letter-spacing:.16em;color:#8FA9C2}
-.dpl .v{font-family:var(--f-d);font-weight:700;font-size:12.5px;color:#E0B65C;margin-top:2px}
+.dpl .v{font-family:var(--f-d);font-weight:700;font-size:12px;color:#E0B65C;margin-top:2px;
+  white-space:nowrap}
 
 .facts{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:#DBE1E9;
   border:1px solid #DBE1E9;margin:14px 0 0}
@@ -258,26 +265,192 @@ textarea{resize:vertical;line-height:1.5}
   text-transform:uppercase;color:#95A5B8}
 .facts b{display:block;font-size:14px;margin-top:3px;color:#14274A}
 
-.score{display:grid;grid-template-columns:170px 1fr;gap:22px;align-items:center;
-  background:#EDF1F6;border-radius:10px;padding:13px 16px;margin:12px 0 0}
-.sleft .lab{color:#66788E}
-.big{font-family:var(--f-d);font-weight:800;font-size:46px;line-height:1;color:#0B6F5C;margin-top:4px}
-.big em{font-style:normal;font-size:22px;margin-left:2px}
-.bandname{font-family:var(--f-m);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
-  color:#9C7222;margin-top:5px}
-.scale{position:relative;height:12px;border-radius:99px;background:#DBE1E9;overflow:hidden}
-.scale i{display:block;height:100%;background:#0B6F5C;border-radius:99px}
-.scale u{position:absolute;top:0;bottom:0;width:1px;background:#fff}
-.scale u.m40{left:40%} .scale u.m70{left:70%}
-.scalelab{display:flex;justify-content:space-between;font-family:var(--f-m);font-size:9px;
-  letter-spacing:.1em;text-transform:uppercase;color:#95A5B8;margin-top:5px}
-.bandnote{margin:9px 0 0;font-size:12.5px;line-height:1.55;color:#3A4E66}
+/* the folding panels beside the report — the planner's own workbench */
+/* the toolbar is a row of small buttons, not the full-width stack .b2 is
+   everywhere else */
+.reptools .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.reptools .row .b2{width:auto;margin-top:0;padding:9px 14px;font-size:13.5px}
+.fold{border-top:1px solid var(--rule);padding-top:14px;margin-top:2px}
+.fold.hide{display:none}
+.b2.ghost.open{background:var(--navy);border-color:var(--navy);color:#fff}
+.ownnote{margin:0 0 10px;font-size:11.5px;color:var(--mute)}
+.owngrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}
 
-.trow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;margin:12px 0 0}
-.tcell span{display:block;font-size:11px;color:#66788E}
-.tcell b{display:block;font-family:var(--f-m);font-size:15px;color:#14274A;margin:2px 0 4px}
-.tbar{display:block;height:7px;border-radius:99px;background:#DBE1E9;overflow:hidden}
-.tbar u{display:block;height:100%;background:#9C7222;border-radius:99px}
+/* four boxes, one row, always */
+.facts.f4{grid-template-columns:repeat(4,1fr)}
+
+/* Section label inside the document. It was grey on white and disappeared —
+   now it is navy, heavier, and sits on its own rule. */
+.lab2{font-family:var(--f-d);font-weight:700;font-size:14px;letter-spacing:.02em;
+  text-transform:none;color:#14274A;margin:26px 0 11px;padding-bottom:6px;
+  border-bottom:2px solid #14274A}
+.tlead{margin:0 0 9px;font-size:12px;line-height:1.6;color:#4A5E76}
+
+/* who was in the room */
+.who{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px}
+.wcard{border:1px solid #DBE1E9;border-radius:9px;padding:11px 13px;break-inside:avoid}
+.wcard h4{font-family:var(--f-d);font-weight:700;font-size:11.5px;margin:0 0 7px;
+  line-height:1.3;color:#14274A}
+.wbar{display:grid;grid-template-columns:1fr auto;gap:1px 8px;align-items:baseline;margin-bottom:4px}
+.wbar span{font-size:10.5px;color:#3A4E66}
+.wbar em{font-style:normal;font-family:var(--f-m);font-size:10.5px;font-weight:600;color:#14274A}
+.wbar i{grid-column:1/-1;display:block;height:5px;border-radius:99px;background:#EDF1F6;overflow:hidden}
+.wbar u{display:block;height:100%;background:#9FB4CC;border-radius:99px}
+.wbar.top u{background:#14274A}
+
+/* About the employees — two sentences, no charts. */
+.whoblk{border:1px solid #DBE1E9;border-left:4px solid #14274A;border-radius:10px;
+  padding:14px 18px}
+.wholine,.wholine2{margin:0;font-family:var(--f-d);font-weight:700;font-size:15px;
+  line-height:1.45;color:#14274A}
+.wholine2 b{font-family:var(--f-m);font-weight:700;color:#14274A}
+.whopoint{margin:6px 0 0;font-size:13px;line-height:1.6;color:#4A5E76}
+.whopoint b{font-family:var(--f-m);font-weight:700;color:#B5341F}
+
+/* Where the people sit — one bar, the percentage inside each colour. No key:
+   the dial above has already taught the reader what the five colours mean. */
+.sp{grid-column:1/-1;margin-top:14px;border-top:1px solid #DBE1E9;padding-top:13px}
+.sphead{margin:0 0 8px;font-family:var(--f-m);font-weight:600;font-size:10px;
+  letter-spacing:.16em;text-transform:uppercase;color:#4A5E76}
+.spbar{display:flex;height:44px;border-radius:8px;overflow:hidden}
+.spbar i{display:flex;align-items:center;justify-content:center;font-style:normal;
+  font-family:var(--f-m);font-weight:600;font-size:14px;color:#fff;min-width:0;overflow:hidden}
+/* the amber band is too light to carry white text */
+.spbar i.dark{color:#5A4300}
+
+/* the barometer — dial and meaning side by side, the footnote on its own last
+   row so it never wraps into a column */
+.gwrap{display:grid;grid-template-columns:280px 1fr;gap:8px 26px;align-items:center;
+  background:#F4F7FB;border:1px solid #DBE1E9;border-radius:11px;padding:18px 22px}
+.gwrap .bandwho{grid-column:1 / -1;text-align:left;border-top:1px solid #DBE1E9;
+  padding-top:8px;margin-top:6px}
+.gauge{width:100%;height:auto;display:block}
+.gauge .gl{font-family:var(--f-m);font-size:19px;fill:#66788E;letter-spacing:1.5px}
+.gauge .gc{text-anchor:middle} .gauge .ge{text-anchor:end}
+.gauge .gv{font-family:var(--f-d);font-size:66px;font-weight:800;fill:#14274A;text-anchor:middle}
+.gauge .gvp{font-size:34px}
+.gwhat{margin:0;font-family:var(--f-m);font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:#8496AC}
+/* the three words and where they sit, so the number can be placed */
+.bandbig{font-family:var(--f-d);font-weight:800;font-size:32px;line-height:1.08;
+  color:#0B6F5C;margin-top:4px}
+.bandnote{margin:9px 0 0;font-size:13px;line-height:1.6;color:#3A4E66}
+/* the footnote sits under the dial it refers to */
+.bandwho{margin:4px 0 0;font-family:var(--f-m);font-size:9.5px;letter-spacing:.04em;
+  color:#8496AC;text-align:center}
+
+/* one block per topic taught */
+.tblocks{display:flex;flex-direction:column;gap:11px}
+.tblock{display:grid;grid-template-columns:26px 1fr;gap:13px;align-items:start;
+  border:1px solid #DBE1E9;border-radius:10px;padding:14px 16px;break-inside:avoid}
+.tnum{display:block;width:26px;height:26px;border-radius:99px;background:#14274A;color:#fff;
+  font-family:var(--f-m);font-size:12px;font-weight:700;text-align:center;line-height:26px}
+/* The topic name above each finding — it was almost invisible in grey. */
+.ttop{margin:0;font-family:var(--f-m);font-weight:700;font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:#0B6F5C}
+.tbody h3{font-family:var(--f-d);font-weight:700;font-size:15px;margin:3px 0 0;
+  line-height:1.35;color:#14274A}
+.tnums{margin:6px 0 0;font-size:12px;line-height:1.6;color:#4A5E76}
+.tnums b{font-family:var(--f-m);font-weight:700;color:#0B6F5C}
+
+/* session feedback — two cards side by side, then the closing line */
+.fbwrap{margin-top:4px}
+/* One card a row: the figure lives inside it, so the section reads as two
+   sentences rather than four boxes. */
+.fbrow{display:grid;grid-template-columns:104px 1fr;gap:26px;align-items:center;
+  border:1px solid #DBE1E9;border-radius:10px;padding:14px 18px;
+  margin-bottom:10px;break-inside:avoid}
+.fbnum{font-family:var(--f-d);font-weight:800;font-size:42px;line-height:1;
+  color:#0B6F5C;text-align:right}
+.fbnum em{font-style:normal;font-size:19px;margin-left:1px}
+.fbnum s{display:block;text-decoration:none;font-family:var(--f-m);font-size:9px;
+  letter-spacing:.06em;line-height:1.35;color:#8496AC;margin-top:5px;text-align:right}
+.fbcard{border:1px solid #DBE1E9;border-radius:10px;padding:13px 15px;break-inside:avoid}
+.fbk{display:block;margin:0 0 6px;font-family:var(--f-m);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:#0B6F5C;font-weight:700}
+.fblead{margin:0 0 6px;font-family:var(--f-d);font-weight:700;font-size:13px;
+  line-height:1.4;color:#14274A}
+.fbline{margin:0;font-size:12px;line-height:1.75;color:#4A5E76}
+.fbline b{font-family:var(--f-m);font-weight:700;color:#0B6F5C}
+/* The observation: a finding, so it carries a little more weight than the
+   numbers above it, but it still sits inside the feedback section. */
+.obs{margin:11px 0 0;border:1px solid #C6D5EA;border-left:4px solid #14274A;
+  border-radius:10px;padding:12px 15px;background:#F7FAFD;break-inside:avoid}
+.obsk{margin:0;font-family:var(--f-m);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:#7C93B4;font-weight:700}
+.obsh{margin:4px 0 0;font-family:var(--f-d);font-weight:700;font-size:14px;color:#14274A}
+.obsl{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:#4A5E76}
+.obsl b{font-family:var(--f-m);font-weight:700;color:#14274A}
+
+/* the storeroom — screen only */
+.hw{display:flex;flex-direction:column;gap:16px}
+.hwtop{margin:0;font-size:12px;color:var(--mute)}
+.hwsec h4{margin:0 0 8px;font-family:var(--f-d);font-weight:700;font-size:14px;
+  color:var(--ink);padding-bottom:5px;border-bottom:1px solid var(--rule)}
+.hwrow{display:grid;grid-template-columns:190px 1fr;gap:16px;padding:7px 0;
+  align-items:start}
+.hwrow + .hwrow{border-top:1px solid var(--rule-2)}
+.hwrow span{font-family:var(--f-m);font-size:11px;font-weight:600;color:var(--ink);
+  line-height:1.5}
+.hwrow p{margin:0;font-size:12.5px;line-height:1.65;color:var(--ink-2)}
+@media(max-width:640px){ .hwrow{grid-template-columns:1fr;gap:3px} }
+
+/* the planner's own card — screen only */
+.knew{border:1px solid var(--rule);border-radius:11px;padding:16px 18px;margin-bottom:14px}
+.knew .gh{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin:0 0 3px}
+.knew .gh h4{margin:0;font-family:var(--f-d);font-weight:700;font-size:15px;color:var(--ink)}
+.knew .gh span{font-family:var(--f-m);font-size:11px;color:var(--mute)}
+.gsub{margin:0 0 14px;font-size:12px;color:var(--mute)}
+.kgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kstat{border:1px solid var(--rule);border-radius:10px;padding:12px 14px}
+.kstat b{display:block;font-family:var(--f-d);font-weight:800;font-size:28px;line-height:1;color:var(--ink)}
+.kstat b.low{color:#C0392B} .kstat b.ok{color:var(--teal)}
+.kstat b em{font-style:normal;font-size:15px}
+.kstat span{display:block;margin-top:6px;font-family:var(--f-m);font-size:9.5px;
+  line-height:1.4;color:var(--mute)}
+.kbands{display:flex;gap:6px;margin-top:13px}
+.kbands div{flex:1;text-align:center;border:1px solid var(--rule);border-radius:8px;padding:8px 4px}
+.kbands u{display:block;height:4px;border-radius:2px;margin-bottom:7px;text-decoration:none}
+.kbands b{display:block;font-family:var(--f-d);font-weight:800;font-size:19px;color:var(--ink)}
+.kbands span{display:block;margin-top:3px;font-family:var(--f-m);font-size:8.5px;color:var(--mute)}
+.kverdict{margin:13px 0 0;font-size:13px;line-height:1.6;color:var(--ink-2);
+  background:#FDF6EE;border:1px solid #EBD8C2;border-left:4px solid #C79A3A;
+  border-radius:9px;padding:11px 14px}
+.kverdict b{color:#8A6216}
+.thin{margin:0;font-size:12.5px;color:var(--mute);background:var(--rule-2);
+  border-radius:9px;padding:11px 14px}
+.knote{margin:12px 0 0;font-size:11px;color:var(--mute);line-height:1.6}
+
+/* Said plainly, in its own quiet strip — not hidden, not shouted. */
+.fbmiss{margin:0;font-size:12.5px;line-height:1.6;color:#7A5A3A;
+  background:#FDF6EE;border:1px solid #EBD8C2;border-radius:9px;padding:10px 14px;
+  break-inside:avoid}
+.fbmiss b{font-family:var(--f-m);font-weight:700;color:#A9713A}
+
+/* This one line is the company's own credit. It should not look like every
+   other box on the page. */
+.fbclose{margin:11px 0 0;font-size:13.5px;line-height:1.6;color:#5A4A22;
+  background:#FCF3DF;border:1px solid #E3C77E;border-left:4px solid #C79A3A;
+  border-radius:10px;padding:12px 15px}
+.fbclose b{font-family:var(--f-m);font-weight:700;color:#8A6216}
+
+/* The note at the foot, laid out like her own card: the name in gold on the
+   dark ground, the picture beside it when there is one. */
+/* Its own card. Text first, face on the right — the reader finishes on the
+   words, not the picture. */
+.bio{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;
+  background:#fff;border:1px solid #DBE1E9;border-radius:11px;padding:15px 18px;
+  margin-top:22px;break-inside:avoid;page-break-inside:avoid}
+.bio.nopic{grid-template-columns:1fr}
+.biopic img{width:104px;height:104px;border-radius:50%;object-fit:cover;
+  border:3px solid #C79A3A;display:block}
+/* the paragraph rule first, so the named lines below can override it */
+.bio p{margin:0;font-size:12px;line-height:1.7;color:#4A5E76}
+.bio p.biohi{margin:0 0 5px;font-family:var(--f-d);font-weight:700;font-size:12px;
+  color:#14274A}
+/* A quiet signature, not a headline. */
+.bio p.bioquote{margin:9px 0 0;font-family:var(--f-d);font-style:italic;font-weight:600;
+  font-size:13.5px;line-height:1.5;color:#B8862B}
 
 .qwrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 0}
 .qb{border:1px solid #DBE1E9;border-radius:9px;padding:9px 11px;break-inside:avoid}
@@ -294,7 +467,9 @@ textarea{resize:vertical;line-height:1.5}
 .qbar.top u{background:#E8A81C}
 .qbar.top .op{color:#9C7222}
 .qbn{margin:7px 0 0;font-family:var(--f-m);font-size:9.5px;letter-spacing:.06em;color:#95A5B8}
-.method{margin:12px 0 10px;font-size:9.5px;line-height:1.6;color:#66788E}
+.method{margin:10px 0 12px;font-size:10px;line-height:1.7;color:#66788E;
+  background:#F6F8FB;border:1px solid #E4EAF1;border-radius:10px;padding:11px 14px;
+  break-inside:avoid;page-break-inside:avoid}
 .nodata{margin:14px 0 0;font-size:12.5px;color:#66788E;background:#EDF1F6;padding:12px;border-radius:8px}
 .dend{background:#14274A;color:#fff;text-align:center;padding:8px;margin:0 -24px;
   font-family:var(--f-d);font-weight:700;font-size:14px}
@@ -308,29 +483,57 @@ textarea{resize:vertical;line-height:1.5}
   .dpl{text-align:center}
 }
 @media print{
-  @page{size:A4;margin:8mm}
-  body{background:#fff}
+  /* Side margins live on the document, not the page, so the navy bands can run
+     edge to edge instead of floating in a white frame. The first page has no top
+     margin either, so the banner starts at the paper edge. */
+  @page{size:A4;margin:8mm 0}
+  @page:first{margin-top:0}
+  /* html kept the app's grey, which showed below the last strip */
+  html,body{background:#fff}
   .bar,.reptools,.foot{display:none!important}
   .repwrap{padding:0;max-width:none}
-  .doc{border:none;border-radius:0;padding:0 4mm}
+  .doc{border:none;border-radius:0;padding:0 11mm}
   /* An A4 page is narrower than a laptop, so the phone layout above would
      otherwise take over and stack everything down two pages. */
-  .doc .dtop{grid-template-columns:110px 1fr 120px;text-align:left;margin:0 -4mm;padding:10px 4mm}
+  .doc .dtop{grid-template-columns:104px 1fr 140px;text-align:left;margin:0 -11mm;padding:14px 11mm}
   .dtitle{text-align:center} .dpl{text-align:right}
-  .dtitle h1{font-size:17pt} .dtitle p{font-size:9pt}
-  .facts{grid-template-columns:repeat(6,1fr);margin-top:10px}
-  .facts span{font-size:6pt} .facts b{font-size:10.5pt}
-  .score{grid-template-columns:150px 1fr;gap:16px;padding:11px 13px;margin-top:10px}
-  .big{font-size:34pt} .big em{font-size:15pt}
-  .bandnote{font-size:9pt}
-  .trow{grid-template-columns:repeat(auto-fit,minmax(95px,1fr));margin-top:10px}
-  .tcell b{font-size:11.5pt}
-  .qwrap{grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
-  .qbh h3{font-size:9.6pt}
-  .qbar .on,.qbar .op{font-size:8.6pt}
-  .qbn{font-size:7pt}
-  .method{font-size:6.8pt;margin:10px 0 8px}
-  .dend{margin:0 -4mm;padding:7px;font-size:11pt}
+  .dtitle h1{font-size:16.5pt} .dtitle p{font-size:8.6pt} .dpl .v{font-size:9pt}
+  .facts.f4{grid-template-columns:repeat(4,1fr);margin-top:12px}
+  .facts span{font-size:6.6pt} .facts b{font-size:11pt}
+  /* Sizes only — the page is allowed to run to a second sheet rather than be
+     squeezed. A cramped report reads as a cheap one. */
+  /* a heading never sits alone at the foot of a page */
+  .lab2{font-size:11.5pt;margin:16px 0 8px;padding-bottom:5px;
+    break-after:avoid;page-break-after:avoid}
+  .fbwrap,.gwrap,.whoblk{break-inside:avoid;page-break-inside:avoid}
+  .tlead{font-size:9pt;margin-bottom:9px}
+  .whoblk{padding:10px 14px}
+  .wholine,.wholine2{font-size:11pt} .whopoint{font-size:9.2pt}
+  .gwrap{grid-template-columns:215px 1fr;gap:20px;padding:14px 18px}
+  .gwhat{font-size:6.6pt}
+  .bandbig{font-size:24pt}
+  .bandnote{font-size:9.6pt;margin-top:7px} .bandwho{font-size:7pt;line-height:1.6}
+  .sp{margin-top:10px;padding-top:9px}
+  .sphead{font-size:6.4pt;margin-bottom:6px}
+  .spbar{height:30px} .spbar i{font-size:10pt}
+  .tblock{padding:10px 13px;gap:11px}
+  .tbody h3{font-size:11.5pt} .tnums{font-size:9pt} .ttop{font-size:6.8pt}
+  .fbrow{grid-template-columns:80px 1fr;gap:20px;padding:11px 14px;margin-bottom:8px}
+  .fbnum{font-size:29pt} .fbnum em{font-size:14pt} .fbnum s{font-size:6.4pt}
+  .fbcard{padding:10px 12px}
+  .fbbig{padding:10px} .fbnum{font-size:29pt} .fbnum em{font-size:14pt}
+  .fbcap{font-size:6.8pt;margin-top:5px}
+  .fbk{font-size:6.6pt} .fblead{font-size:9.6pt} .fbline{font-size:9pt}
+  .fbclose{font-size:10pt;padding:9px 13px;margin-top:8px}
+  .fbmiss{font-size:8.6pt;padding:8px 12px;margin-top:8px}
+  .obs{padding:9px 12px;margin-top:8px}
+  .obsk{font-size:6.4pt} .obsh{font-size:10.4pt} .obsl{font-size:8.6pt}
+  .bio{margin-top:14px;padding-top:11px;gap:16px}
+  .bio p{font-size:8.6pt} .bio p.biohi{font-size:9pt}
+  .bio p.bioquote{font-size:9.6pt;margin-top:7px}
+  .biopic img{width:88px;height:88px}
+  .method{font-size:7.4pt;margin:12px 0 9px}
+  .dend{margin:0 -11mm;padding:9px;font-size:11pt}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
@@ -403,6 +606,15 @@ textarea{resize:vertical;line-height:1.5}
 /* Pulled out to the stage edges so the two tinted bands run full width, and
    the flex gap below is trimmed back — the rows are navigation, not content. */
 .tophead{margin:-26px -30px 0}
+/* The dashboard's own row of main topics — only the ones already asked. */
+.btabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.btab{border:1px solid #C6D5EA;background:#F1F6FC;border-radius:8px;padding:5px 11px;cursor:pointer;
+  font-family:var(--f-b);font-weight:600;font-size:12.5px;color:var(--stage-ink)}
+.btab em{font-style:normal;font-family:var(--f-m);font-size:11px;font-weight:600;
+  color:var(--stage-mute);margin-left:6px}
+.btab:hover{border-color:#9DB6D6}
+.btab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.btab.on em{color:#B9C9E2}
 .ptabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--stage);padding:12px 30px 11px}
 .ptab{border:1px solid #C6D5EA;background:#F1F6FC;border-radius:8px;padding:6px 12px;cursor:pointer;
   font-family:var(--f-b);font-weight:700;font-size:13px;color:#2E4468}
@@ -633,7 +845,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v20';
+var NEEDS_VERSION='v21';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -654,7 +866,7 @@ function versionCheck(){
 /* the same mark as the header, reused on the report */
 var LOGO=(document.querySelector('.blogo img')||{}).src||'';
 var FILTER='All', REPORT=null, SESSIONS=null, METASAVE=null;
-var STAGE='home', SEL=null, LEVEL='All', BOARD=false;
+var STAGE='home', SEL=null, LEVEL='All', BOARD=false, BFILT='All';
 /* Which pillars are open in the sidebar. Closed by default except the one you
    are looking at, so the list stays short as more pillars are written. */
 var OPEN_P={};
@@ -1479,18 +1691,39 @@ function renderBoard(){
   }).filter(Boolean);
   var most=rows.length?Math.max.apply(null,rows.map(function(r){ return r.t.total; })):0;
 
+  /* Which main topics have actually been asked — the dashboard only offers
+     those, so the row never fills with headings that lead to an empty page. */
+  var groups=[], seen={};
+  rows.forEach(function(r){
+    var g=pillarOf(r.q.topic||'')||'Other';
+    if(!seen[g]){ seen[g]=0; groups.push(g); }
+    seen[g]++;
+  });
+  if(groups.indexOf(BFILT)<0 && BFILT!=='All') BFILT='All';
+  var shown = BFILT==='All' ? rows : rows.filter(function(r){
+    return (pillarOf(r.q.topic||'')||'Other')===BFILT; });
+
+  var filterRow='<div class="btabs">'+
+    '<button class="btab'+(BFILT==='All'?' on':'')+'" data-bf="All">All'+
+      '<em>'+rows.length+'</em></button>'+
+    groups.map(function(g){
+      return '<button class="btab'+(BFILT===g?' on':'')+'" data-bf="'+esc(g)+'">'+
+        esc(g)+'<em>'+seen[g]+'</em></button>'; }).join('')+
+  '</div>';
+
   var stage='<div class="stage">'+
     '<div class="ctrl top">'+
       '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
       '<button class="b" id="goRep2">View the workshop report</button>'+
-      '<button class="b" id="goHome">Back to the start</button>'+
+      '<button class="b" id="goPoll">Back to the poll</button>'+
       '<span class="done">Answered <b>'+ofRoom(S.people||0)+'</b></span>'+
     '</div>'+
     '<div class="meta"><span>Dashboard &nbsp;&middot;&nbsp; '+
       pollsDone()+' poll'+(pollsDone()===1?'':'s')+' done'+
       ' &nbsp;&middot;&nbsp; '+rows.length+' question'+(rows.length===1?'':'s')+' asked</span>'+
-      '<span>Everything collected so far</span></div>'+
-    (rows.length ? '<div class="igrid">'+rows.map(function(r){
+      '<span>'+(BFILT==='All'?'Everything collected so far':esc(BFILT)+' only')+'</span></div>'+
+    filterRow+
+    (shown.length ? '<div class="igrid">'+shown.map(function(r){
         var best=0;
         r.q.options.forEach(function(o,i){ var n=+((r.t.by||{})[i])||0; if(n>best) best=n; });
         return '<div class="icard"><h4><span>'+esc(r.q.q)+
@@ -1512,7 +1745,10 @@ function renderBoard(){
   wire();
   on('refreshNow',function(){ BUSY=false; refresh().then(function(){ render(true); }); });
   on('goRep2',function(){ location.hash='#report'; });
-  on('goHome',function(){ BOARD=false; STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
+  on('goPoll',function(){ BOARD=false; render(true); });
+  [].forEach.call(app.querySelectorAll('.btab'),function(b){
+    b.addEventListener('click',function(){ BFILT=b.dataset.bf; render(true); });
+  });
   drawQR();
 }
 
@@ -1964,12 +2200,209 @@ function saveMeta(){
   METASAVE=1;
   call(q).then(function(){ if(REPORT) REPORT.meta=META; render(true); }).catch(function(){});
 }
-function bandNote(b){
-  return b==='Early'    ? 'Most people here are at the beginning. The basics — knowing what goes out, and a fund for emergencies — will move this fastest.'
-       : b==='Building' ? 'The foundations are partly in place. The gap is usually between knowing what to do and having a number to work to.'
-       : b==='Strong'   ? 'A financially aware group. The value now is in refinement — matching what they hold to what they are saving for.'
-       : '';
+/* The storeroom: every rule the tool applies, in one place, written for the
+   person presenting rather than for a programmer. It lives here rather than in
+   a separate file so it can never drift out of date with the version running. */
+function howItWorks(){
+  function sec(h, rows){
+    return '<div class="hwsec"><h4>'+h+'</h4>'+rows+'</div>';
+  }
+  function row(k, v){
+    return '<div class="hwrow"><span>'+k+'</span><p>'+v+'</p></div>';
+  }
+  var bands=[['Beginner','under 20%'],['Building','20 – 39%'],
+             ['Progressing','40 – 59%'],['Prepared','60 – 79%'],
+             ['Well Prepared','80% and above']];
+  return '<div class="hw">'+
+    '<p class="hwtop">How this report is worked out &mdash; yours only, and this '+
+      'page never prints.</p>'+
+
+    sec('The five levels',
+      bands.map(function(b){
+        return row(b[0]+' &middot; '+b[1], esc(BAND_NOTES[b[0]]||''));
+      }).join('')) +
+
+    sec('How the score is worked out',
+      row('The figure',
+        'Every option in a scored question carries points. Each person\u2019s score '+
+        'is the points they earned divided by the points available on the '+
+        'questions they answered. The dial shows the average of those scores '+
+        '&mdash; one person, one weight, so somebody who answered eight questions '+
+        'does not count for more than somebody who answered four.')+
+      row('The bar underneath',
+        'The same people, sorted into the five levels. The dial cannot show that '+
+        'a room is split; the bar can. Two rooms averaging 41% can look completely '+
+        'different here.')+
+      row('Who is left out',
+        'Anyone who answered fewer than half the scored questions. A score built '+
+        'on two answers is noise, and noise at the edges moves the average. The '+
+        'line under the dial says how many were left out.')) +
+
+    sec('What never reaches the company',
+      row('Income', 'Asked in the intro, kept in your panel, never printed.')+
+      row('The &ldquo;I already knew this&rdquo; card',
+        'Yours only. It tells you whether that group really did know it, or '+
+        'whether they know more than they have acted on.')+
+      row('This page', 'Never printed, on any copy.')) +
+
+    sec('The audience levels',
+      row('Under 30 &middot; 30 to 45 &middot; Over 45',
+        'The intro asks in exactly these three bands, and they match Early, Mid '+
+        'and Senior on the questions, so the room\u2019s shape and the question '+
+        'filter can never tell two different stories.')+
+      row('Mixed rooms',
+        'In a real room the ages are mixed, so leave the filter on Show all and '+
+        'use the level tag as your own guide for which question suits the people '+
+        'in front of you.')) +
+
+    sec('When a finding is held back',
+      row('Married with children',
+        'Printed only when that group is at least 15 people, or a tenth of those '+
+        'who answered both questions. Below that the report falls back to the '+
+        'plain sentence.')+
+      row('The observation',
+        'Printed only when at least 20% of those who gave feedback said the '+
+        'session had little new for them, that group is at least 15 people, and '+
+        'more than half of them actually scored below the room average. If they '+
+        'scored above, the sentence would be false, so it does not print at all.')+
+      row('Next steps',
+        'Everything above one in five, and never fewer than three, so the line '+
+        'never rests on one person changing their mind.')) +
+
+    sec('Which questions count',
+      row('Scored', 'Only the teaching questions. Each option carries points.')+
+      row('Never scored',
+        'Intro and Feedback. They describe the room and the hour, they do not '+
+        'test anyone, and they stay out of the awareness figure entirely.')+
+      row('The conclusions',
+        'Each topic\u2019s score picks one of three written sentences. The numbers '+
+        'beneath it are chosen to point the same way &mdash; on a weak topic the '+
+        'largest weak answer, on a strong one the largest strong answer &mdash; so '+
+        'the evidence never argues with the conclusion above it.')) +
+
+    sec('Anonymity',
+      row('What is stored',
+        'Every answer is tied to the device that sent it, never to a person. '+
+        'There is no name, no email, nothing that maps back to anybody. That is '+
+        'what lets the tool count the same person across two questions while you '+
+        'can still tell the room, truthfully, that you will not know who said what.')) +
+  '</div>';
 }
+
+/* Printed only when the group is large enough to mean something. Most scored
+   questions ask what someone has done, not what they know, so a low score
+   beside "I knew this already" is knowledge that has not become action. */
+function observation(R, nothing){
+  var I=R.insight;
+  if(!I || !I.show) return '';
+  return '<div class="obs">'+
+    '<p class="obsk">An important observation</p>'+
+    '<p class="obsh">Knowing is not the same as doing.</p>'+
+    '<p class="obsl"><b>'+I.pct+'%</b> felt the session had little new to teach them '+
+      '&mdash; but their answers say otherwise. The information is there; '+
+      'the action is missing.</p>'+
+    /* The same people, so it belongs in the same block rather than repeated
+       three lines above under a different figure. */
+    (nothing?'<p class="obsl"><b>'+nothing+'%</b> do not plan to change anything '+
+      '&mdash; the group worth reaching next time.</p>':'')+
+  '</div>';
+}
+
+/* The same group, in full, for the planner's own screen. Never printed. */
+function knewCard(R){
+  var I=R.insight;
+  if(!I) return '';
+  var head='<div class="gh"><h4>The &ldquo;I already knew this&rdquo; group</h4>'+
+    '<span>yours only &middot; never printed</span></div>'+
+    '<p class="gsub">The people who answered &ldquo;I knew most of it already&rdquo; or '+
+    '&ldquo;It was too general for me&rdquo;, and how they actually scored.</p>';
+  if(I.scored < 15){
+    return '<div class="knew">'+head+
+      '<p class="thin"><b>'+I.said+' '+(I.said===1?'person':'people')+'</b> &mdash; too few to '+
+      'say anything. A percentage of a handful is noise, so the breakdown stays '+
+      'hidden until at least 15 people fall into this group.</p></div>';
+  }
+  var names=['Beginner','Building','Progressing','Prepared','Well Prepared'];
+  var bands=I.spread.map(function(n,i){
+    return '<div><u style="background:'+BAND_COLS[i]+'"></u><b>'+n+'</b>'+
+      '<span>'+names[i].toUpperCase()+'</span></div>'; }).join('');
+  var verdict = I.below > I.scored/2
+    ? '<b>'+I.below+' of the '+I.scored+' scored below the room average.</b> '+
+      'They know more than they have acted on &mdash; that is a habit gap, not a '+
+      'knowledge gap. Worth naming gently in the room rather than teaching harder.'
+    : '<b>'+(I.scored-I.below)+' of the '+I.scored+' scored at or above the room average.</b> '+
+      'They really did know it. The session was pitched right; this group simply '+
+      'needs a more advanced one.';
+  return '<div class="knew">'+head+
+    '<div class="kgrid">'+
+      '<div class="kstat"><b>'+I.said+'</b><span>people, of '+I.of+' who<br>gave feedback</span></div>'+
+      '<div class="kstat"><b class="'+(I.mean<I.roomMean?'low':'ok')+'">'+I.mean+
+        '<em>%</em></b><span>their average<br>awareness score</span></div>'+
+      '<div class="kstat"><b>'+I.roomMean+'<em>%</em></b><span>the room&rsquo;s<br>average</span></div>'+
+    '</div>'+
+    '<div class="kbands">'+bands+'</div>'+
+    '<p class="kverdict">'+verdict+'</p>'+
+    '<p class="knote">No individual is identified. These are counts across anonymous '+
+      'devices, the same as every other figure in the tool.</p>'+
+  '</div>';
+}
+
+/* The needle is one number — the average person. It cannot show that a room is
+   split, and most rooms are. This bar can: each person is scored on their own
+   answers and dropped into one of the five bands the dial is coloured in.
+   Colour carries the meaning, so the bands are not labelled; the percentage
+   inside each block is all the reading it needs. */
+var BAND_COLS = ['#E03131','#F76707','#FAB005','#82C91E','#12B886'];
+function spreadBar(R){
+  var p = R.people;
+  if(!p || !p.counted || !p.spread) return '';
+  var tot = p.counted;
+  var seg = p.spread.map(function(n,i){
+    var pct = Math.round(n/tot*100);
+    /* below about a fifteenth of the width the number would be clipped, so the
+       block shows colour only rather than half a digit */
+    var txt = pct>=7 ? pct+'%' : '';
+    return '<i class="'+(i===2?'dark':'')+'" style="flex:'+n+
+      ';background:'+BAND_COLS[i]+'">'+txt+'</i>';
+  }).join('');
+  return '<div class="sp">'+
+    '<p class="sphead">Where the '+tot+' '+(tot===1?'person sits':'people sit')+'</p>'+
+    '<div class="spbar">'+seg+'</div></div>';
+}
+/* Said as a count, not a share — a number reads as a fact, a percentage reads
+   as a complaint about the room. */
+function missedLine(R){
+  var p = R.people; if(!p) return '';
+  var present = parseInt(META.attended||META.participants,10);
+  var out = p.dropped;
+  if(present && present > p.counted) out = present - p.counted;
+  if(!out || !p.counted) return '';
+  return '<br>'+out+' of the '+(present||(p.counted+out))+
+    ' people present answered too few questions to be counted.';
+}
+
+/* What the band actually means — the first question anyone asks when they see
+   the word, so it sits right beside it. One per colour on the dial. */
+var BAND_NOTES = {
+  'Beginner':
+    'Most people here have not started planning yet \u2014 and that is normal, '+
+    'because nobody is taught this. Knowing where the money goes each month is '+
+    'the first thing that changes it.',
+  'Building':
+    'A start has been made, but it is not steady yet. Most people are managing '+
+    'month to month without a plan behind it. Turning intention into fixed '+
+    'amounts is what moves this next.',
+  'Progressing':
+    'The habits are forming. Most people know what they should be doing; what '+
+    'is missing is a number to work towards and a date to reach it by.',
+  'Prepared':
+    'The essentials are in place \u2014 savings, cover, and a sense of direction. '+
+    'The work now is matching what they hold to what they are actually saving for.',
+  'Well Prepared':
+    'A financially aware group, managing money against real goals. The value now '+
+    'is in keeping the plan current as income and responsibilities change.'
+};
+function bandNote(b){ return BAND_NOTES[b] || ''; }
 function fmtDate(d){ return prettyDate(d); }
 /* 14:30 reads as 2:30 pm on the report and in the list. */
 function prettyTime(v){
@@ -1992,17 +2425,159 @@ function pastRow(x){
   if(x.date) bits.push(shortDate(x.date));
   if(x.time) bits.push(prettyTime(x.time));
   if(x.place) bits.push(x.place);
-  /* "attended" only when the real count was entered; otherwise it is still
-     the estimate typed at the start, and saying so keeps it honest. */
-  if(x.attended) bits.push(x.attended+' attended');
-  else if(x.participants) bits.push(x.participants+' expected');
+  /* Total attended: the real count if it was entered, otherwise how many
+     people actually answered — never the guess typed before the room filled. */
+  var head = x.attended || x.responded || '';
+  bits.push((head?head:'\u2014')+' attended');
+  var aw = (x.awareness===''||x.awareness===null);
   return '<button class="pastrow" data-row="'+x.row+'">'+
     '<b>'+esc(x.company||'Untitled')+'</b>'+
-    '<i>'+(x.awareness===''||x.awareness===null?'&mdash;':x.awareness+'%')+'</i>'+
+    '<i>'+(aw?'&mdash;':x.awareness+'%')+'<u>awareness</u></i>'+
     '<em>'+esc(x.title||'Workshop')+'</em>'+
     '<span>'+esc(bits.join(' \u00b7 '))+'</span></button>';
 }
 
+/* ── the report ──────────────────────────────────────────────── */
+/* A gauge, drawn here rather than fetched, so it prints and needs nothing from
+   the internet. Colours run red at Low to green at High — awareness is a good
+   thing, so a prepared room must not light up red on its own report. */
+function gaugeSVG(pct){
+  var CX=320, CY=286, RO=250, RI=158;
+  var cols=['#E03131','#F76707','#FAB005','#82C91E','#12B886'];
+  function pol(r,deg){ var a=deg*Math.PI/180;
+    return [CX+r*Math.cos(a), CY-r*Math.sin(a)]; }
+  function arc(i){
+    var a0=180-i*36, a1=180-(i+1)*36;
+    var p0=pol(RO,a0), p1=pol(RO,a1), p2=pol(RI,a1), p3=pol(RI,a0);
+    return 'M'+p0[0].toFixed(1)+','+p0[1].toFixed(1)+
+           ' A'+RO+','+RO+' 0 0 1 '+p1[0].toFixed(1)+','+p1[1].toFixed(1)+
+           ' L'+p2[0].toFixed(1)+','+p2[1].toFixed(1)+
+           ' A'+RI+','+RI+' 0 0 0 '+p3[0].toFixed(1)+','+p3[1].toFixed(1)+' Z';
+  }
+  var v=Math.max(0,Math.min(100,pct||0)), ang=180-v*1.8;
+  var n=pol(RO-34,ang), b1=pol(18,ang-90), b2=pol(18,ang+90);
+  var segs=''; for(var i=0;i<5;i++) segs+='<path d="'+arc(i)+'" fill="'+cols[i]+'"/>';
+  return '<svg class="gauge" viewBox="0 0 640 372" role="img" '+
+      'aria-label="Financial awareness '+v+' per cent">'+segs+
+    '<path d="M'+b1[0].toFixed(1)+','+b1[1].toFixed(1)+
+      ' L'+n[0].toFixed(1)+','+n[1].toFixed(1)+
+      ' L'+b2[0].toFixed(1)+','+b2[1].toFixed(1)+'Z" fill="#14274A"/>'+
+    '<circle cx="'+CX+'" cy="'+CY+'" r="20" fill="#14274A"/>'+
+    '<circle cx="'+CX+'" cy="'+CY+'" r="8" fill="#fff"/>'+
+    '<text x="34" y="322" class="gl">LOW</text>'+
+    '<text x="'+CX+'" y="26" class="gl gc">MODERATE</text>'+
+    '<text x="606" y="322" class="gl ge">HIGH</text>'+
+    '<text x="'+CX+'" y="360" class="gv">'+v+'<tspan class="gvp">%</tspan></text>'+
+  '</svg>';
+}
+
+/* What the room actually said, in plain numbers. A finding is a scored question
+   where the answer most people chose is one of the weaker ones — that is the
+   gap worth a company's attention, and it needs no interpreting to be true. */
+function findings(R){
+  var out=[];
+  (R.results||[]).forEach(function(r){
+    if(!r.scored || !r.total) return;
+    var best=0, bi=0;
+    r.counts.forEach(function(n,i){ if(n>best){ best=n; bi=i; } });
+    var top=0; (r.scores||[]).forEach(function(v){ if((v||0)>top) top=v||0; });
+    var got=(r.scores&&r.scores[bi])||0;
+    var share=Math.round(best/r.total*100);
+    out.push({ topic:r.topic, q:r.q, lead:r.lead||'', opt:r.options[bi],
+               share:share, weak:(top>0 && got<=Math.floor(top/2)), total:r.total });
+  });
+  var weak=out.filter(function(x){ return x.weak; })
+    .sort(function(a,b){ return b.share-a.share; });
+  var good=out.filter(function(x){ return !x.weak; })
+    .sort(function(a,b){ return b.share-a.share; });
+  return { weak:weak.slice(0,4), good:good.slice(0,2) };
+}
+function findCard(f,kind){
+  return '<div class="fcard '+kind+'">'+
+    '<span class="ftop">'+esc(f.topic)+'</span>'+
+    '<b>'+f.share+'%</b>'+
+    '<p class="fopt">&ldquo;'+esc(f.opt)+'&rdquo;</p>'+
+    '<p class="fq">'+esc(f.q)+'</p></div>';
+}
+
+/* The company already knows its own age spread. What it does not know is
+   whether those people have anything behind them — so the intro is written out
+   as two sentences: who is in the room, and the thing that makes it matter. */
+var AGE_SAY = { 'under 30':'under 30', '30 to 45':'between 30 and 45',
+                'over 45':'over 45', '30-40':'in their thirties',
+                '40-50':'in their forties', 'over 50':'over 50' };
+function aboutEmployees(R){
+  var by={}; (R.intro||[]).forEach(function(r){ by[r.id]=r; });
+  function win(r){
+    if(!r || !r.total) return null;
+    var b=-1, i=0;
+    r.counts.forEach(function(n,k){ if(n>b){ b=n; i=k; } });
+    return { i:i, pct:Math.round(b/r.total*100), opt:String(r.options[i]||'') };
+  }
+  var age=win(by.in_age), mar=win(by.in_marital), kid=win(by.in_kids);
+  if(!age && !mar && !kid && !by.in_plan) return '';
+
+  var who=[];
+  if(age) who.push(AGE_SAY[age.opt.toLowerCase()] || age.opt.toLowerCase());
+  if(mar) who.push(/married/i.test(mar.opt) ? 'married'
+                 : /separated/i.test(mar.opt) ? 'separated' : 'single');
+  var hasKids = kid && /^yes/i.test(kid.opt);
+  if(kid) who.push(hasKids ? 'parents' : 'not yet parents');
+
+  var s1 = who.length
+    ? 'Most people here are '+who.slice(0,-1).join(', ')+
+      (who.length>1?', and ':'')+who[who.length-1]+'.'
+    : '';
+
+
+
+  /* The line that gives the sentence its point: people with dependants and
+     nothing written down. */
+  var s2='', pl=by.in_plan;
+  if(pl && pl.total){
+    var none=0;
+    pl.options.forEach(function(o,i){ if(!/^yes/i.test(o)) none+=pl.counts[i]; });
+    var pct=Math.round(none/pl.total*100);
+    if(pct){
+      s2='<b>'+pct+'%</b> of them have no financial plan';
+      s2 += hasKids ? ' &mdash; with a family depending on that income, this is where the risk sits.'
+                    : ' &mdash; the earning years are the ones that decide the rest.';
+    }
+  }
+  return (s1||s2) ? '<div class="whoblk">'+
+      (s1?'<p class="wholine">'+esc(s1)+'</p>':'')+
+      (s2?'<p class="whopoint">'+s2+'</p>':'')+
+    '</div>' : '';
+}
+
+/* The intro questions are worded for the room ("Are you married?"). On the
+   company's copy they are headings, not questions. */
+var REPORT_LABELS = {
+  in_age    : 'Age group',
+  in_marital: 'Marital status',
+  in_kids   : 'Children (if any)',
+  in_income : 'Monthly take home',
+  in_plan   : 'Do they have a financial plan?'
+};
+function reportLabel(r){ return REPORT_LABELS[r.id] || r.q; }
+
+/* Who the report is signed by. One place to change it. */
+var PLANNER = {
+  name : 'Khushbu Choudhary',
+  role : 'Financial Planner',
+  bio  : 'Khushbu Choudhary is a financial planner based in Kathmandu. She works with '+
+         'Nepali professionals who want to make better decisions with their '+
+         'money, and runs financial awareness sessions for companies and '+
+         'educational institutions.',
+  email: 'CONTACT_EMAIL',
+  phone: 'CONTACT_PHONE',
+  quote: 'Most people don\u2019t need more income to feel secure. They need a plan.',
+  photo: 'data:image/jpeg;base64,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'
+};
+
+/* The company's copy. Everything on it is a summary — no charts of scores, no
+   question-by-question breakdown. The detail lives in the planner's own panel
+   beside it, which does not print. */
 function renderReport(){
   if(!ENDPOINT) return setup();
   if(!CODE) return document.getElementById('pcode') ? undefined : gate();
@@ -2012,37 +2587,84 @@ function renderReport(){
     barMeta.textContent='Report'; return;
   }
   var R=REPORT, aw=R.awareness;
+  var head = META.attended || META.participants || R.responded || '—';
 
+  var introBars = aboutEmployees(R);
+
+  /* ── the topics taught ───────────────────────────────────── */
+  var ST=R.session_topics||[];
+  var topicBlocks = ST.length ? ST.map(function(t,n){
+      return '<div class="tblock">'+
+        '<span class="tnum">'+(n+1)+'</span>'+
+        '<div class="tbody"><p class="ttop">'+esc(t.topic)+'</p>'+
+        '<h3>'+esc(t.verdict||'')+'</h3>'+
+        '<p class="tnums">'+t.lines.map(function(l){
+            return '<b>'+l.pct+'%</b> '+esc(l.say); }).join(' &nbsp;&middot;&nbsp; ')+
+        '</p></div></div>';
+    }).join('') : '';
+
+  /* ── what the room said about the session ────────────────── */
+  var F=R.feedback||{lines:[],next:[]};
+  var fbBlock='';
+  if((F.lines&&F.lines.length)||(F.next&&F.next.length)||F.more!==null){
+    /* Two sentences, written the way she would say them out loud, with the
+       numbers carried inside rather than listed beside. */
+    var L=F.lines||[];
+    var helpful = F.useful>=80 ? 'Your employees found the session very helpful.'
+                : F.useful>=60 ? 'Your employees found the session helpful.'
+                : 'Employees found parts of the session useful.';
+    var l1='';
+    if(L[0]){
+      l1='<b>'+L[0].pct+'%</b> of the employees '+esc(L[0].say)+
+         (F.positive && L[0].pct>=50 ? ', which is great' : '')+'.';
+      if(L[1]) l1+=' <b>'+L[1].pct+'%</b> '+esc(L[1].say)+'.';
+    }
+    /* Everything above one in five, and never fewer than three, so the line
+       does not read as though only one person changed their mind. */
+    var nx=(F.next||[]).map(function(l){
+      return '<b>'+l.pct+'%</b> '+esc(l.say); });
+    /* One figure carries the section, so it reads as a result rather than a
+       footnote. The detail sits beside it. */
+    /* Two rows, each led by its own figure, so the second reads with the same
+       weight as the first. */
+    var actPct = (F.acted && F.actedOf) ? Math.round(F.acted/F.actedOf*100) : null;
+    function row(num, cap, key, lead, body){
+      return '<div class="fbrow">'+
+        '<div class="fbnum">'+
+          ((num!==null&&num!==undefined) ? num+'<em>%</em>' : '')+
+          '<s>'+cap+'</s></div>'+
+        '<div class="fbtext"><p class="fbk">'+key+'</p>'+
+        (lead?'<p class="fblead">'+lead+'</p>':'')+
+        '<p class="fbline">'+body+'</p></div></div>';
+    }
+    fbBlock='<div class="fbwrap">'+
+      '<p class="lab2">Session feedback</p>'+
+      (l1 ? row(F.useful,'found the session useful','How it landed',helpful,l1) : '')+
+      (nx.length ? row(actPct,'will take action',
+        'What they will do next','',nx.join(' &nbsp;&middot;&nbsp; ')) : '')+
+      /* The other half, said plainly and without a heading that announces it. */
+      /* One or the other, never both: the observation already describes these
+         people, and its figure is drawn from the same answers. */
+      ((R.insight && R.insight.show) ? observation(R, F.nothing)
+        : (((F.weak&&F.weak.length)||F.nothing)
+        ? '<p class="fbmiss">'+
+          (F.nothing?'<b>'+F.nothing+'%</b> do not plan to change anything':'')+
+          ((F.weak&&F.weak.length&&F.nothing)?', and ':'')+
+          ((F.weak&&F.weak.length)?'<b>'+F.weak[0].pct+
+            '%</b> already knew most of the information':'')+
+          ' &mdash; the group worth reaching next time.</p>' : ''))+
+      ((F.closing&&META.company)?'<p class="fbclose">Overall it was '+esc(F.closing)+
+        ' initiative taken by <b>'+esc(META.company)+'</b>'+
+        (F.more!==null&&F.more!==undefined ? ', and <b>'+F.more+
+          '%</b> of employees would like more such sessions in future':'')+'.</p>':'')+
+    '</div>';
+  }
+
+  /* ── the planner's own panel — never printed ─────────────── */
   var det='<div class="mgrid">'+REPORT_FIELDS.map(metaField).join('')+
     '<button class="b2" id="mSave">Save these details</button></div>';
-
-  var topicRows = R.topics.length ? '<div class="trow">'+R.topics.map(function(t){
-      return '<div class="tcell"><span>'+esc(t.topic)+'</span><b>'+t.pct+'%</b>'+
-             '<i class="tbar"><u style="width:'+t.pct+'%"></u></i></div>';
-    }).join('')+'</div>' : '';
-
-  var qBlocks = R.results.map(function(r){
-    var best=Math.max.apply(null,r.counts);
-    return '<div class="qb">'+
-      '<div class="qbh"><h3>'+esc(r.q)+'</h3>'+
-        '<span class="tag">'+esc(r.topic)+(r.scored?'':' · not scored')+'</span></div>'+
-      '<div class="qbars">'+r.options.map(function(o,i){
-        var pct=r.total?Math.round(r.counts[i]/r.total*100):0;
-        return '<div class="qbar'+((r.total&&r.counts[i]===best)?' top':'')+'">'+
-          '<span class="on">'+esc(o)+'</span><span class="op">'+pct+'%</span>'+
-          '<i><u style="width:'+pct+'%"></u></i></div>';
-      }).join('')+'</div>'+
-      '<p class="qbn">'+r.total+' answered'+(r.scored&&r.pct!=null?' · '+r.pct+'% of the points available':'')+'</p>'+
-    '</div>';
-  }).join('');
-
-  /* The room's own shape, kept beside the report but never inside it. It sits
-     in the tools column, which is not printed, so the company copy cannot
-     carry it even by accident. */
-  var introBlock = (R.intro && R.intro.length)
-    ? '<div class="ownblk"><p class="lab">Who was in the room</p>'+
-      '<p class="ownnote">Yours only &mdash; this is not in the company copy and does not print.</p>'+
-      '<div class="owngrid">'+R.intro.map(function(r){
+  var ownIntro=(R.intro||[]).length
+    ? '<div class="owngrid">'+(R.intro||[]).map(function(r){
         var best=Math.max.apply(null,r.counts);
         return '<div class="qb"><div class="qbh"><h3>'+esc(r.q)+'</h3>'+
           '<span class="tag">'+r.total+' answered</span></div>'+
@@ -2052,74 +2674,123 @@ function renderReport(){
               '<span class="on">'+esc(o)+'</span><span class="op">'+pct+'%</span>'+
               '<i><u style="width:'+pct+'%"></u></i></div>';
           }).join('')+'</div></div>';
-      }).join('')+'</div></div>'
-    : '';
-
-  var saved = SESSIONS && SESSIONS.length
-    ? '<div class="past"><p class="lab">Saved workshops</p>'+
-      SESSIONS.map(pastRow).join('')+'</div>' : '';
+      }).join('')+'</div>' : '<p class="hsub">Nothing collected.</p>';
+  var ownQs=(R.results||[]).length
+    ? '<div class="owngrid">'+R.results.map(function(r){
+        var best=Math.max.apply(null,r.counts);
+        return '<div class="qb"><div class="qbh"><h3>'+esc(r.q)+'</h3>'+
+          '<span class="tag">'+esc(r.topic)+(r.scored?'':' &middot; not scored')+'</span></div>'+
+          '<div class="qbars">'+r.options.map(function(o,i){
+            var pct=r.total?Math.round(r.counts[i]/r.total*100):0;
+            return '<div class="qbar'+((r.total&&r.counts[i]===best)?' top':'')+'">'+
+              '<span class="on">'+esc(o)+'</span><span class="op">'+pct+'%</span>'+
+              '<i><u style="width:'+pct+'%"></u></i></div>';
+          }).join('')+'</div>'+
+          '<p class="qbn">'+r.total+' answered'+
+            (r.scored&&r.pct!=null?' &middot; '+r.pct+'% of the points available':'')+'</p></div>';
+      }).join('')+'</div>' : '<p class="hsub">Nothing collected.</p>';
 
   app.innerHTML =
     '<div class="repwrap">'+
-      '<div class="reptools noprint">'+det+
-        '<div class="row"><button class="b2" id="repSave">Save this workshop</button>'+
-        (R.savedAt?'<span class="savedtag">Saved automatically &middot; '+
-          esc(clockOf(R.savedAt))+'</span>':'')+
-        '<button class="b2 ghost" id="repPrint">Save as PDF</button>'+
-        '<button class="b2 ghost" id="repBack">Back to the poll</button></div>'+
-        introBlock+saved+
+      '<div class="reptools noprint">'+
+        '<div class="row">'+
+          '<button class="b2" id="repPrint">Save as PDF</button>'+
+          '<button class="b2 ghost" id="repBack">Back to the poll</button>'+
+          '<button class="b2 ghost" id="tgDet">Workshop details</button>'+
+          '<button class="b2 ghost" id="tgOwn">Who was in the room</button>'+
+          '<button class="b2 ghost" id="tgAll">Every question</button>'+
+          '<button class="b2 ghost" id="tgHow">How this works</button>'+
+          (R.savedAt?'<span class="savedtag">Saved automatically &middot; '+
+            esc(clockOf(R.savedAt))+'</span>':'')+
+        '</div>'+
+        '<div class="fold hide" id="foldDet">'+det+'</div>'+
+        '<div class="fold hide" id="foldOwn">'+
+          '<p class="ownnote">Yours only &mdash; income is never shown to the company, '+
+          'and none of this prints.</p>'+knewCard(R)+ownIntro+'</div>'+
+        '<div class="fold hide" id="foldAll">'+ownQs+'</div>'+
+        '<div class="fold hide" id="foldHow">'+howItWorks()+'</div>'+
       '</div>'+
+
       '<div class="doc" id="repDoc">'+
         '<div class="dtop">'+
           '<div class="dlogo"><img src="'+LOGO+'" alt="Jugnu — See Beyond"></div>'+
-          '<div class="dtitle"><h1>Employee Financial Wellness Snapshot</h1>'+
-            '<p>'+esc(META.company||'—')+(META.title?' &middot; '+esc(META.title):'')+'</p></div>'+
-          '<div class="dpl"><div class="k">PLANNER</div><div class="v">Khushbu Choudhary</div></div>'+
+          '<div class="dtitle"><h1>Employee Financial Wellness<br>Snapshot</h1>'+
+            '<p>Prepared for '+esc(META.company||'—')+'</p></div>'+
+          '<div class="dpl"><div class="k">PLANNER</div>'+
+            '<div class="v">'+esc(PLANNER.name)+'</div></div>'+
         '</div>'+
-        '<div class="facts">'+
+
+        '<div class="facts f4">'+
           '<div><span>Date</span><b>'+esc(fmtDate(META.date)||'—')+'</b></div>'+
-          '<div><span>Time</span><b>'+esc(prettyTime(META.time)||'—')+'</b></div>'+
           '<div><span>Place</span><b>'+esc(META.place||'—')+'</b></div>'+
-          '<div><span>In the room</span><b>'+esc(META.attended||META.participants||'—')+'</b></div>'+
           '<div><span>Duration</span><b>'+esc(META.duration||'—')+'</b></div>'+
-          '<div><span>Questions asked</span><b>'+R.questionsAnswered+'</b></div>'+
-          '<div><span>Answered by</span><b>'+R.responded+'</b></div>'+
+          '<div><span>Total attendees</span><b>'+esc(head)+'</b></div>'+
         '</div>'+
-        (aw===null ? '<p class="nodata">No scored questions were answered in this session, so an awareness level cannot be worked out. The breakdown below still stands.</p>'
-        : '<div class="score">'+
-            '<div class="sleft"><p class="lab">Financial awareness level</p>'+
-              '<div class="big">'+aw+'<em>%</em></div><div class="bandname">'+esc(R.band)+'</div></div>'+
-            '<div class="sright">'+
-              '<div class="scale"><i style="width:'+aw+'%"></i>'+
-                '<u class="m40"></u><u class="m70"></u></div>'+
-              '<div class="scalelab"><span>Early</span><span>Building</span><span>Strong</span></div>'+
-              '<p class="bandnote">'+bandNote(R.band)+'</p>'+
-            '</div></div>')+
-        topicRows+
-        '<div class="qwrap">'+qBlocks+'</div>'+
-        '<p class="method">How this is worked out: each option in a scored question carries points. '+
-          'The level is the points earned across the room divided by the points available. '+
-          'Questions with no right answer are shown as a breakdown and left out of the level. '+
-          'Every answer is anonymous &mdash; no individual response is recorded or shared.</p>'+
+
+        (introBars?'<p class="lab2">About the employees</p>'+introBars:'')+
+
+        (aw===null
+          ? '<p class="nodata">No scored questions were answered, so an awareness '+
+            'level cannot be worked out.</p>'
+          : '<p class="lab2">Financial Awareness Level</p>'+
+            '<div class="gwrap">'+
+              '<div class="gleft">'+gaugeSVG(aw)+'</div>'+
+              '<div class="gright">'+
+                '<p class="gwhat">What this means</p>'+
+                '<div class="bandbig">'+esc(R.band)+'</div>'+
+                '<p class="bandnote">'+bandNote(R.band)+'</p>'+
+              '</div>'+
+              spreadBar(R)+
+              '<p class="bandwho">* Based on polls conducted during the session.'+
+                missedLine(R)+'</p>'+
+            '</div>')+
+
+        (topicBlocks?'<p class="lab2">Topics discussed</p>'+
+          '<p class="tlead">'+ST.length+' topic'+(ST.length===1?' was':'s were')+
+            ' covered. A brief synopsis of the responses received on each.</p>'+
+          '<div class="tblocks">'+topicBlocks+'</div>':'')+
+
+        fbBlock+
+
+        '<div class="bio'+(PLANNER.photo?'':' nopic')+'">'+
+          '<div class="biotext">'+
+            '<p class="biohi">About the presenter</p>'+
+            '<p>'+esc(PLANNER.bio)+'</p>'+
+            (PLANNER.quote?'<p class="bioquote">&ldquo;'+esc(PLANNER.quote)+'&rdquo;</p>':'')+
+          '</div>'+
+          (PLANNER.photo?'<div class="biopic"><img src="'+PLANNER.photo+'" alt=""></div>':'')+
+        '</div>'+
+
+        '<p class="method"><b>Disclaimer:</b> This session was held to create '+
+          'financial awareness, and no product or service was promoted. '+
+          'All responses were anonymous &mdash; no individual answer was '+
+          'recorded or shared.</p>'+
+
         '<div class="dend">jugnu &nbsp;&mdash;&nbsp; <span>SEE BEYOND</span></div>'+
       '</div>'+
     '</div>';
+
   barMeta.textContent='Report';
   wireMetaFields();
   on('mSave',saveMeta);
-  on('repPrint',function(){ window.print(); });
-  on('repBack',function(){ STAGE='run'; location.hash='#present'; });
-  on('repSave',function(){
-    call({act:'save',code:CODE}).then(function(d){
-      if(d&&d.ok){ loadReport(); alert('Saved. You can reopen this workshop from the list.'); }
-    }).catch(function(){});
+  /* The browser names the PDF after the page, so the page is renamed for the
+     moment it prints and put back straight after. */
+  on('repPrint',function(){
+    var was=document.title;
+    var yr=(String(META.date||'').slice(0,4))||String(new Date().getFullYear());
+    document.title=[ (META.company||'Workshop'),
+                     (META.title||'Session')+' Snapshot', yr ].join('_');
+    window.print();
+    setTimeout(function(){ document.title=was; },800);
   });
-  [].forEach.call(app.querySelectorAll('.pastrow'),function(b){
-    b.addEventListener('click',function(){
-      call({act:'load',code:CODE,row:b.dataset.row}).then(function(d){
-        if(d&&d.ok){ REPORT=d; META=d.meta||META; render(true);
-          window.scrollTo({top:0,behavior:'smooth'}); }
-      }).catch(function(){});
+  on('repBack',function(){ STAGE='run'; location.hash='#present'; });
+  [['tgDet','foldDet'],['tgOwn','foldOwn'],['tgAll','foldAll'],
+   ['tgHow','foldHow']].forEach(function(pair){
+    on(pair[0],function(){
+      var f=document.getElementById(pair[1]); if(!f) return;
+      f.classList.toggle('hide');
+      var b=document.getElementById(pair[0]);
+      if(b) b.classList.toggle('open', !f.classList.contains('hide'));
     });
   });
 }
