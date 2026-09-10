@@ -126,7 +126,13 @@ button{font-family:inherit}
 .mini:hover{border-color:var(--teal);color:var(--teal)}
 
 .stage{background:var(--stage);color:var(--stage-ink);border-left:1px solid var(--rule);padding:26px 30px 30px;
-  display:flex;flex-direction:column;gap:20px}
+  display:flex;flex-direction:column;gap:0}
+/* Each part gets its own room: controls, a line, then the question. */
+.stage .ctrl.top{margin:20px 0;padding-bottom:20px;border-bottom:1px solid #D8DFE9}
+.stage .meta{margin-bottom:26px}
+.stage .slead{margin-bottom:10px}
+.stage .sq{margin-bottom:20px}
+.stage .prev,.stage .sres,.stage .igrid,.stage .blk{margin-bottom:18px}
 .stagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;
   border-bottom:1px solid var(--stage-rule);padding-bottom:14px}
 .stagehead .lab{color:var(--stage-mute)}
@@ -135,7 +141,7 @@ button{font-family:inherit}
   font-variant-numeric:tabular-nums;color:var(--stage-mute)}
 .count{font-family:var(--f-m);font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
 .count small{font-size:12px;font-weight:400;color:var(--stage-mute);margin-left:7px}
-.sq{font-family:var(--f-d);font-weight:700;font-size:clamp(24px,3.1vw,38px);line-height:1.2;margin:0;
+.sq{font-family:var(--f-d);font-weight:700;font-size:clamp(22px,2.4vw,29px);line-height:1.22;margin:0;
   letter-spacing:-.02em;text-wrap:balance}
 .sres{display:flex;flex-direction:column;gap:14px;margin-top:2px}
 .srow{display:grid;grid-template-columns:1fr auto auto;gap:6px 16px;align-items:baseline}
@@ -354,7 +360,7 @@ textarea{resize:vertical;line-height:1.5}
 
 /* ── lead-in line ─────────────────────────────────────────────── */
 .qcard .lead{font-size:14.5px;color:var(--mute);line-height:1.5;margin:0 0 6px}
-.slead{font-size:clamp(14px,1.5vw,18px);color:var(--stage-mute);margin:0 0 -8px;line-height:1.45}
+.slead{font-size:clamp(16px,1.7vw,19px);color:var(--stage-mute);margin:0 0 -4px;line-height:1.45}
 
 /* ── the intro block, on a phone ──────────────────────────────── */
 .hello{font-family:var(--f-d);font-weight:700;font-size:20px;line-height:1.35;margin:0 0 6px;text-wrap:balance}
@@ -386,21 +392,28 @@ textarea{resize:vertical;line-height:1.5}
 .opt.failed{border-color:#E4B4AE;background:#FDECEA}
 .savedtag{font-family:var(--f-m);font-size:11px;letter-spacing:.05em;color:var(--mute);
   align-self:center;margin-left:2px}
-.ptabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--stage-rule);
-  margin:-4px 0 0;padding-bottom:0}
-.ptab{border:0;background:none;padding:8px 2px 9px;margin-right:16px;cursor:pointer;
-  font-family:var(--f-b);font-weight:600;font-size:13.5px;color:var(--stage-mute);
-  border-bottom:2px solid transparent;margin-bottom:-1px}
-.ptab:hover{color:var(--stage-ink)}
-.ptab.on{color:var(--stage-ink);border-bottom-color:var(--navy)}
-.ptab em{font-style:normal;font-family:var(--f-m);font-size:11px;color:var(--faint);margin-left:5px}
-.stabs{display:flex;flex-wrap:wrap;gap:5px;padding:10px 0 12px}
-.stab{border:1px solid var(--stage-rule);background:var(--stage);border-radius:99px;
-  padding:5px 11px;cursor:pointer;font-size:12.5px;color:var(--stage-ink)}
-.stab:hover{border-color:var(--stage-mute)}
-.stab.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
-.stab i{font-style:normal;font-family:var(--f-m);font-size:11px;color:var(--faint);margin-left:5px}
-.stab.on i{color:rgba(255,255,255,.6)}
+/* Pulled out to the stage edges so the two tinted bands run full width, and
+   the flex gap below is trimmed back — the rows are navigation, not content. */
+.tophead{margin:-26px -30px 0}
+.ptabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--stage);padding:12px 30px 11px}
+.ptab{border:1px solid #C6D5EA;background:#F1F6FC;border-radius:8px;padding:6px 12px;cursor:pointer;
+  font-family:var(--f-b);font-weight:700;font-size:13px;color:#2E4468}
+.ptab:hover{border-color:#9BB2D2}
+.ptab em{font-style:normal;font-family:var(--f-m);font-size:11px;color:#7C93B4;margin-left:6px;font-weight:400}
+/* Gold, taken from the logo: on the plan for today. */
+.ptab.today{border-color:#C79A3A;background:#FCF3DF;color:#73561D}
+.ptab.today em{color:#9D741F}
+/* Navy: where you are now — it always wins over the gold. */
+.ptab.on,.ptab.today.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.ptab.on em,.ptab.today.on em{color:#9DB2CC}
+.stabs{display:flex;flex-wrap:wrap;gap:6px;background:#E9F0FA;
+  padding:10px 30px 11px;border-top:1px solid #D3E0F0;border-bottom:1px solid #D3E0F0}
+.stab{border:1px solid #C6D5EA;background:#fff;border-radius:8px;
+  padding:6px 12px;cursor:pointer;font-size:12.5px;font-weight:600;color:#2E4468}
+.stab:hover{border-color:#9BB2D2}
+.stab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.stab i{font-style:normal;font-family:var(--f-m);font-size:11px;color:#7C93B4;margin-left:6px;font-weight:400}
+.stab.on i{color:#9DB2CC}
 .chip u{text-decoration:none;font-family:var(--f-m);font-size:10px;color:var(--faint);margin-left:3px}
 .chip.on u{color:rgba(255,255,255,.6)}
 .pillars{display:grid;gap:3px}
@@ -419,6 +432,55 @@ textarea{resize:vertical;line-height:1.5}
 .subt i{font-style:normal;font-family:var(--f-m);font-size:11px;color:var(--faint);float:right}
 .subt.on{background:var(--navy);color:#fff}
 .subt.on i{color:rgba(255,255,255,.65)}
+.edtop .done{margin-left:auto;font-family:var(--f-m);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--stage-mute)}
+.b.edDel{color:#B5541F;border-color:#E4CFC4;background:#FDF6F3}
+.ed3{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end;margin-bottom:6px}
+.ed3 label{display:block}
+.ed3 .lab{display:block;margin:0 0 6px}
+.ed3 select{width:100%}
+.edchk{display:flex;align-items:center;gap:9px;font-size:13.5px;white-space:nowrap;padding-bottom:10px;
+  cursor:pointer}
+.edchk input{width:16px;height:16px;accent-color:var(--teal);margin:0;flex:none}
+.edin{width:100%;padding:10px 12px;border:1px solid var(--stage-rule);border-radius:9px;
+  font-family:inherit;font-size:14px;color:var(--stage-ink);background:var(--stage)}
+.edin:focus{outline:none;border-color:var(--teal)}
+.edin.big{font-size:19px;font-weight:600;padding:12px}
+.orow{display:grid;grid-template-columns:28px 1fr auto auto 30px;gap:9px;align-items:center;margin-bottom:7px}
+.okey{width:28px;height:28px;border-radius:7px;background:var(--stage-soft);color:var(--stage-mute);
+  font-family:var(--f-m);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+ /* named apart from the audience's .opts list, which this used to collide with */
+.ptsbox{display:flex;flex-direction:row;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap}
+.edpt{width:52px;padding:9px 6px;text-align:center;border:1px solid var(--stage-rule);
+  border-radius:8px;font-family:var(--f-m);font-size:14px;background:var(--stage);color:var(--stage-ink)}
+.ptsbox em{font-style:normal;font-family:var(--f-m);font-size:10px;letter-spacing:.08em;color:var(--faint)}
+.omove{display:flex;gap:2px}
+.oarr{border:1px solid var(--stage-rule);background:var(--stage);border-radius:7px;
+  width:26px;height:28px;cursor:pointer;color:var(--stage-mute);font-size:9px;line-height:1}
+.oarr:hover:not(:disabled){border-color:var(--stage-mute);color:var(--stage-ink)}
+.oarr:disabled{opacity:.3;cursor:default}
+.ox{border:1px solid transparent;background:none;color:var(--faint);border-radius:7px;
+  padding:6px 8px;cursor:pointer;font-size:12px}
+.ox:hover:not(:disabled){color:#B5541F;background:#FDF6F3}
+.ox:disabled{opacity:.25;cursor:default}
+.addo{border:1px dashed var(--stage-rule);background:none;border-radius:9px;padding:9px 14px;
+  cursor:pointer;font-size:13px;color:var(--stage-ink);margin-top:4px;align-self:flex-start}
+.addo:hover{border-color:var(--stage-mute)}
+.edhint{font-family:var(--f-m);font-size:11px;letter-spacing:.06em;color:var(--faint);margin:16px 0 0}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.pick.tight{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:6px}
+.pk{display:flex;align-items:center;gap:9px;border:1px solid var(--rule);border-radius:9px;
+  padding:9px 12px;background:var(--card);cursor:pointer;text-align:left;color:var(--ink)}
+.pk:hover{border-color:var(--mute)}
+.pk.sel{border-color:#C79A3A;background:#FCF3DF}
+.tick{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--rule);flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff}
+.pk.sel .tick{background:#B0842C;border-color:#B0842C}
+.pk b{font-weight:600;font-size:13.5px;flex:1}
+.pk.sel b{color:#73561D}
+.pk u{text-decoration:none;font-family:var(--f-m);font-size:11px;color:var(--faint)}
+.planfoot{margin:13px 0 0;font-family:var(--f-m);font-size:11px;letter-spacing:.06em;color:var(--faint)}
+.planstrip{margin-top:22px;padding-top:16px;border-top:1px solid var(--stage-rule)}
 .dashbtn{width:100%;text-align:left;background:var(--card);border:1px solid var(--rule);
   border-radius:9px;padding:10px 13px;font-family:var(--f-b);font-weight:600;font-size:14px;
   color:var(--ink);cursor:pointer}
@@ -475,7 +537,10 @@ textarea{resize:vertical;line-height:1.5}
 .tiny:hover{background:#E1E8F1}
 
 /* in or out of today's poll — the library is not touched */
-.qrow{display:grid;grid-template-columns:1fr 26px;align-items:start;gap:2px}
+.qrow{display:grid;grid-template-columns:1fr 22px;align-items:start;gap:2px}
+.lvtag{font-family:var(--f-m);font-size:10px;font-weight:600;color:var(--faint);
+  text-align:center;padding-top:9px;letter-spacing:.02em}
+.lv-Early{color:#2E7D57}.lv-Mid{color:#9C7222}.lv-Senior{color:#8A4B2A}
 .qrow .qbtn{width:100%}
 .tog{background:none;border:1px solid transparent;border-radius:7px;color:var(--faint);
   font-size:15px;line-height:1;cursor:pointer;padding:6px 0;width:24px;margin-top:7px;font-family:var(--f-b)}
@@ -542,7 +607,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v17';
+var NEEDS_VERSION='v18';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -568,6 +633,10 @@ var STAGE='home', SEL=null, LEVEL='All', BOARD=false;
    are looking at, so the list stays short as more pillars are written. */
 var OPEN_P={};
 function pillars(){ return (S && S.pillars) || [{name:'All', topics:(S&&S.topics)||[]}]; }
+function planList(){ return (S && S.plan) || []; }
+function inPlan(name){ return planList().indexOf(name)>=0; }
+function setPlan(list){ send({act:'set', plan:list.join('|')}); }
+
 function pillarOf(t){
   var ps=pillars();
   for(var i=0;i<ps.length;i++) if(ps[i].topics.indexOf(t)>=0) return ps[i].name;
@@ -1065,6 +1134,36 @@ function prettyDate(v){
   return (+m[3])+' '+mo+' '+m[1];
 }
 
+/* A note to the presenter about what she means to cover. It restricts
+   nothing — anything not ticked is still one click away during the session. */
+function planCard(){
+  var qs=questions(), ps=pillars(), n=planList().length;
+  return '<div class="hcard">'+
+    '<h2>Topics for today</h2>'+
+    '<p class="hsub">Optional. Whatever you tick is marked in gold while you present, '+
+      'so you can see your plan at a glance. Leave it empty and nothing is marked.</p>'+
+    '<div class="pick">'+ps.map(function(p){
+      var c=qs.filter(function(x){ return p.topics.indexOf(x.topic||'')>=0; }).length;
+      var on=inPlan(p.name);
+      return '<button class="pk'+(on?' sel':'')+'" data-plan="'+esc(p.name)+'">'+
+        '<span class="tick">'+(on?'&#10003;':'')+'</span>'+
+        '<b>'+esc(p.name)+'</b><u>'+c+'</u></button>';
+    }).join('')+'</div>'+
+    '<p class="planfoot">'+(n?n+' of '+ps.length+' chosen':'Nothing chosen &mdash; all topics stay plain')+
+      ' &nbsp;&middot;&nbsp; you can still ask anything else during the session</p>'+
+  '</div>';
+}
+
+function wirePlan(){
+  [].forEach.call(app.querySelectorAll('[data-plan]'),function(b){
+    b.addEventListener('click',function(){
+      var name=b.dataset.plan, list=planList().slice(), at=list.indexOf(name);
+      if(at>=0) list.splice(at,1); else list.push(name);
+      setPlan(list);
+    });
+  });
+}
+
 function renderHome(){
   var running = S && S.activeId;
   app.innerHTML='<div class="homewrap">'+
@@ -1076,6 +1175,7 @@ function renderHome(){
       '<button class="b2" id="hStart">Start the poll</button>'+
       (running ? '<button class="b2 ghost" id="hCont">Carry on with the poll already running</button>' : '')+
     '</div>'+
+    planCard()+
     '<div class="hcard">'+
       '<h2>Past workshops</h2>'+
       (SESSIONS===null ? '<p class="hsub">Loading&hellip;</p>'
@@ -1089,6 +1189,7 @@ function renderHome(){
     '</div></div>';
   barMeta.textContent='Presenter';
   wireMetaFields();
+  wirePlan();
   on('hStart',function(){
     readMetaFields();
     if(!META.company.trim()){ alert('A company name, at least — the report is titled with it.'); return; }
@@ -1116,6 +1217,10 @@ function renderPresenter(){
     '<h2>Connecting</h2><p>One moment.</p></div></div>'; return; }
   if(STAGE==='home'){ if(SESSIONS===null) loadSessions(); return renderHome(); }
 
+  if(EDIT!==null){
+    app.innerHTML='<div class="pres">'+sidebar(selectedQ())+editor()+'</div>';
+    barMeta.textContent='Presenter'; wire(); wireEditor(); drawQR(); return;
+  }
   if(BOARD) return renderBoard();
   if(openBlock()) return renderBlockPresenter(openBlock());
   var qs=questions(), q=selectedQ();
@@ -1211,21 +1316,37 @@ function numberOf(q){
 /* Main topics on one row, the subtopics of the chosen one below. Three of the
    seven have nothing under them, so their second row is left out rather than
    showing a single tab that does nothing. */
+/* Landing on a topic should show something, not an empty stage asking you to
+   pick again — so the first question that survives the audience filter opens. */
+function firstIn(topic){
+  var qs=questions().filter(function(x){
+    if((x.topic||'')!==topic) return false;
+    if(LEVEL!=='All' && (x.level||'Any')!==LEVEL && (x.level||'Any')!=='Any') return false;
+    return true;
+  });
+  return qs.length ? qs[0].id : null;
+}
+
 function topbar(){
   var qs=questions(), ps=pillars();
   var here=pillarOf(FILTER) || (ps[1]&&ps[1].name) || (ps[0]&&ps[0].name);
   var mine=ps.filter(function(p){ return p.name===here; })[0] || {topics:[]};
   var subs = mine.topics.length>1 ? mine.topics : [];
-  return '<div class="ptabs">'+ps.map(function(p){
+  /* Both rows live in one wrapper: the stage is a flex column with a wide gap
+     between its children, and two loose rows would inherit it twice. */
+  return '<div class="tophead">'+
+    '<div class="ptabs">'+ps.map(function(p){
       var n=qs.filter(function(x){ return p.topics.indexOf(x.topic||'')>=0; }).length;
-      return '<button class="ptab'+(p.name===here?' on':'')+'" data-p="'+esc(p.name)+'">'+
+      return '<button class="ptab'+(inPlan(p.name)?' today':'')+(p.name===here?' on':'')+
+        '" data-p="'+esc(p.name)+'">'+
         esc(p.name)+'<em>'+n+'</em></button>';
     }).join('')+'</div>'+
     (subs.length ? '<div class="stabs">'+subs.map(function(t){
       var c=qs.filter(function(x){ return (x.topic||'')===t; }).length;
       return '<button class="stab'+(FILTER===t?' on':'')+'" data-t2="'+esc(t)+'">'+
         esc(t)+'<i>'+c+'</i></button>';
-    }).join('')+'</div>' : '');
+    }).join('')+'</div>' : '')+
+  '</div>';
 }
 
 function sidebar(q){
@@ -1256,18 +1377,19 @@ function sidebar(q){
     '<div><p class="lab">Questions'+(FILTER&&FILTER!=='All'?' &middot; '+esc(FILTER):'')+'</p><div class="qlist">'+
       (shown.length? shown.map(function(x,ix){
         var on=isOn(x);
+        /* The letter says who the question is written for — E, M, S or A for
+           any age — so the list can be read at a glance while presenting. */
+        var lv=(x.level||'Any'), tag=lv==='Any'?'A':lv.charAt(0);
         return '<div class="qrow'+(on?'':' out')+'">'+
           '<button class="qbtn'+(q&&x.id===q.id?' on':'')+'" data-id="'+esc(x.id)+'">'+
             '<i>'+(ix+1)+'</i><span>'+esc(x.q)+
             (wasAsked(x)?'<b class="ns was">asked</b>':(x.scored?'':'<b class="ns">not scored</b>'))+
             '</span></button>'+
-          '<button class="tog" data-tog="'+esc(x.id)+'" title="'+
-            (on?'Leave this one out of today\'s poll':'Put this one back into today\'s poll')+'">'+
-            (on?'&minus;':'+')+'</button>'+
+          '<span class="lvtag lv-'+esc(lv)+'" title="'+esc(lv)+'">'+tag+'</span>'+
         '</div>'; }).join('')
         : '<p style="font-size:13px;color:var(--mute);margin:4px 0">Nothing in this topic yet.</p>')+
     '</div></div>'+
-    (EDIT!==null ? editor() : '<button class="mini" id="addQ">+ Add a question</button>')+
+    '<button class="mini" id="addQ">+ Add a question</button>'+
     (isBlockTopic(FILTER) && blockQs(FILTER).length
       ? '<button class="mini" id="askIntro">Ask the '+esc(FILTER)+' block</button>' : '')+
     '<button class="mini" id="goRep">View the workshop report</button>'+
@@ -1280,6 +1402,18 @@ function sidebar(q){
 /* Everything the room has said today, in the order it was asked, so the intro
    comes first when the intro went first. A look-back only — nothing here can
    ask, open or close anything. */
+/* The same choice, reachable mid-session — rooms drift, and re-planning
+   should not mean starting the poll again. */
+function planStrip(){
+  var ps=pillars();
+  return '<div class="planstrip"><p class="lab">Topics for today</p><div class="pick tight">'+
+    ps.map(function(p){
+      var on=inPlan(p.name);
+      return '<button class="pk'+(on?' sel':'')+'" data-plan="'+esc(p.name)+'">'+
+        '<span class="tick">'+(on?'&#10003;':'')+'</span><b>'+esc(p.name)+'</b></button>';
+    }).join('')+'</div></div>';
+}
+
 function renderBoard(){
   var side=sidebar(null), all=(S.all)||{}, it=introTopic();
   var rows=askedList().map(function(id){
@@ -1315,12 +1449,14 @@ function renderBoard(){
           }).join('')+'</div>';
       }).join('')+'</div>'
       : '<h1 class="sq">Nothing asked yet.</h1>')+
+    planStrip()+
     '<p class="hidden-note">Yours only &mdash; the room never sees this</p>'+
   '</div>';
 
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Dashboard';
   wire();
+  wirePlan();
   on('refreshNow',function(){ BUSY=false; refresh().then(function(){ render(true); }); });
   on('goRep2',function(){ location.hash='#report'; });
   on('goHome',function(){ BOARD=false; STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
@@ -1418,40 +1554,123 @@ function renderBlockPresenter(topic){
   drawQR();
 }
 
+/* The editor sits on the stage, not in the sidebar: every option keeps its own
+   points on the same row, so the two can never drift out of order — which is
+   how a wrong score slips in unnoticed. */
 function editor(){
-  var tops=(S.topics||['General']);
-  var levs=(S.levels||['Any']);
-  return '<div class="ed"><p class="lab">'+(EDIT.id?'Edit question':'New question')+'</p>'+
-    '<p class="lab">Lead-in line &mdash; optional</p>'+
-    '<textarea id="edL" rows="2" placeholder="A setting-up sentence, if it needs one">'+esc(EDIT.lead||'')+'</textarea>'+
-    '<p class="lab">The question</p>'+
-    '<textarea id="edQ" rows="2" placeholder="The question">'+esc(EDIT.q||'')+'</textarea>'+
-    '<p class="lab">Written for</p>'+
-    '<select id="edV">'+levs.map(function(l){
-      return '<option'+((EDIT.level||'Any')===l?' selected':'')+'>'+esc(l)+'</option>'; }).join('')+'</select>'+
-    '<p class="lab">Topic</p>'+
-    '<select id="edT">'+tops.map(function(t){
-      return '<option'+((EDIT.topic||'General')===t?' selected':'')+'>'+esc(t)+'</option>';
-    }).join('')+'</select>'+
-    '<p class="lab">Options, one per line</p>'+
-    '<textarea id="edO" rows="4" placeholder="Yes&#10;No">'+esc((EDIT.options||[]).join('\n'))+'</textarea>'+
-    '<label class="chk"><input type="checkbox" id="edS"'+(EDIT.scored?' checked':'')+'> '+
-      'Count this question in the awareness score</label>'+
-    '<div id="edScoreBox" class="'+(EDIT.scored?'':'hide')+'">'+
-      '<p class="lab">Points, one per line &mdash; same order as the options</p>'+
-      '<textarea id="edP" rows="4" placeholder="2&#10;1&#10;0">'+
-        esc((EDIT.scores||[]).join('\n'))+'</textarea>'+
+  var tops=(S.topics||['General']), levs=(S.levels||['Any']), ages=(S.levelAges||{});
+  var opts=(EDIT.options||['','']).slice();
+  var scr =(EDIT.scores||[]).slice();
+  while(scr.length<opts.length) scr.push(0);
+
+  return '<div class="stage">'+topbar()+
+    '<div class="ctrl top edtop">'+
+      '<button class="b go" id="edSave">Save</button>'+
+      '<button class="b" id="edCancel">Cancel</button>'+
+      (EDIT.id?'<button class="b edDel" id="edDel">Delete</button>':'')+
+      '<span class="done">'+(EDIT.id?'Editing a question':'New question')+'</span>'+
     '</div>'+
-    '<div class="row"><button class="b2" id="edSave">Save</button>'+
-    '<button class="b2 ghost" id="edCancel">Cancel</button>'+
-    (EDIT.id?'<button class="b2 ghost" id="edDel">Delete</button>':'')+'</div></div>';
+
+    '<div class="ed3">'+
+      '<label><span class="lab">Topic</span><select id="edT">'+tops.map(function(t){
+        return '<option'+((EDIT.topic||'General')===t?' selected':'')+'>'+esc(t)+'</option>';
+      }).join('')+'</select></label>'+
+      '<label><span class="lab">Audience type</span><select id="edV">'+levs.map(function(l){
+        var a=ages[l]||'';
+        return '<option value="'+esc(l)+'"'+((EDIT.level||'Any')===l?' selected':'')+'>'+
+          esc(l==='Any'?'Any age':l)+(a?'  ('+esc(a)+')':'')+'</option>';
+      }).join('')+'</select></label>'+
+      '<label class="edchk"><input type="checkbox" id="edS"'+(EDIT.scored?' checked':'')+'>'+
+        '<span>Count in the awareness score</span></label>'+
+    '</div>'+
+
+    '<p class="lab">Lead-in line &mdash; optional</p>'+
+    '<input class="edin" id="edL" value="'+esc(EDIT.lead||'')+'" '+
+      'placeholder="A setting-up sentence, if it needs one">'+
+
+    '<p class="lab">The question</p>'+
+    '<input class="edin big" id="edQ" value="'+esc(EDIT.q||'')+'" placeholder="The question">'+
+
+    '<p class="lab">Options'+(EDIT.scored?' and points':'')+'</p>'+
+    '<div id="edRows">'+opts.map(function(o,i){ return edRow(o,scr[i],i,opts.length); }).join('')+'</div>'+
+    '<button class="addo" id="edAdd">+ Add an option</button>'+
+
+    '<p class="edhint'+(EDIT.scored?'':' hide')+'" id="edHint">0 not prepared &nbsp;&middot;&nbsp; '+
+      '1 partly &nbsp;&middot;&nbsp; 2 well prepared &nbsp;&middot;&nbsp; 3 a further step</p>'+
+  '</div>';
+}
+
+function edRow(text, pts, i, n){
+  return '<div class="orow" data-row="'+i+'">'+
+    '<span class="okey">'+String.fromCharCode(65+i)+'</span>'+
+    '<input class="edin" data-opt="'+i+'" value="'+esc(text||'')+'" placeholder="Option '+
+      String.fromCharCode(65+i)+'">'+
+    '<span class="ptsbox'+(EDIT.scored?'':' hide')+'">'+
+      '<input class="edpt" data-pt="'+i+'" value="'+(+pts||0)+'" inputmode="numeric">'+
+      '<em>pts</em></span>'+
+    '<span class="omove">'+
+      '<button class="oarr" data-up="'+i+'"'+(i===0?' disabled':'')+' title="Move up">&#9650;</button>'+
+      '<button class="oarr" data-dn="'+i+'"'+(i===n-1?' disabled':'')+' title="Move down">&#9660;</button>'+
+    '</span>'+
+    '<button class="ox" data-del="'+i+'" title="Remove"'+(n<=2?' disabled':'')+'>&#10005;</button>'+
+  '</div>';
+}
+
+/* Reads what is on screen back into EDIT, so a reorder or an added row never
+   throws away something half-typed. */
+function edGather(){
+  var opts=[], scr=[];
+  [].forEach.call(document.querySelectorAll('[data-opt]'),function(el){ opts.push(el.value); });
+  [].forEach.call(document.querySelectorAll('[data-pt]'), function(el){ scr.push(Math.max(0,+el.value||0)); });
+  while(scr.length<opts.length) scr.push(0);
+  EDIT.options=opts; EDIT.scores=scr;
+  var g=function(id){ var e=document.getElementById(id); return e?e.value:''; };
+  EDIT.q=g('edQ'); EDIT.lead=g('edL'); EDIT.topic=g('edT'); EDIT.level=g('edV');
+  var c=document.getElementById('edS'); EDIT.scored=!!(c&&c.checked);
 }
 
 function on(id,fn){ var e=document.getElementById(id); if(e) e.addEventListener('click',fn); }
+
+function wireEditor(){
+  on('edSave',saveEdit);
+  on('edCancel',function(){ EDIT=null; render(true); });
+  on('edDel',function(){
+    if(!confirm('Delete this question from the library?')) return;
+    var qs=questions().filter(function(x){ return x.id!==EDIT.id; });
+    EDIT=null; saveQuestions(qs);
+  });
+  on('edAdd',function(){
+    edGather(); EDIT.options.push(''); EDIT.scores.push(0); render(true);
+  });
+  var chk=document.getElementById('edS');
+  if(chk) chk.addEventListener('change',function(){ edGather(); render(true); });
+  [].forEach.call(document.querySelectorAll('[data-del]'),function(b){
+    b.addEventListener('click',function(){
+      edGather(); var i=+b.dataset.del;
+      if(EDIT.options.length<=2) return;
+      EDIT.options.splice(i,1); EDIT.scores.splice(i,1); render(true);
+    });
+  });
+  /* Points travel with their option, so a shuffle can never scramble scoring. */
+  function move(i,j){
+    edGather();
+    if(j<0||j>=EDIT.options.length) return;
+    var o=EDIT.options.splice(i,1)[0], p2=EDIT.scores.splice(i,1)[0];
+    EDIT.options.splice(j,0,o); EDIT.scores.splice(j,0,p2);
+    render(true);
+  }
+  [].forEach.call(document.querySelectorAll('[data-up]'),function(b){
+    b.addEventListener('click',function(){ var i=+b.dataset.up; move(i,i-1); }); });
+  [].forEach.call(document.querySelectorAll('[data-dn]'),function(b){
+    b.addEventListener('click',function(){ var i=+b.dataset.dn; move(i,i+1); }); });
+}
 function wire(){
   on('goBoard',function(){ BOARD=true; EDIT=null; render(true); });
   [].forEach.call(app.querySelectorAll('.qbtn'),function(b){
-    b.addEventListener('click',function(){ BOARD=false; EDIT=null; SEL=b.dataset.id; render(true); });
+    b.addEventListener('click',function(){
+      if(EDIT!==null && !confirm('Discard the changes to this question?')) return;
+      BOARD=false; EDIT=null; SEL=b.dataset.id; render(true);
+    });
   });
   [].forEach.call(app.querySelectorAll('.tog'),function(b){
     b.addEventListener('click',function(e){
@@ -1476,7 +1695,10 @@ function wire(){
   [].forEach.call(app.querySelectorAll('.chip'),function(b){
     b.addEventListener('click',function(){
       BOARD=false;
-      if(b.dataset.l!==undefined) LEVEL=b.dataset.l; else { FILTER=b.dataset.t; SEL=null; }
+      if(b.dataset.l!==undefined){
+        LEVEL=b.dataset.l;
+        if(FILTER && !isBlockTopic(FILTER)) SEL=firstIn(FILTER);
+      } else { FILTER=b.dataset.t; SEL=isBlockTopic(FILTER)?null:firstIn(FILTER); }
       render(true);
     });
   });
@@ -1492,16 +1714,17 @@ function wire(){
     b.addEventListener('click',function(){
       var pl=pillars().filter(function(x){ return x.name===b.dataset.p; })[0];
       if(!pl) return;
-      BOARD=false; EDIT=null; SEL=null;
-      /* Landing on a pillar puts you on its first topic, so something is always
-         showing rather than an empty screen asking you to pick again. */
+      BOARD=false; EDIT=null;
       FILTER=pl.topics[0]||'All';
+      SEL=isBlockTopic(FILTER)?null:firstIn(FILTER);
       render(true);
     });
   });
   [].forEach.call(app.querySelectorAll('.stab'),function(b){
     b.addEventListener('click',function(){
-      BOARD=false; EDIT=null; SEL=null; FILTER=b.dataset.t2; render(true);
+      BOARD=false; EDIT=null; FILTER=b.dataset.t2;
+      SEL=isBlockTopic(FILTER)?null:firstIn(FILTER);
+      render(true);
     });
   });
   [].forEach.call(app.querySelectorAll('.subt'),function(b){
@@ -1517,15 +1740,6 @@ function wire(){
     if(q) EDIT={id:q.id,q:q.q,lead:q.lead||'',topic:q.topic,level:q.level||'Any',
                 options:q.options.slice(),scored:!!q.scored,scores:(q.scores||[]).slice()};
     render(true); });
-  on('edCancel',function(){ EDIT=null; render(true); });
-  on('edSave',saveEdit);
-  var chk=document.getElementById('edS');
-  if(chk) chk.addEventListener('change',function(){
-    document.getElementById('edScoreBox').classList.toggle('hide',!chk.checked); });
-  on('edDel',function(){
-    var qs=questions().filter(function(x){ return x.id!==EDIT.id; });
-    EDIT=null; saveQuestions(qs);
-  });
   on('toggleOpen',function(){ send({act:'set',open:S.open?0:1}); });
   on('toggleRev',function(){ send({act:'set',revealed:S.revealed?0:1}); });
   on('nextQ',function(){ var qs=questions(), i=qs.indexOf(selectedQ());
@@ -1537,25 +1751,19 @@ function saveQuestions(qs){
   call({act:'config',code:CODE,questions:JSON.stringify(qs)}).then(refresh).catch(function(){});
 }
 function saveEdit(){
-  var qt=(document.getElementById('edQ').value||'').trim();
-  var opts=(document.getElementById('edO').value||'').split('\n')
-    .map(function(s){return s.trim();}).filter(Boolean);
-  if(!qt||opts.length<2){ alert('A question and at least two options, please.'); return; }
-  var topic=document.getElementById('edT').value;
-  var lead=(document.getElementById('edL').value||'').trim();
-  var level=document.getElementById('edV').value;
-  var scored=document.getElementById('edS').checked;
+  edGather();
+  var qt=(EDIT.q||'').trim();
+  var opts=(EDIT.options||[]).map(function(x){ return (x||'').trim(); }).filter(Boolean);
+  if(!qt || opts.length<2){ alert('A question and at least two options, please.'); return; }
   var scores=opts.map(function(){ return 0; });
-  if(scored){
-    var raw=(document.getElementById('edP').value||'').split('\n')
-      .map(function(x){return x.trim();}).filter(function(x){return x!=='';});
-    if(raw.length!==opts.length){
-      alert('Give one number of points for each option — '+opts.length+' lines.'); return; }
-    scores=raw.map(function(x){ return Math.max(0, +x || 0); });
+  if(EDIT.scored){
+    scores=(EDIT.scores||[]).slice(0,opts.length).map(function(x){ return Math.max(0,+x||0); });
+    while(scores.length<opts.length) scores.push(0);
     if(!scores.some(function(x){ return x>0; })){
       alert('At least one option needs points above zero, or untick the scoring box.'); return; }
   }
-  var body={q:qt, lead:lead, topic:topic, level:level, options:opts, scored:scored, scores:scores};
+  var body={ q:qt, lead:(EDIT.lead||'').trim(), topic:EDIT.topic, level:EDIT.level,
+             options:opts, scored:!!EDIT.scored, scores:scores };
   var qs=questions().slice();
   if(EDIT.id){ body.id=EDIT.id;
     for(var i=0;i<qs.length;i++) if(qs[i].id===EDIT.id) qs[i]=body; }
@@ -1628,7 +1836,7 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, JSON.stringify(VSTATE), FAILS>2, STAGE, BOARD, JSON.stringify(OPEN_P), SEL, LEVEL, FILTER, offList().join(','), S&&S.block, S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
+    MYANS, JSON.stringify(VSTATE), FAILS>2, STAGE, EDIT&&JSON.stringify(EDIT), BOARD, JSON.stringify(OPEN_P), SEL, LEVEL, FILTER, offList().join(','), S&&S.block, S&&S.plan, S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
     S&&S.blocks, S&&S.people, S&&S.all, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
