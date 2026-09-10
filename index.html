@@ -222,12 +222,20 @@ textarea{resize:vertical;line-height:1.5}
 @media(max-width:460px){ .mgrid{grid-template-columns:1fr} }
 .mgrid .b2{margin-top:0;grid-column:1 / -1}
 .past{border-top:1px solid var(--rule);padding-top:12px;display:flex;flex-direction:column;gap:5px}
-.pastrow{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:baseline;text-align:left;
-  background:none;border:1px solid transparent;border-radius:8px;padding:7px 9px;cursor:pointer;color:var(--ink-2)}
+/* Two lines: company and workshop name up top, then when and where. The
+   awareness figure keeps its own column on the right of both. */
+.pastrow{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:
+  "co name pct" "when when pct";
+  column-gap:9px;row-gap:2px;align-items:baseline;text-align:left;
+  background:none;border:1px solid var(--rule-2);border-radius:9px;padding:9px 11px;
+  cursor:pointer;color:var(--ink-2)}
 .pastrow:hover{background:var(--rule-2);border-color:var(--rule)}
-.pastrow b{font-size:13px;color:var(--ink)}
-.pastrow span{font-size:11.5px;color:var(--mute)}
-.pastrow i{font-style:normal;font-family:var(--f-m);font-size:12.5px;font-weight:600;color:var(--teal)}
+.pastrow b{grid-area:co;font-size:13.5px;color:var(--ink);white-space:nowrap}
+.pastrow em{grid-area:name;font-style:normal;font-size:12.5px;color:var(--ink-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pastrow span{grid-area:when;font-size:11.5px;color:var(--mute)}
+.pastrow i{grid-area:pct;align-self:center;font-style:normal;font-family:var(--f-m);
+  font-size:14px;font-weight:600;color:var(--teal);white-space:nowrap}
 
 .doc{background:#fff;color:#14274A;border:1px solid var(--rule);border-radius:12px;
   padding:0 24px;overflow:hidden}
@@ -484,11 +492,13 @@ textarea{resize:vertical;line-height:1.5}
 .pk u{text-decoration:none;font-family:var(--f-m);font-size:11px;color:var(--faint)}
 .planfoot{margin:13px 0 0;font-family:var(--f-m);font-size:11px;letter-spacing:.06em;color:var(--faint)}
 .planstrip{margin-top:22px;padding-top:16px;border-top:1px solid var(--stage-rule)}
-.clk{border:2px solid #C6D5EA;background:#F4F8FD;border-radius:10px;padding:5px 15px 7px;
-  text-align:center;min-width:112px;margin-left:auto}
-.clk small{display:block;font-family:var(--f-m);font-size:9.5px;letter-spacing:.13em;
-  color:#7C93B4;margin-bottom:1px}
-.clk b{display:block;font-family:var(--f-m);font-size:28px;font-weight:700;line-height:1.05;
+/* One line, sitting in the same row as the buttons — tall enough to read from
+   the front of the room, short enough that the row never wraps. */
+.clk{display:inline-flex;align-items:center;gap:7px;
+  border:2px solid #C6D5EA;background:#F4F8FD;border-radius:9px;padding:4px 11px;
+  margin-left:auto;white-space:nowrap}
+.clk small{font-family:var(--f-m);font-size:9.5px;letter-spacing:.13em;color:#7C93B4}
+.clk b{font-family:var(--f-m);font-size:20px;font-weight:700;line-height:1.1;
   font-variant-numeric:tabular-nums;color:var(--stage-ink)}
 .clk.warm{border-color:#E0A030;background:#FDF6E9}
 .clk.warm small{color:#9C7222}.clk.warm b{color:#8A6216}
@@ -623,7 +633,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v19';
+var NEEDS_VERSION='v20';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -649,14 +659,32 @@ var STAGE='home', SEL=null, LEVEL='All', BOARD=false;
    are looking at, so the list stays short as more pillars are written. */
 var OPEN_P={};
 function pillars(){ return (S && S.pillars) || [{name:'All', topics:(S&&S.topics)||[]}]; }
-function planList(){ return (S && S.plan) || []; }
+/* PLANWANT is what you last ticked. Until Google has confirmed it, this is what
+   the screen shows — otherwise a reply still carrying the old list, or the
+   background refresh, would untick a box a moment after you ticked it. */
+var PLANWANT=null, PLANQ=Promise.resolve();
+function planList(){ return PLANWANT || (S && S.plan) || []; }
 function inPlan(name){ return planList().indexOf(name)>=0; }
 /* Shown at once, told to Google after. Waiting for the reply made ticking
    feel slow, and two quick clicks overwrote each other. */
 function setPlan(list){
+  PLANWANT=list.slice();
   if(S) S.plan=list.slice();
   render(true);
-  call({act:'set', code:CODE, plan:list.join('|')}).then(refresh).catch(function(){});
+  /* One at a time, in the order tapped, so two quick ticks cannot cross. */
+  var go=function(){
+    var send=PLANWANT.slice();
+    return call({act:'set', code:CODE, plan:send.join('|')}).then(function(d){
+      if(d && d.state) d.state.plan=PLANWANT.slice();
+      /* Only let go of the local copy once nothing newer is waiting. */
+      if(PLANWANT.join('|')===send.join('|')){
+        if(S) S.plan=PLANWANT.slice();
+        PLANWANT=null;
+      }
+    });
+  };
+  PLANQ=PLANQ.then(go,go).catch(function(){});
+  return PLANQ;
 }
 
 function pillarOf(t){
@@ -664,7 +692,7 @@ function pillarOf(t){
   for(var i=0;i<ps.length;i++) if(ps[i].topics.indexOf(t)>=0) return ps[i].name;
   return null;
 }
-var META={company:'',title:'',date:'',place:'',participants:'',duration:''};
+var META={company:'',title:'',date:'',time:'',place:'',participants:'',duration:''};
 var VID=deviceId();
 
 function deviceId(){
@@ -755,6 +783,9 @@ function fullState(){
       INTRO_SENT=false; INTRO_BUSY=false; INTRO_FAIL=false; INTRO_WHY=''; INTRO_AT=0; INTRO_DONE={};
       if(S && S.sessionId!==d.sessionId){ MYANS={}; VSTATE={}; VQ={}; VSENT={}; }
     }
+    /* A reply that left before your last tick still carries the old list —
+       your choice wins until Google has confirmed it. */
+    if(PLANWANT) d.plan=PLANWANT.slice();
     S=d; if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
   }).catch(function(){ BUSY=false; FAILS++; render(); });
 }
@@ -1095,8 +1126,9 @@ function settle(qid,i,how){
 }
 
 /* ---- presenter ---- */
-var META_FIELDS=[['company','Company'],['title','Session title'],['date','Date'],
-                 ['place','Place'],['participants','People in the room'],['duration','Duration']];
+var META_FIELDS=[['company','Company'],['title','Workshop name'],['date','Date'],
+                 ['time','Start time'],['place','Place'],
+                 ['participants','People in the room'],['duration','Duration']];
 /* The start screen asks for an estimate. The report asks what actually
    happened, so "43 of 150" is measured against the real room, not a guess. */
 var REPORT_FIELDS=META_FIELDS.concat([['attended','Actually attended']]);
@@ -1110,6 +1142,9 @@ function metaField(f){
   if(k==='date')
     return '<label><span class="lab">'+f[1]+'</span>'+
       '<input type="date" id="m_date" value="'+esc(v)+'"></label>';
+  if(k==='time')
+    return '<label><span class="lab">'+f[1]+'</span>'+
+      '<input type="time" id="m_time" value="'+esc(v)+'"></label>';
   if(k==='duration'){
     /* Custom does not add a second box — the list turns into a text field in the
        same place, so the row never changes shape. */
@@ -1210,12 +1245,7 @@ function renderHome(){
     '<div class="hcard">'+
       '<h2>Past workshops</h2>'+
       (SESSIONS===null ? '<p class="hsub">Loading&hellip;</p>'
-        : SESSIONS.length ? '<div class="past">'+SESSIONS.map(function(x){
-            return '<button class="pastrow" data-row="'+x.row+'">'+
-              '<b>'+esc(x.company||'Untitled')+'</b>'+
-              '<span>'+esc(x.date||'')+(x.participants?' &middot; '+esc(x.participants)+' people':'')+'</span>'+
-              '<i>'+(x.awareness===''||x.awareness===null?'&mdash;':x.awareness+'%')+'</i></button>';
-          }).join('')+'</div>'
+        : SESSIONS.length ? '<div class="past">'+SESSIONS.map(pastRow).join('')+'</div>'
         : '<p class="hsub">None saved yet. Run a poll, then press Save this workshop on the report.</p>')+
     '</div></div>';
   barMeta.textContent='Presenter';
@@ -1304,10 +1334,12 @@ function renderPresenter(){
         '<button class="b" id="nextQ">Next one</button>'+
         '<button class="b" id="editQ">Edit this one</button>'+
         clockBox()+
-        '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
       '</div>'+
+      /* Polls done moved down here: the button row stays one line, and the
+         timer sits beside Open voting where it can be seen. */
       '<div class="meta"><span>'+numberOf(q)+
         ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+
+        ' &nbsp;&middot;&nbsp; Polls done <b class="plain">'+pollsDone()+'</b>'+
         '</span>'+
         '<span>Status: <b class="ok">'+(S.open?'Asked':'Closed')+'</b>'+
         ' &nbsp;&middot;&nbsp; <b class="plain">'+ofRoom(t.total)+'</b> answered</span></div>'+
@@ -1853,12 +1885,12 @@ var OPEN_KEY='', OPEN_AT=0, FROZEN=0;
 function clockBox(){
   var s2=clockSecs();
   var cls = s2>=120 ? ' late' : (s2>=60 ? ' warm' : '');
-  return '<span class="clk'+cls+'" id="clkBox"><small>OPEN FOR</small>'+
+  return '<span class="clk'+cls+'" id="clkBox"><small>OPEN</small>'+
     '<b id="clk">'+clockText()+'</b></span>';
 }
 
 function clockSecs(){
-  var ms = S && S.open ? (Date.now()-OPEN_AT) : FROZEN;
+  var ms = S && (S.open||S.block) ? (Date.now()-OPEN_AT) : FROZEN;
   return Math.max(0, Math.floor(ms/1000));
 }
 function clockText(){
@@ -1866,9 +1898,11 @@ function clockText(){
   return Math.floor(t/60)+':'+('0'+(t%60)).slice(-2);
 }
 function trackClock(){
-  if(!S || !S.activeId){ OPEN_KEY=''; FROZEN=0; return; }
-  var key = S.sessionId+'|'+S.activeId;
-  if(S.open){
+  /* A block (Intro, Feedback) has no activeId — the whole block is the thing
+     that is open, so it gets its own key and runs the same clock. */
+  if(!S || (!S.activeId && !S.block)){ OPEN_KEY=''; FROZEN=0; return; }
+  var key = S.block ? (S.sessionId+'|B:'+S.block) : (S.sessionId+'|'+S.activeId);
+  if(S.block || S.open){
     if(key!==OPEN_KEY || !OPEN_AT){ OPEN_KEY=key; OPEN_AT=Date.now(); }
   } else if(key===OPEN_KEY && OPEN_AT){
     FROZEN = Date.now()-OPEN_AT;
@@ -1937,6 +1971,37 @@ function bandNote(b){
        : '';
 }
 function fmtDate(d){ return prettyDate(d); }
+/* 14:30 reads as 2:30 pm on the report and in the list. */
+function prettyTime(v){
+  var m=/^(\d{1,2}):(\d{2})/.exec(String(v||''));
+  if(!m) return String(v||'');
+  var h=+m[1], ap=h<12?'am':'pm', h12=h%12; if(h12===0) h12=12;
+  return h12+':'+m[2]+' '+ap;
+}
+/* Short form for the list, where the row must stay on one line. */
+function shortDate(v){
+  var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v||''));
+  if(!m) return String(v||'');
+  var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1];
+  return (+m[3])+' '+mo+' '+m[1];
+}
+/* One saved workshop: who and what on the first line, when and where on the
+   second, the awareness figure on the right. */
+function pastRow(x){
+  var bits=[];
+  if(x.date) bits.push(shortDate(x.date));
+  if(x.time) bits.push(prettyTime(x.time));
+  if(x.place) bits.push(x.place);
+  /* "attended" only when the real count was entered; otherwise it is still
+     the estimate typed at the start, and saying so keeps it honest. */
+  if(x.attended) bits.push(x.attended+' attended');
+  else if(x.participants) bits.push(x.participants+' expected');
+  return '<button class="pastrow" data-row="'+x.row+'">'+
+    '<b>'+esc(x.company||'Untitled')+'</b>'+
+    '<i>'+(x.awareness===''||x.awareness===null?'&mdash;':x.awareness+'%')+'</i>'+
+    '<em>'+esc(x.title||'Workshop')+'</em>'+
+    '<span>'+esc(bits.join(' \u00b7 '))+'</span></button>';
+}
 
 function renderReport(){
   if(!ENDPOINT) return setup();
@@ -1992,12 +2057,7 @@ function renderReport(){
 
   var saved = SESSIONS && SESSIONS.length
     ? '<div class="past"><p class="lab">Saved workshops</p>'+
-      SESSIONS.map(function(x){
-        return '<button class="pastrow" data-row="'+x.row+'">'+
-          '<b>'+esc(x.company||'Untitled')+'</b>'+
-          '<span>'+esc(x.date||'')+(x.participants?' · '+esc(x.participants)+' people':'')+'</span>'+
-          '<i>'+(x.awareness===''||x.awareness===null?'—':x.awareness+'%')+'</i></button>';
-      }).join('')+'</div>' : '';
+      SESSIONS.map(pastRow).join('')+'</div>' : '';
 
   app.innerHTML =
     '<div class="repwrap">'+
@@ -2018,6 +2078,7 @@ function renderReport(){
         '</div>'+
         '<div class="facts">'+
           '<div><span>Date</span><b>'+esc(fmtDate(META.date)||'—')+'</b></div>'+
+          '<div><span>Time</span><b>'+esc(prettyTime(META.time)||'—')+'</b></div>'+
           '<div><span>Place</span><b>'+esc(META.place||'—')+'</b></div>'+
           '<div><span>In the room</span><b>'+esc(META.attended||META.participants||'—')+'</b></div>'+
           '<div><span>Duration</span><b>'+esc(META.duration||'—')+'</b></div>'+
