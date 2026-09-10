@@ -384,6 +384,31 @@ textarea{resize:vertical;line-height:1.5}
 .pres.onecol{grid-template-columns:1fr}
 .opt.pending{opacity:.62}
 .opt.failed{border-color:#E4B4AE;background:#FDECEA}
+.savedtag{font-family:var(--f-m);font-size:11px;letter-spacing:.05em;color:var(--mute);
+  align-self:center;margin-left:2px}
+.pillars{display:grid;gap:3px}
+.pil{border-bottom:1px solid var(--rule-2)}
+.pilhead{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;
+  padding:9px 4px;cursor:pointer;font-family:var(--f-b);font-weight:600;font-size:13px;
+  letter-spacing:.02em;color:var(--ink);text-align:left}
+.pilhead:hover{color:var(--teal)}
+.pilhead .tri{font-style:normal;font-size:10px;color:var(--faint);width:10px}
+.pilhead span{flex:1}
+.pilhead em{font-family:var(--f-m);font-style:normal;font-size:11px;color:var(--faint)}
+.piltopics{display:grid;gap:2px;padding:0 0 8px 18px}
+.subt{width:100%;text-align:left;background:none;border:0;border-radius:7px;
+  padding:6px 9px;cursor:pointer;font-size:13px;color:var(--ink-2)}
+.subt:hover{background:var(--stage-soft)}
+.subt i{font-style:normal;font-family:var(--f-m);font-size:11px;color:var(--faint);float:right}
+.subt.on{background:var(--navy);color:#fff}
+.subt.on i{color:rgba(255,255,255,.65)}
+.dashbtn{width:100%;text-align:left;background:var(--card);border:1px solid var(--rule);
+  border-radius:9px;padding:10px 13px;font-family:var(--f-b);font-weight:600;font-size:14px;
+  color:var(--ink);cursor:pointer}
+.dashbtn:hover{border-color:var(--mute)}
+.dashbtn.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.icard h4 u.tagi{text-decoration:none;font-family:var(--f-m);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--stage-mute);margin-left:6px}
 .board{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:4px 0 16px}
 .bstat{border:1px solid var(--rule);border-radius:10px;padding:11px 13px}
 .bstat span{display:block;font-family:var(--f-m);font-size:11px;letter-spacing:.08em;
@@ -500,7 +525,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v12';
+var NEEDS_VERSION='v16';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -521,7 +546,16 @@ function versionCheck(){
 /* the same mark as the header, reused on the report */
 var LOGO=(document.querySelector('.blogo img')||{}).src||'';
 var FILTER='All', REPORT=null, SESSIONS=null, METASAVE=null;
-var STAGE='home', SEL=null, LEVEL='All';
+var STAGE='home', SEL=null, LEVEL='All', BOARD=false;
+/* Which pillars are open in the sidebar. Closed by default except the one you
+   are looking at, so the list stays short as more pillars are written. */
+var OPEN_P={};
+function pillars(){ return (S && S.pillars) || [{name:'All', topics:(S&&S.topics)||[]}]; }
+function pillarOf(t){
+  var ps=pillars();
+  for(var i=0;i<ps.length;i++) if(ps[i].topics.indexOf(t)>=0) return ps[i].name;
+  return null;
+}
 var META={company:'',title:'',date:'',place:'',participants:'',duration:''};
 var VID=deviceId();
 
@@ -605,7 +639,14 @@ function fullState(){
     BUSY=false; FAILS=0;
     if(!d || !d.ok) return;
     if(d.v) TICK=d.v;
-    if(S && S.sessionId!==d.sessionId){ MYANS={}; INTRO_SENT=false; INTRO_BUSY=false; INTRO_FAIL=false; INTRO_DONE={}; }
+    var wasBlock = S ? ((S.block)||(S.intro?introTopic():'')) : '';
+    var nowBlock = (d.block)||(d.intro?((d.introTopic)||'Intro'):'');
+    if((S && S.sessionId!==d.sessionId) || wasBlock!==nowBlock){
+      /* A different block is a different set of answers — the tick from the
+         last one must not greet people on this one. */
+      INTRO_SENT=false; INTRO_BUSY=false; INTRO_FAIL=false; INTRO_WHY=''; INTRO_AT=0; INTRO_DONE={};
+      if(S && S.sessionId!==d.sessionId){ MYANS={}; VSTATE={}; VQ={}; VSENT={}; }
+    }
     S=d; if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
   }).catch(function(){ BUSY=false; FAILS++; render(); });
 }
@@ -613,6 +654,11 @@ function fullState(){
 /* ---- shared helpers ---- */
 /* "43 of 150" is the presenter's own check that nobody is being dropped —
    the room size comes from what was typed when the poll was started. */
+/* Just the time from a stored timestamp — the date is already on the report. */
+function clockOf(v){
+  try{ var d=new Date(v); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+  catch(e){ return ''; }
+}
 function roomSize(){ var n=parseInt(META&&META.participants,10); return (n>0)?n:0; }
 function ofRoom(n){ var r=roomSize(); return r?(n+' of '+r):String(n); }
 
@@ -635,10 +681,29 @@ function offList(){ return (S && S.off) || []; }
 function isOn(q){ return !!q && offList().indexOf(q.id)<0; }
 function setOn(id,on){ send({act:'set', off:id, on: on?1:0}); }
 function introTopic(){ return (S && S.introTopic) || 'Intro'; }
-function introQs(){ return questions().filter(function(q){ return q.topic===introTopic(); }); }
-function introLive(){ return introQs().filter(isOn); }
-var INTRO_HELLO = "Hi folks — five quick taps, so I know who's in the room 🙂";
-var INTRO_PRIV  = "This info remains anonymous — Khushbu won't know who said what.";
+function blockTopics(){ return (S && S.blockTopics) || [introTopic()]; }
+function isBlockTopic(t){ return blockTopics().indexOf(t)>=0; }
+function openBlock(){ return (S && S.block) || (S && S.intro ? introTopic() : ''); }
+function blockQs(t){ return questions().filter(function(q){ return q.topic===t; }); }
+function blockLive(t){ return blockQs(t).filter(isOn); }
+function blockCounts(t){
+  var b=(S && S.blocks && S.blocks[t]) || null;
+  if(b) return b;
+  if(t===introTopic() && S && S.introCounts) return {counts:S.introCounts, people:S.introPeople||0};
+  return {counts:{}, people:0};
+}
+/* What the room is told when a block opens. */
+var BLOCK_TEXT = {
+  'Intro':    { hello:"Hi folks \u2014 five quick taps, so I know who's in the room \ud83d\ude42",
+                priv:"This info remains anonymous \u2014 Khushbu won't know who said what.",
+                done:"That is all for now \u2014 keep this page open for the questions." },
+  'Feedback': { hello:"Before you go \u2014 three quick taps",
+                priv:"Anonymous, as always. Your name is never recorded.",
+                done:"Thank you for your time today." }
+};
+function blockText(t){ return BLOCK_TEXT[t] || {hello:t, priv:''}; }
+function introQs(){ return blockQs(introTopic()); }
+function introLive(){ return blockLive(introTopic()); }
 function wasAsked(q){ return !!q && askedList().indexOf(q.id)>=0; }
 /* The intro describes the room rather than testing it, so it is not one of
    the polls done. */
@@ -668,7 +733,7 @@ function renderAudience(){
                     :'One moment.')+'</p></div></div>';
     barMeta.textContent='Connecting'; return;
   }
-  if(S.intro){ return renderIntroAudience(); }
+  if(openBlock()){ return renderBlockAudience(openBlock()); }
   var q=activeQ();
   if(!q){
     app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
@@ -710,8 +775,8 @@ function renderAudience(){
   });
 }
 
-function renderIntroAudience(){
-  var qs=introLive();
+function renderBlockAudience(topic){
+  var qs=blockLive(topic), txt=blockText(topic);
   if(!qs.length){
     app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
       '<h2>Waiting for the next question</h2><p>Keep this page open.</p></div></div>';
@@ -720,12 +785,12 @@ function renderIntroAudience(){
   if(INTRO_SENT){
     app.innerHTML='<div class="aud"><div class="rest">'+
       '<div class="tickbig">&#10003;</div><h2>Thank you</h2>'+
-      '<p>That is all for now — keep this page open for the questions.</p></div></div>';
+      '<p>'+esc(txt.done||'That is all for now — keep this page open.')+'</p></div></div>';
     barMeta.textContent='Done'; return;
   }
   app.innerHTML='<div class="aud">'+
-    '<h1 class="hello">'+esc(INTRO_HELLO)+'</h1>'+
-    '<p class="priv">'+esc(INTRO_PRIV)+'</p>'+
+    '<h1 class="hello">'+esc(txt.hello)+'</h1>'+
+    (txt.priv?'<p class="priv">'+esc(txt.priv)+'</p>':'')+
     qs.map(function(q,n){
       /* The setting-up sentence comes first, then the question — the same order
          a person would say them out loud. */
@@ -745,7 +810,7 @@ function renderIntroAudience(){
       (INTRO_FAIL?failNote(qs)
                  :'Please answer all '+qs.length+' before you submit.')+'</p>'+
   '</div>';
-  barMeta.textContent='Intro';
+  barMeta.textContent=topic;
   [].forEach.call(app.querySelectorAll('.io'),function(b){
     b.addEventListener('click',function(){
       MYANS[b.dataset.q]=+b.dataset.i; render(true);
@@ -983,43 +1048,9 @@ function prettyDate(v){
   return (+m[3])+' '+mo+' '+m[1];
 }
 
-/* Everything collected today on one screen: how many people are with us, and
-   how many answered each question. A row well below the rest is the signal
-   that somebody's phone is not getting through. */
-function liveBoard(){
-  if(!S || !S.totals) return '';
-  var tot=S.totals, ids=askedList(), it=introTopic();
-  if(!ids.length) return '';
-  var rows=ids.map(function(id){
-    var q=questions().filter(function(x){ return x.id===id; })[0];
-    if(!q) return null;
-    return { q:q, n:+(tot[id]||0), intro:q.topic===it };
-  }).filter(Boolean);
-  if(!rows.length) return '';
-  var most=Math.max.apply(null,rows.map(function(r){ return r.n; }));
-  return '<div class="hcard">'+
-    '<h2>Responses so far</h2>'+
-    '<div class="board">'+
-      '<div class="bstat"><span>People who answered</span><b>'+ofRoom(S.people||0)+'</b></div>'+
-      '<div class="bstat"><span>Polls done</span><b>'+pollsDone()+'</b></div>'+
-      '<div class="bstat"><span>Questions out</span><b>'+rows.length+'</b></div>'+
-    '</div>'+
-    '<div class="brows">'+rows.map(function(r){
-      var pct=most?Math.round(r.n/most*100):0;
-      return '<div class="brow'+((most&&r.n<most)?' lag':'')+'">'+
-        '<span class="bq">'+esc(r.q.q)+(r.intro?' <em>intro</em>':'')+'</span>'+
-        '<span class="bn">'+r.n+'</span>'+
-        '<i><u style="width:'+pct+'%"></u></i></div>';
-    }).join('')+'</div>'+
-    '<p class="hsub">Every answer collected today is already saved. Press '+
-      '<b>Save this workshop</b> on the report before you start the next one.</p>'+
-  '</div>';
-}
-
 function renderHome(){
   var running = S && S.activeId;
   app.innerHTML='<div class="homewrap">'+
-    liveBoard()+
     '<div class="hcard">'+
       '<h2>Start a fresh poll</h2>'+
       '<p class="hsub">The counts go back to zero. Everything already collected stays saved '+
@@ -1068,11 +1099,12 @@ function renderPresenter(){
     '<h2>Connecting</h2><p>One moment.</p></div></div>'; return; }
   if(STAGE==='home'){ if(SESSIONS===null) loadSessions(); return renderHome(); }
 
-  if(S.intro) return renderIntroPresenter();
+  if(BOARD) return renderBoard();
+  if(openBlock()) return renderBlockPresenter(openBlock());
   var qs=questions(), q=selectedQ();
   /* Choosing Intro shows the whole block, because that is how it goes out —
      five questions on one screen, asked in one press. */
-  if(FILTER===introTopic() && !SEL) return renderIntroPreview();
+  if(isBlockTopic(FILTER) && !SEL) return renderBlockPreview(FILTER);
   var side=sidebar(q);
 
   var stage;
@@ -1170,15 +1202,23 @@ function sidebar(q){
     return true;
   });
   var side='<div class="side">'+
-    '<div><p class="lab">Topic</p><div class="chips">'+
-      ['All'].concat(tops).map(function(t){
-        var n = t==='All' ? qs.filter(function(x){return x.topic!==introTopic();}).length
-                          : qs.filter(function(x){return (x.topic||'General')===t;}).length;
-        /* Intro always shows, even empty — it is where you go to build the block. */
-        if(t!=='All' && !n && t!==introTopic()) return '';
-        return '<button class="chip'+(FILTER===t?' on':'')+'" data-t="'+esc(t)+'">'+
-          esc(t)+' <i>'+n+'</i></button>'; }).join('')+
-    '</div></div>'+
+    /* Not a topic — a different kind of thing, so it sits above the topics
+       with a line under it rather than joining the row of chips. */
+    '<button class="dashbtn'+(BOARD?' on':'')+'" id="goBoard">Dashboard</button>'+
+    '<div class="pillars">'+pillars().map(function(pl){
+      var open = OPEN_P[pl.name] || pl.topics.indexOf(FILTER)>=0;
+      var n = qs.filter(function(x){ return pl.topics.indexOf(x.topic||'')>=0; }).length;
+      return '<div class="pil'+(open?' open':'')+'">'+
+        '<button class="pilhead" data-p="'+esc(pl.name)+'">'+
+          '<i class="tri">'+(open?'\u25be':'\u25b8')+'</i>'+
+          '<span>'+esc(pl.name)+'</span><em>'+n+'</em></button>'+
+        (open ? '<div class="piltopics">'+pl.topics.map(function(t){
+            var c = qs.filter(function(x){ return (x.topic||'')===t; }).length;
+            return '<button class="subt'+(FILTER===t?' on':'')+'" data-t="'+esc(t)+'">'+
+              esc(t)+' <i>'+c+'</i></button>';
+          }).join('')+'</div>' : '')+
+      '</div>';
+    }).join('')+'</div>'+
     '<div><p class="lab">Written for</p><div class="chips">'+
       ['All'].concat(levs).map(function(l){
         return '<button class="chip lv'+(LEVEL===l?' on':'')+'" data-l="'+esc(l)+'">'+esc(l)+'</button>';
@@ -1199,7 +1239,8 @@ function sidebar(q){
         : '<p style="font-size:13px;color:var(--mute);margin:4px 0">Nothing in this topic yet.</p>')+
     '</div></div>'+
     (EDIT!==null ? editor() : '<button class="mini" id="addQ">+ Add a question</button>')+
-    (introQs().length ? '<button class="mini" id="askIntro">Ask the intro block</button>' : '')+
+    (isBlockTopic(FILTER) && blockQs(FILTER).length
+      ? '<button class="mini" id="askIntro">Ask the '+esc(FILTER)+' block</button>' : '')+
     '<button class="mini" id="goRep">View the workshop report</button>'+
     '<div class="join"><p class="lab">Audience joins here</p>'+
       '<p class="url">'+esc(audienceURL())+'</p><div id="qr"></div></div></div>';
@@ -1207,12 +1248,62 @@ function sidebar(q){
   return side;
 }
 
-function renderIntroPreview(){
-  var qs=introQs();
+/* Everything the room has said today, in the order it was asked, so the intro
+   comes first when the intro went first. A look-back only — nothing here can
+   ask, open or close anything. */
+function renderBoard(){
+  var side=sidebar(null), all=(S.all)||{}, it=introTopic();
+  var rows=askedList().map(function(id){
+    var q=questions().filter(function(x){ return x.id===id; })[0];
+    if(!q) return null;
+    var t=all[id]||{total:0,by:{}};
+    return { q:q, t:t, intro:(q.topic||'')===it };
+  }).filter(Boolean);
+  var most=rows.length?Math.max.apply(null,rows.map(function(r){ return r.t.total; })):0;
+
+  var stage='<div class="stage">'+
+    '<div class="ctrl top">'+
+      '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
+      '<button class="b" id="goRep2">View the workshop report</button>'+
+      '<button class="b" id="goHome">Back to the start</button>'+
+      '<span class="done">Answered <b>'+ofRoom(S.people||0)+'</b></span>'+
+    '</div>'+
+    '<div class="meta"><span>Dashboard &nbsp;&middot;&nbsp; '+
+      pollsDone()+' poll'+(pollsDone()===1?'':'s')+' done'+
+      ' &nbsp;&middot;&nbsp; '+rows.length+' question'+(rows.length===1?'':'s')+' asked</span>'+
+      '<span>Everything collected so far</span></div>'+
+    (rows.length ? '<div class="igrid">'+rows.map(function(r){
+        var best=0;
+        r.q.options.forEach(function(o,i){ var n=+((r.t.by||{})[i])||0; if(n>best) best=n; });
+        return '<div class="icard"><h4><span>'+esc(r.q.q)+
+          (r.intro?' <u class="tagi">intro</u>':'')+'</span>'+
+          '<em'+((most && r.t.total<most)?' class="short"':'')+'>'+r.t.total+'</em></h4>'+
+          r.q.options.map(function(o,i){
+            var n=+((r.t.by||{})[i])||0, pct=r.t.total?Math.round(n/r.t.total*100):0;
+            return '<div class="irow'+((r.t.total&&n===best)?' top':'')+'">'+
+              '<span>'+esc(o)+'</span><em>'+pct+'%</em>'+
+              '<i><u style="width:'+pct+'%"></u></i></div>';
+          }).join('')+'</div>';
+      }).join('')+'</div>'
+      : '<h1 class="sq">Nothing asked yet.</h1>')+
+    '<p class="hidden-note">Yours only &mdash; the room never sees this</p>'+
+  '</div>';
+
+  app.innerHTML='<div class="pres">'+side+stage+'</div>';
+  barMeta.textContent='Dashboard';
+  wire();
+  on('refreshNow',function(){ BUSY=false; refresh().then(function(){ render(true); }); });
+  on('goRep2',function(){ location.hash='#report'; });
+  on('goHome',function(){ BOARD=false; STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
+  drawQR();
+}
+
+function renderBlockPreview(topic){
+  var qs=blockQs(topic);
   var side=sidebar(null);
   /* Once the block has gone out she comes back here to look at the room, so
      the answers sit above the questions rather than vanishing with the panel. */
-  var asked=introAsked(), c=(S.introCounts)||{}, people=S.introPeople||0;
+  var bc=blockCounts(topic), asked=qs.some(wasAsked), c=bc.counts, people=bc.people;
   var stage='<div class="stage">'+
     '<div class="ctrl top">'+
       (qs.length?'<button class="b go" id="askIntro2">'+(asked?'Ask it again':'Ask the room')+'</button>':'')+
@@ -1220,7 +1311,7 @@ function renderIntroPreview(){
       '<button class="b" id="goHome">Back to the start</button>'+
       '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
     '</div>'+
-    '<div class="meta"><span>Intro block &nbsp;&middot;&nbsp; '+
+    '<div class="meta"><span>'+esc(topic)+' block &nbsp;&middot;&nbsp; '+
       qs.filter(isOn).length+' of '+qs.length+' going out'+
       ' &nbsp;&middot;&nbsp; one screen</span>'+
       '<span>Status: <b'+(asked?' class="ok"':'')+'>'+(asked?'Asked':'Not asked')+'</b>'+
@@ -1242,15 +1333,15 @@ function renderIntroPreview(){
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Presenter';
   wire();
-  on('askIntro2',function(){ SEL=null; send({act:'set',intro:1}); });
-  on('addQ2',function(){ EDIT={q:'',lead:'',options:['',''],topic:introTopic(),
+  on('askIntro2',function(){ SEL=null; send({act:'set',block:topic}); });
+  on('addQ2',function(){ EDIT={q:'',lead:'',options:['',''],topic:topic,
     level:'Any',scored:false,scores:[]}; render(true); });
   [].forEach.call(app.querySelectorAll('[data-tog]'),function(b){
     b.addEventListener('click',function(){ setOn(b.dataset.tog, offList().indexOf(b.dataset.tog)>=0); });
   });
   [].forEach.call(app.querySelectorAll('[data-edit]'),function(b){
     b.addEventListener('click',function(){
-      var x=introQs().filter(function(y){return y.id===b.dataset.edit;})[0];
+      var x=blockQs(topic).filter(function(y){return y.id===b.dataset.edit;})[0];
       if(x) EDIT={id:x.id,q:x.q,lead:x.lead||'',topic:x.topic,level:x.level||'Any',
                   options:x.options.slice(),scored:false,scores:(x.scores||[]).slice()};
       render(true);
@@ -1274,25 +1365,25 @@ function introCards(qs,c,people){
   }).join('')+'</div>';
 }
 
-function renderIntroPresenter(){
-  var qs=introQs(), c=(S.introCounts)||{}, people=S.introPeople||0;
+function renderBlockPresenter(topic){
+  var b=blockCounts(topic), qs=blockLive(topic), c=b.counts, people=b.people;
   app.innerHTML='<div class="pres onecol"><div class="stage">'+
     '<div class="ctrl top">'+
-      '<button class="b go" id="introClose">Close the intro</button>'+
+      '<button class="b go" id="introClose">Close this block</button>'+
       '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
       '<button class="b" id="goQs">Go to the questions</button>'+
       '<button class="b" id="goHome">Back to the start</button>'+
       '<span class="done">Answered <b>'+ofRoom(people)+'</b></span>'+
     '</div>'+
-    '<div class="meta"><span>Intro &nbsp;&middot;&nbsp; '+qs.length+
+    '<div class="meta"><span>'+esc(topic)+' &nbsp;&middot;&nbsp; '+qs.length+
       ' question'+(qs.length===1?'':'s')+' &nbsp;&middot;&nbsp; Open for <b id="clk" class="plain">'+
       clockText()+'</b></span><span>Status: <b class="ok">Open</b></span></div>'+
     introCards(qs,c,people)+
     '<p class="hidden-note">Yours only &mdash; the room never sees this, and it stays out of the report</p>'+
   '</div></div>';
-  barMeta.textContent='Intro';
-  on('introClose',function(){ send({act:'set',intro:0}); });
-  on('goQs',function(){ send({act:'set',intro:0}); });
+  barMeta.textContent=topic;
+  on('introClose',function(){ send({act:'set',block:''}); });
+  on('goQs',function(){ send({act:'set',block:''}); });
   on('goHome',function(){ STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
   on('refreshNow',function(){ BUSY=false; refresh().then(function(){ render(true); }); });
   drawQR();
@@ -1329,8 +1420,9 @@ function editor(){
 
 function on(id,fn){ var e=document.getElementById(id); if(e) e.addEventListener('click',fn); }
 function wire(){
+  on('goBoard',function(){ BOARD=true; EDIT=null; render(true); });
   [].forEach.call(app.querySelectorAll('.qbtn'),function(b){
-    b.addEventListener('click',function(){ EDIT=null; SEL=b.dataset.id; render(true); });
+    b.addEventListener('click',function(){ BOARD=false; EDIT=null; SEL=b.dataset.id; render(true); });
   });
   [].forEach.call(app.querySelectorAll('.tog'),function(b){
     b.addEventListener('click',function(e){
@@ -1354,12 +1446,26 @@ function wire(){
   on('goHome',function(){ STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
   [].forEach.call(app.querySelectorAll('.chip'),function(b){
     b.addEventListener('click',function(){
-      if(b.dataset.l!==undefined) LEVEL=b.dataset.l; else FILTER=b.dataset.t;
+      BOARD=false;
+      if(b.dataset.l!==undefined) LEVEL=b.dataset.l; else { FILTER=b.dataset.t; SEL=null; }
       render(true);
     });
   });
+  /* The triangle opens and shuts a pillar; the name inside it picks a topic. */
+  [].forEach.call(app.querySelectorAll('.pilhead'),function(b){
+    b.addEventListener('click',function(){
+      var n=b.dataset.p;
+      OPEN_P[n]=!(OPEN_P[n] || (pillars().filter(function(x){return x.name===n;})[0]||{topics:[]}).topics.indexOf(FILTER)>=0);
+      render(true);
+    });
+  });
+  [].forEach.call(app.querySelectorAll('.subt'),function(b){
+    b.addEventListener('click',function(){
+      BOARD=false; FILTER=b.dataset.t; SEL=null; EDIT=null; render(true);
+    });
+  });
   on('goRep',function(){ location.hash='#report'; });
-  on('askIntro',function(){ SEL=null; send({act:'set',intro:1}); });
+  on('askIntro',function(){ SEL=null; send({act:'set',block:FILTER}); });
   on('addQ',function(){ EDIT={q:'',lead:'',options:['',''],topic:(FILTER==='All'?'General':FILTER),
     level:(LEVEL==='All'?'Any':LEVEL),scored:true,scores:[]}; render(true); });
   on('editQ',function(){ var q=selectedQ();
@@ -1477,8 +1583,8 @@ function signature(){
   return JSON.stringify([MODE, !!CODE, S && S.sessionId, S && S.activeId,
     S && S.open, S && S.revealed, c && c.total, c && c.by,
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
-    MYANS, JSON.stringify(VSTATE), FAILS>2, STAGE, SEL, LEVEL, FILTER, offList().join(','), S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
-    S&&S.introPeople, S&&S.introCounts, S&&S.people, S&&S.totals, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
+    MYANS, JSON.stringify(VSTATE), FAILS>2, STAGE, BOARD, JSON.stringify(OPEN_P), SEL, LEVEL, FILTER, offList().join(','), S&&S.block, S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
+    S&&S.blocks, S&&S.people, S&&S.all, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
     REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
 }
 function typing(){
@@ -1582,6 +1688,8 @@ function renderReport(){
     '<div class="repwrap">'+
       '<div class="reptools noprint">'+det+
         '<div class="row"><button class="b2" id="repSave">Save this workshop</button>'+
+        (R.savedAt?'<span class="savedtag">Saved automatically &middot; '+
+          esc(clockOf(R.savedAt))+'</span>':'')+
         '<button class="b2 ghost" id="repPrint">Save as PDF</button>'+
         '<button class="b2 ghost" id="repBack">Back to the poll</button></div>'+
         introBlock+saved+
