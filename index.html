@@ -386,6 +386,23 @@ textarea{resize:vertical;line-height:1.5}
 .opt.failed{border-color:#E4B4AE;background:#FDECEA}
 .savedtag{font-family:var(--f-m);font-size:11px;letter-spacing:.05em;color:var(--mute);
   align-self:center;margin-left:2px}
+.ptabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--stage-rule);
+  margin:-4px 0 0;padding-bottom:0}
+.ptab{border:0;background:none;padding:8px 2px 9px;margin-right:16px;cursor:pointer;
+  font-family:var(--f-b);font-weight:600;font-size:13.5px;color:var(--stage-mute);
+  border-bottom:2px solid transparent;margin-bottom:-1px}
+.ptab:hover{color:var(--stage-ink)}
+.ptab.on{color:var(--stage-ink);border-bottom-color:var(--navy)}
+.ptab em{font-style:normal;font-family:var(--f-m);font-size:11px;color:var(--faint);margin-left:5px}
+.stabs{display:flex;flex-wrap:wrap;gap:5px;padding:10px 0 12px}
+.stab{border:1px solid var(--stage-rule);background:var(--stage);border-radius:99px;
+  padding:5px 11px;cursor:pointer;font-size:12.5px;color:var(--stage-ink)}
+.stab:hover{border-color:var(--stage-mute)}
+.stab.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+.stab i{font-style:normal;font-family:var(--f-m);font-size:11px;color:var(--faint);margin-left:5px}
+.stab.on i{color:rgba(255,255,255,.6)}
+.chip u{text-decoration:none;font-family:var(--f-m);font-size:10px;color:var(--faint);margin-left:3px}
+.chip.on u{color:rgba(255,255,255,.6)}
 .pillars{display:grid;gap:3px}
 .pil{border-bottom:1px solid var(--rule-2)}
 .pilhead{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;
@@ -525,7 +542,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v16';
+var NEEDS_VERSION='v17';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -1170,6 +1187,7 @@ function renderPresenter(){
         :'The room sees only the question &mdash; results are hidden')+'</p>'+
     '</div>';
   }
+  stage=stage.replace('<div class="stage">','<div class="stage">'+topbar());
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Presenter';
   wire(); drawQR();
@@ -1190,6 +1208,26 @@ function numberOf(q){
   return i<0 ? 'Question' : 'Question '+(i+1)+' of '+v.length;
 }
 
+/* Main topics on one row, the subtopics of the chosen one below. Three of the
+   seven have nothing under them, so their second row is left out rather than
+   showing a single tab that does nothing. */
+function topbar(){
+  var qs=questions(), ps=pillars();
+  var here=pillarOf(FILTER) || (ps[1]&&ps[1].name) || (ps[0]&&ps[0].name);
+  var mine=ps.filter(function(p){ return p.name===here; })[0] || {topics:[]};
+  var subs = mine.topics.length>1 ? mine.topics : [];
+  return '<div class="ptabs">'+ps.map(function(p){
+      var n=qs.filter(function(x){ return p.topics.indexOf(x.topic||'')>=0; }).length;
+      return '<button class="ptab'+(p.name===here?' on':'')+'" data-p="'+esc(p.name)+'">'+
+        esc(p.name)+'<em>'+n+'</em></button>';
+    }).join('')+'</div>'+
+    (subs.length ? '<div class="stabs">'+subs.map(function(t){
+      var c=qs.filter(function(x){ return (x.topic||'')===t; }).length;
+      return '<button class="stab'+(FILTER===t?' on':'')+'" data-t2="'+esc(t)+'">'+
+        esc(t)+'<i>'+c+'</i></button>';
+    }).join('')+'</div>' : '');
+}
+
 function sidebar(q){
   var qs=questions(), tops=(S.topics||[]), levs=(S.levels||[]);
   var shown=qs.filter(function(x){
@@ -1202,29 +1240,20 @@ function sidebar(q){
     return true;
   });
   var side='<div class="side">'+
-    /* Not a topic — a different kind of thing, so it sits above the topics
-       with a line under it rather than joining the row of chips. */
     '<button class="dashbtn'+(BOARD?' on':'')+'" id="goBoard">Dashboard</button>'+
-    '<div class="pillars">'+pillars().map(function(pl){
-      var open = OPEN_P[pl.name] || pl.topics.indexOf(FILTER)>=0;
-      var n = qs.filter(function(x){ return pl.topics.indexOf(x.topic||'')>=0; }).length;
-      return '<div class="pil'+(open?' open':'')+'">'+
-        '<button class="pilhead" data-p="'+esc(pl.name)+'">'+
-          '<i class="tri">'+(open?'\u25be':'\u25b8')+'</i>'+
-          '<span>'+esc(pl.name)+'</span><em>'+n+'</em></button>'+
-        (open ? '<div class="piltopics">'+pl.topics.map(function(t){
-            var c = qs.filter(function(x){ return (x.topic||'')===t; }).length;
-            return '<button class="subt'+(FILTER===t?' on':'')+'" data-t="'+esc(t)+'">'+
-              esc(t)+' <i>'+c+'</i></button>';
-          }).join('')+'</div>' : '')+
-      '</div>';
-    }).join('')+'</div>'+
-    '<div><p class="lab">Written for</p><div class="chips">'+
+    /* Who you are speaking to comes first — it decides which questions are
+       worth looking at, so it belongs above them, not below. */
+    '<div><p class="lab">Audience type</p><div class="chips">'+
       ['All'].concat(levs).map(function(l){
-        return '<button class="chip lv'+(LEVEL===l?' on':'')+'" data-l="'+esc(l)+'">'+esc(l)+'</button>';
+        var age=(S.levelAges||{})[l]||'';
+        /* "All" means show every question; "Any" is a question written to suit
+           every age. Two different things, so they cannot both be one word. */
+        var name = l==='All' ? 'Show all' : (l==='Any' ? 'Any age' : l);
+        return '<button class="chip lv'+(LEVEL===l?' on':'')+'" data-l="'+esc(l)+'">'+
+          esc(name)+(age?' <u>'+esc(age)+'</u>':'')+'</button>';
       }).join('')+
     '</div></div>'+
-    '<div><p class="lab">Questions</p><div class="qlist">'+
+    '<div><p class="lab">Questions'+(FILTER&&FILTER!=='All'?' &middot; '+esc(FILTER):'')+'</p><div class="qlist">'+
       (shown.length? shown.map(function(x,ix){
         var on=isOn(x);
         return '<div class="qrow'+(on?'':' out')+'">'+
@@ -1304,7 +1333,7 @@ function renderBlockPreview(topic){
   /* Once the block has gone out she comes back here to look at the room, so
      the answers sit above the questions rather than vanishing with the panel. */
   var bc=blockCounts(topic), asked=qs.some(wasAsked), c=bc.counts, people=bc.people;
-  var stage='<div class="stage">'+
+  var stage='<div class="stage">'+topbar()+
     '<div class="ctrl top">'+
       (qs.length?'<button class="b go" id="askIntro2">'+(asked?'Ask it again':'Ask the room')+'</button>':'')+
       '<button class="b" id="addQ2">Add a question to the block</button>'+
@@ -1457,6 +1486,22 @@ function wire(){
       var n=b.dataset.p;
       OPEN_P[n]=!(OPEN_P[n] || (pillars().filter(function(x){return x.name===n;})[0]||{topics:[]}).topics.indexOf(FILTER)>=0);
       render(true);
+    });
+  });
+  [].forEach.call(app.querySelectorAll('.ptab'),function(b){
+    b.addEventListener('click',function(){
+      var pl=pillars().filter(function(x){ return x.name===b.dataset.p; })[0];
+      if(!pl) return;
+      BOARD=false; EDIT=null; SEL=null;
+      /* Landing on a pillar puts you on its first topic, so something is always
+         showing rather than an empty screen asking you to pick again. */
+      FILTER=pl.topics[0]||'All';
+      render(true);
+    });
+  });
+  [].forEach.call(app.querySelectorAll('.stab'),function(b){
+    b.addEventListener('click',function(){
+      BOARD=false; EDIT=null; SEL=null; FILTER=b.dataset.t2; render(true);
     });
   });
   [].forEach.call(app.querySelectorAll('.subt'),function(b){
