@@ -121,6 +121,11 @@ button{font-family:inherit}
 .qbtn.on{background:var(--sunk);border-color:var(--rule);color:var(--ink);font-weight:600}
 .qbtn i{font-style:normal;font-family:var(--f-m);font-size:10.5px;color:var(--faint);padding-top:2px}
 .qbtn.on i{color:var(--teal)}
+/* in today's pipeline — visible down the whole list without opening anything */
+.qbtn.pipe{background:#EEF7F4;border-color:#BCDDD3;color:#0B6F5C}
+.qbtn.pipe i{color:#0B6F5C}
+.qbtn.pipe.on{background:#0B6F5C;border-color:#0B6F5C;color:#fff}
+.qbtn.pipe.on i,.qbtn.pipe.on .ns{color:#BCDDD3}
 .mini{background:none;border:1px dashed var(--rule);border-radius:8px;padding:8px;width:100%;
   font-size:12.5px;color:var(--mute);cursor:pointer}
 .mini:hover{border-color:var(--teal);color:var(--teal)}
@@ -434,6 +439,37 @@ textarea{resize:vertical;line-height:1.5}
 @media print{ .pbreak{break-before:page;page-break-before:always} }
 
 /* the library — a reference screen, so it reads as a list rather than a tool */
+.ltabs{display:flex;gap:8px;margin:0 0 16px}
+.ltab{font-family:var(--f-b);font-size:13px;font-weight:600;padding:7px 15px;border-radius:8px;
+  border:1px solid var(--stage-rule);background:#fff;color:var(--stage-mute);cursor:pointer}
+.ltab.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.qd{border-left:2px solid var(--stage-rule);padding:0 0 0 14px;margin:0 0 20px}
+.qd .qdh{font-family:var(--f-m);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--stage-mute);margin:0 0 5px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.qd .qdh b{color:var(--teal);font-weight:600}
+.qd .chipn{font-family:var(--f-m);font-size:9px;letter-spacing:.08em;padding:2px 7px;border-radius:3px;
+  background:#EEF4F1;color:var(--teal);border:1px solid #CDE3DB;text-transform:none}
+.qd .chipn.warn{background:#FCF4E4;color:#8A6418;border-color:#E3CE9E}
+.qd .qdlead{font-style:italic;color:var(--stage-mute);font-size:13px;margin:0 0 3px}
+.qd .qdq{font-family:var(--f-d);font-weight:700;font-size:16px;margin:0 0 9px;line-height:1.3}
+.qd .qdo{display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1fr);gap:10px;
+  padding:5px 0;border-bottom:1px solid var(--stage-soft);font-size:13.5px;align-items:baseline}
+.qd .qdo:last-of-type{border-bottom:0}
+.qd .qdo u{text-decoration:none;font-family:var(--f-m);font-size:10.5px;font-weight:600;
+  width:21px;height:21px;border-radius:3px;display:flex;align-items:center;justify-content:center}
+.qd .qdo i{font-style:italic;color:var(--stage-mute);font-size:12.5px}
+.qd .qdo i:before{content:"\2192  ";font-style:normal;color:#B9C6D4}
+.qd .qdaft{margin:9px 0 0;font-size:13px;color:var(--stage-ink);
+  border-left:2px solid #C79235;padding:2px 0 2px 10px}
+.qd .qdaft b{font-family:var(--f-m);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:#8A6418;display:block;font-weight:500}
+.qdrules{background:var(--stage-soft);border-radius:10px;padding:16px 18px;margin:0 0 22px}
+.qdrules h4{font-family:var(--f-d);font-size:15px;margin:0 0 10px}
+.qdrules div{display:grid;grid-template-columns:130px 1fr;gap:14px;padding:4px 0;font-size:13px}
+.qdrules span{font-family:var(--f-m);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--stage-mute)}
+@media(max-width:700px){ .qd .qdo{grid-template-columns:24px 1fr}
+  .qd .qdo i{grid-column:2} .qdrules div{grid-template-columns:1fr;gap:2px} }
 .lbnote{margin:0 0 20px;font-size:12.5px;line-height:1.65;color:var(--stage-mute);
   max-width:760px}
 .lbpil{margin-bottom:26px}
@@ -716,17 +752,24 @@ textarea{resize:vertical;line-height:1.5}
 .ptab:hover{border-color:#9BB2D2}
 .ptab em{font-style:normal;font-family:var(--f-m);font-size:11px;color:#7C93B4;margin-left:6px;font-weight:400}
 /* Gold, taken from the logo: on the plan for today. */
-.ptab.today{border-color:#C79A3A;background:#FCF3DF;color:#73561D}
-.ptab.today em{color:#9D741F}
+/* holds something in today's pipeline */
+.ptab.pipe{border-color:#BCDDD3;background:#EEF7F4;color:#0B6F5C}
+.ptab.pipe em{color:#3E9280}
 /* Navy: where you are now — it always wins over the gold. */
-.ptab.on,.ptab.today.on{background:var(--navy);border-color:var(--navy);color:#fff}
-.ptab.on em,.ptab.today.on em{color:#9DB2CC}
+.ptab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.ptab.on em{color:#9DB2CC}
+.ptab.pipe.on{background:#0B6F5C;border-color:#0B6F5C}
+.ptab.pipe.on em{color:#BCDDD3}
 .stabs{display:flex;flex-wrap:wrap;gap:6px;background:#E9F0FA;
   padding:10px 30px 11px;border-top:1px solid #D3E0F0;border-bottom:1px solid #D3E0F0}
 .stab{border:1px solid #C6D5EA;background:#fff;border-radius:8px;
   padding:6px 12px;cursor:pointer;font-size:12.5px;font-weight:600;color:#2E4468}
 .stab:hover{border-color:#9BB2D2}
+.stab.pipe{border-color:#BCDDD3;background:#EEF7F4;color:#0B6F5C}
+.stab.pipe i{color:#3E9280}
 .stab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.stab.pipe.on{background:#0B6F5C;border-color:#0B6F5C}
+.stab.pipe.on i{color:#BCDDD3}
 .stab i{font-style:normal;font-family:var(--f-m);font-size:11px;color:#7C93B4;margin-left:6px;font-weight:400}
 .stab.on i{color:#9DB2CC}
 .chip u{text-decoration:none;font-family:var(--f-m);font-size:10px;color:var(--faint);margin-left:3px}
@@ -820,13 +863,26 @@ textarea{resize:vertical;line-height:1.5}
   background:var(--teal);color:#fff;border-radius:99px;padding:1px 7px}
 .dashbtn.wide.on em{background:#fff;color:var(--navy)}
 
-/* the + on each row of the question list */
-.pipbtn{border:1px solid var(--rule);background:var(--card);border-radius:7px;
-  width:26px;height:26px;font-size:14px;line-height:1;color:var(--mute);cursor:pointer;
-  flex:0 0 auto}
-.pipbtn:hover{border-color:var(--teal);color:var(--teal)}
-.pipbtn.in{background:var(--teal);border-color:var(--teal);color:#fff}
-.b.inpipe{background:#EEF7F4;border-color:#9AC9BC;color:#0B6F5C}
+/* the right-hand side of the meta row: the running count sits above the status,
+   inside the same cell, so the row stays one row */
+/* the running count sits at the far end of the button row it lives in */
+.ctrl.top .done.end{margin-left:auto}
+.meta b.bad{color:#C0392B}
+.meta b.off{color:var(--stage-mute)}
+
+/* the pipeline control, sitting under the question it belongs to */
+.piprow2{display:flex;align-items:center;gap:10px;margin:-6px 0 16px}
+.pipon{border:1px solid var(--stage-rule);background:var(--card);border-radius:9px;
+  padding:8px 15px;font-family:var(--f-b);font-weight:600;font-size:13.5px;
+  color:var(--stage-ink);cursor:pointer}
+.pipon:hover{border-color:var(--teal);color:var(--teal)}
+.pipin{display:inline-flex;align-items:center;gap:7px;background:#EEF7F4;
+  border:1px solid #9AC9BC;border-radius:9px;padding:8px 15px;
+  font-family:var(--f-b);font-weight:600;font-size:13.5px;color:#0B6F5C}
+.pipoff{border:1px solid var(--stage-rule);background:var(--card);border-radius:9px;
+  padding:8px 15px;font-family:var(--f-b);font-weight:600;font-size:13.5px;
+  color:var(--stage-mute);cursor:pointer}
+.pipoff:hover{border-color:#D9534F;color:#B5341F;background:#FDF2F1}
 
 /* today pipeline */
 .pipnote{margin:0 0 18px;font-size:12.5px;line-height:1.65;color:var(--stage-mute);max-width:720px}
@@ -906,7 +962,7 @@ textarea{resize:vertical;line-height:1.5}
 .tiny:hover{background:#E1E8F1}
 
 /* in or out of today's poll — the library is not touched */
-.qrow{display:grid;grid-template-columns:1fr 22px 26px;align-items:start;gap:2px}
+.qrow{display:grid;grid-template-columns:1fr 22px;align-items:start;gap:2px}
 .lvtag{font-family:var(--f-m);font-size:10px;font-weight:600;color:var(--faint);
   text-align:center;padding-top:9px;letter-spacing:.02em}
 .lv-Early{color:#2E7D57}.lv-Mid{color:#9C7222}.lv-Senior{color:#8A4B2A}
@@ -954,6 +1010,9 @@ textarea{resize:vertical;line-height:1.5}
 (function(){
 /* ═══════════ paste your Apps Script /exec URL here ═══════════ */
 var ENDPOINT = 'https://script.google.com/macros/s/AKfycbw40o89uMbEtGWLG2Jr-YfWD1cZfyOOYQGzGI51HVo6VI-6d4JU5shIEB8B13aYVsou/exec';
+/* A rehearsal harness can point the page at a stand-in for Google. Nothing sets
+   this in normal use, so the address above is what runs. */
+try { if (window.__EP) ENDPOINT = window.__EP; } catch(e){}
 
 var app=document.getElementById('app'), barMeta=document.getElementById('barMeta');
 function modeFor(h){
@@ -976,7 +1035,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v22';
+var NEEDS_VERSION='v23';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -1001,6 +1060,9 @@ var STAGE='home', SEL=null, LEVEL='All', BOARD=false, BFILT='All';
 /* The Library — every question with the line each answer prints in the report.
    Fetched once, when the screen is first opened. */
 var LIB=false, LIBDATA=null, LIBBUSY=false, PIPE=false;
+/* Which face of the library is showing: the written questions, or the full
+   record behind them. */
+var LIBTAB='read';
 /* Today's running order. Held locally until Google confirms it, for the same
    reason the topic ticks are — a reply in flight would otherwise undo a tap. */
 var RUNWANT=null, RUNQ=Promise.resolve();
@@ -1620,7 +1682,6 @@ function renderHome(){
       '<p class="hsub">The counts go back to zero. Everything already collected stays saved '+
         'and can be reopened from the list below.</p>'+
       '<div class="mgrid">'+META_FIELDS.map(metaField).join('')+'</div>'+
-      planPick()+
       '<button class="b2" id="hStart">Start the poll</button>'+
       (running ? '<button class="b2 ghost" id="hCont">Carry on with the poll already running</button>' : '')+
     '</div>'+
@@ -1711,14 +1772,15 @@ function renderPresenter(){
         '<button class="b" id="prevQ">Previous one</button>'+
         '<button class="b" id="nextQ">Next one</button>'+
         '<button class="b" id="editQ">Edit this one</button>'+
-        '<span class="done">Polls done <b>'+pollsDone()+'</b></span>'+
+        '<span class="done end">Polls done <b>'+pollsDone()+'</b></span>'+
       '</div>'+
       '<div class="meta"><span>'+numberOf(q)+
         ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+'</span>'+
-        '<span>Status: <b'+(already?' class="ok"':'')+'>'+
+        '<span>Status: <b class="'+(inToday?(already?'ok':'bad'):'off')+'">'+
           (inToday?(already?'Asked':'Not asked'):'Left out of today')+'</b></span></div>'+
       (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
       '<h1 class="sq">'+esc(q.q)+'</h1>'+
+      pipeRow(q)+
       '<div class="prev">'+q.options.map(function(o,i){
         return '<div class="pv"><span>'+String.fromCharCode(65+i)+'</span>'+esc(o)+
           (q.scored?'<b>'+(q.scores[i]||0)+' pt'+((q.scores[i]||0)===1?'':'s')+'</b>':'')+'</div>';
@@ -1736,20 +1798,16 @@ function renderPresenter(){
         '<button class="b" id="prevQ">Previous one</button>'+
         '<button class="b" id="nextQ">Next one</button>'+
         '<button class="b" id="editQ">Edit this one</button>'+
-        '<button class="b'+(inRun(q.id)?' inpipe':'')+'" data-pipe="'+esc(q.id)+'">'+
-          (inRun(q.id)?'Added &middot; remove':'Add to pipeline')+'</button>'+
         clockBox()+
+        '<span class="done end">Polls done <b>'+pollsDone()+'</b></span>'+
       '</div>'+
-      /* Polls done moved down here: the button row stays one line, and the
-         timer sits beside Open voting where it can be seen. */
       '<div class="meta"><span>'+numberOf(q)+
-        ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+
-        ' &nbsp;&middot;&nbsp; Polls done <b class="plain">'+pollsDone()+'</b>'+
-        '</span>'+
+        ' &nbsp;&middot;&nbsp; '+esc(q.topic||'General')+'</span>'+
         '<span>Status: <b class="ok">'+(S.open?'Asked':'Closed')+'</b>'+
         ' &nbsp;&middot;&nbsp; <b class="plain">'+ofRoom(t.total)+'</b> answered</span></div>'+
       (q.lead?'<p class="slead">'+esc(q.lead)+'</p>':'')+
       '<h1 class="sq">'+esc(q.q)+'</h1>'+
+      pipeRow(q)+
       '<div class="sres">'+q.options.map(function(o,i){
         var pct=t.total?Math.round(t.counts[i]/t.total*100):0;
         return '<div class="srow'+((t.total&&t.counts[i]===best)?' top':'')+'">'+
@@ -1803,16 +1861,25 @@ function topbar(){
   var subs = mine.topics.length>1 ? mine.topics : [];
   /* Both rows live in one wrapper: the stage is a flex column with a wide gap
      between its children, and two loose rows would inherit it twice. */
+  /* A topic holding something in today's pipeline carries the same green as the
+     questions themselves, so the whole row can be read at a glance. */
+  var run=runList();
+  function topicInRun(t){
+    return (S.questions||[]).some(function(x){
+      return (x.topic||'')===t && run.indexOf(x.id)>=0; });
+  }
   return '<div class="tophead">'+
     '<div class="ptabs">'+ps.map(function(p){
       var n=qs.filter(function(x){ return p.topics.indexOf(x.topic||'')>=0; }).length;
-      return '<button class="ptab'+(inPlan(p.name)?' today':'')+(p.name===here?' on':'')+
+      var has=p.topics.some(topicInRun);
+      return '<button class="ptab'+(has?' pipe':'')+(p.name===here?' on':'')+
         '" data-p="'+esc(p.name)+'">'+
         esc(p.name)+'<em>'+n+'</em></button>';
     }).join('')+'</div>'+
     (subs.length ? '<div class="stabs">'+subs.map(function(t){
       var c=qs.filter(function(x){ return (x.topic||'')===t; }).length;
-      return '<button class="stab'+(FILTER===t?' on':'')+'" data-t2="'+esc(t)+'">'+
+      return '<button class="stab'+(topicInRun(t)?' pipe':'')+(FILTER===t?' on':'')+
+        '" data-t2="'+esc(t)+'">'+
         esc(t)+'<i>'+c+'</i></button>';
     }).join('')+'</div>' : '')+
   '</div>';
@@ -1825,8 +1892,6 @@ function sidebar(q){
        only when you have actually asked for them. */
     if((x.topic||'')===introTopic() && FILTER!==introTopic()) return false;
     if(FILTER!=='All' && (x.topic||'General')!==FILTER) return false;
-    /* "Any" questions belong in every audience, so they always show. */
-    if(LEVEL!=='All' && (x.level||'Any')!==LEVEL && (x.level||'Any')!=='Any') return false;
     return true;
   });
   var side='<div class="side">'+
@@ -1839,34 +1904,23 @@ function sidebar(q){
     '<div class="navsep"></div>'+
     '<button class="dashbtn wide'+(PIPE?' on':'')+'" id="goPipe">Today Pipeline'+
       (runList().length?'<em>'+runList().length+'</em>':'')+'</button>'+
-    /* Who you are speaking to comes first — it decides which questions are
-       worth looking at, so it belongs above them, not below. */
-    '<div><p class="lab">Audience type</p><div class="chips">'+
-      ['All'].concat(levs).map(function(l){
-        var age=(S.levelAges||{})[l]||'';
-        /* "All" means show every question; "Any" is a question written to suit
-           every age. Two different things, so they cannot both be one word. */
-        var name = l==='All' ? 'Show all' : (l==='Any' ? 'Any age' : l);
-        return '<button class="chip lv'+(LEVEL===l?' on':'')+'" data-l="'+esc(l)+'">'+
-          esc(name)+(age?' <u>'+esc(age)+'</u>':'')+'</button>';
-      }).join('')+
-    '</div></div>'+
+    /* The audience filter is gone. Every question is now written plainly enough
+       for any age, and all three rungs of a topic go out in the same session —
+       so there was nothing left for it to filter. */
     '<div><p class="lab">Questions'+(FILTER&&FILTER!=='All'?' &middot; '+esc(FILTER):'')+'</p><div class="qlist">'+
       (shown.length? shown.map(function(x,ix){
         var on=isOn(x);
-        /* The letter says who the question is written for — E, M, S or A for
-           any age — so the list can be read at a glance while presenting. */
-        var lv=(x.level||'Any'), tag=lv==='Any'?'A':lv.charAt(0);
+        /* The number says which rung of the topic this is, so the list can be
+           read at a glance while presenting. */
+        var rg=x.rung, tag=(rg===1||rg===2||rg===3)?String(rg):(rg==='x'?'+':'\u00b7');
+        var lv=(rg==='x')?'Any':'Mid';
         return '<div class="qrow'+(on?'':' out')+'">'+
-          '<button class="qbtn'+(q&&x.id===q.id?' on':'')+'" data-id="'+esc(x.id)+'">'+
+          '<button class="qbtn'+(q&&x.id===q.id?' on':'')+
+            (inRun(x.id)?' pipe':'')+'" data-id="'+esc(x.id)+'">'+
             '<i>'+(ix+1)+'</i><span>'+esc(x.q)+
             (wasAsked(x)?'<b class="ns was">asked</b>':(x.scored?'':'<b class="ns">not scored</b>'))+
             '</span></button>'+
           '<span class="lvtag lv-'+esc(lv)+'" title="'+esc(lv)+'">'+tag+'</span>'+
-          '<button class="pipbtn'+(inRun(x.id)?' in':'')+'" data-pipe="'+esc(x.id)+'" '+
-            'title="'+(inRun(x.id)?'In today\u2019s pipeline — tap to remove'
-                                  :'Add to today\u2019s pipeline')+'">'+
-            (inRun(x.id)?'&#10003;':'+')+'</button>'+
         '</div>'; }).join('')
         : '<p style="font-size:13px;color:var(--mute);margin:4px 0">Nothing in this topic yet.</p>')+
     '</div></div>'+
@@ -1886,6 +1940,17 @@ function sidebar(q){
 /* Today's running order, grouped the way a session is planned: by topic, so the
    shape of the hour is visible before it starts. Order within a topic is the
    order they were added. */
+/* Beside the question, not in the button row at the top — the decision is made
+   while reading it, so the control belongs where the eye already is. */
+function pipeRow(q){
+  if(!q) return '';
+  return inRun(q.id)
+    ? '<div class="piprow2"><span class="pipin">&#10003; Added to today&rsquo;s pipeline</span>'+
+      '<button class="pipoff" data-pipe="'+esc(q.id)+'">Remove</button></div>'
+    : '<div class="piprow2">'+
+      '<button class="pipon" data-pipe="'+esc(q.id)+'">+ Add to pipeline</button></div>';
+}
+
 function renderPipeline(){
   var side=sidebar(null);
   var ids=runList(), all=(S.questions||[]);
@@ -1983,7 +2048,7 @@ function renderLibrary(){
         var list=mine.map(function(q){
           var sy=says[q.id]||[];
           return '<div class="lbq"><p class="lbqh">'+esc(q.q)+
-            '<em>'+esc(q.level||'Any')+'</em></p>'+
+            '<em>'+esc(rungName(q))+'</em></p>'+
             (q.lead?'<p class="lblead">'+esc(q.lead)+'</p>':'')+
             '<div class="lbopts">'+q.options.map(function(o,i){
               var sc=(q.scores&&q.scores[i])||0;
@@ -2003,17 +2068,93 @@ function renderLibrary(){
       }).join('');
       return rows ? '<div class="lbpil"><p class="lbpname">'+esc(pl.name)+'</p>'+rows+'</div>' : '';
     }).join('');
+    var tabs='<div class="ltabs">'+
+      '<button class="ltab'+(LIBTAB==='read'?' on':'')+'" data-ltab="read">Library</button>'+
+      '<button class="ltab'+(LIBTAB==='data'?' on':'')+'" data-ltab="data">Questions data</button>'+
+      '</div>';
     stage='<div class="stage">'+topbar()+
       '<div class="meta"><span>Library &nbsp;&middot;&nbsp; '+qs.length+' questions</span>'+
         '<span>Reference only &mdash; nothing here prints</span></div>'+
-      '<p class="lbnote">Every answer and the line it puts in the report. '+
-      'The number on the left is the points that answer carries. '+
-      'Tell me about anything that reads wrong and I will change it.</p>'+
-      body+'</div>';
+      tabs+
+      (LIBTAB==='data'
+        ? libData(qs, says)
+        : '<p class="lbnote">Every answer and the line it puts in the report. '+
+          'The number on the left is the points that answer carries. '+
+          'Tell me about anything that reads wrong and I will change it.</p>'+body)+
+      '</div>';
   }
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Library';
+  [].forEach.call(app.querySelectorAll('.ltab'),function(b){
+    b.addEventListener('click',function(){ LIBTAB=b.dataset.ltab; render(true); });
+  });
   wire(); drawQR();
+}
+
+/* What a question is called on the ladder. The old audience levels stopped
+   meaning anything once every rung goes out in the same session. */
+function rungName(q){
+  if(!q.scored) return '';          /* the intro and feedback are not a ladder */
+  var r=q.rung;
+  if(r===1||r==='1') return 'Rung 1 \u00b7 Do you know?';
+  if(r===2||r==='2') return 'Rung 2 \u00b7 Have you decided?';
+  if(r===3||r==='3') return 'Rung 3 \u00b7 Will it hold?';
+  if(r==='x')        return 'Extra';
+  return '';
+}
+
+/* The whole record behind every question \u2014 what it scores, what it puts in
+   the report, what it says to the room afterwards, and where it does not
+   apply. This is the page to read before a workshop, not during one. */
+function libData(qs, says){
+  var out='<div class="qdrules"><h4>How the scoring works</h4>'+
+    [['Per question','Every answer is worth 0, 1 or 2. No question outweighs another.'],
+     ['Per person','Earned divided by the most they could have earned on the questions asked.'],
+     ['Not applicable','Answers marked \u2014 mean the question does not apply. Never scored, either way.'],
+     ['Who counts','One answer in a topic is enough to appear in it.'],
+     ['Per topic','A topic with only one question asked gets no bar.'],
+     ['Bands','Starting \u00b7 Building \u00b7 Progressing \u00b7 Prepared \u00b7 Well Prepared'],
+     ['In the room','Know \u2192 Plan \u2192 Prepare']
+    ].map(function(r){
+      return '<div><span>'+esc(r[0])+'</span><em style="font-style:normal">'+esc(r[1])+'</em></div>';
+    }).join('')+'</div>';
+
+  out += pillars().map(function(pl){
+    var rows=pl.topics.map(function(t){
+      var mine=qs.filter(function(q){ return (q.topic||'')===t; });
+      if(!mine.length) return '';
+      return '<div class="lbtopic"><div class="lbtop"><h4>'+esc(t)+'</h4>'+
+        '<span>'+mine.length+' question'+(mine.length===1?'':'s')+'</span></div>'+
+        mine.map(function(q){ return libDataQ(q, says[q.id]||[]); }).join('')+'</div>';
+    }).join('');
+    return rows ? '<div class="lbpil"><p class="lbpname">'+esc(pl.name)+'</p>'+rows+'</div>' : '';
+  }).join('');
+  return out;
+}
+
+function libDataQ(q, sy){
+  var chips='';
+  if(q.tag)  chips+='<span class="chipn">'+esc(q.tag)+'</span>';
+  if(q.also) chips+='<span class="chipn">also under '+esc(q.also)+'</span>';
+  if(q.hint) chips+='<span class="chipn warn">'+esc(q.hint)+'</span>';
+  var rn=rungName(q);
+  return '<div class="qd">'+
+    '<p class="qdh"><b>'+esc(q.id)+'</b>'+(rn?'<span>'+esc(rn)+'</span>':'')+chips+'</p>'+
+    (q.lead?'<p class="qdlead">'+esc(q.lead)+'</p>':'')+
+    '<p class="qdq">'+esc(q.q)+'</p>'+
+    q.options.map(function(o,i){
+      var sc=(q.scores&&q.scores[i]!==undefined)?q.scores[i]:0;
+      var na=(sc<0)||!q.scored;
+      var col=na?'#8296AC':(sc===0?'#B4332B':sc===1?'#A8740B':'#0B6F5C');
+      var bg =na?'#EEF1F5':(sc===0?'#FBEBE9':sc===1?'#FBF3E2':'#E6F3EF');
+      return '<div class="qdo">'+
+        '<u style="color:'+col+';background:'+bg+'">'+(q.scored?(na?'&mdash;':sc):'&mdash;')+'</u>'+
+        '<span>'+esc(o)+'</span>'+
+        '<i>'+(sy[i]?esc(sy[i]):(q.scored?(na?'not counted':'&mdash;')
+                                             :'not quoted in the report'))+'</i></div>';
+    }).join('')+
+    (q.after?'<p class="qdaft"><b>After they answer</b>'+esc(q.after)+'</p>':'')+
+  '</div>';
 }
 
 function renderBoard(){
@@ -2553,7 +2694,7 @@ function howItWorks(){
   function row(k, v){
     return '<div class="hwrow"><span>'+k+'</span><p>'+v+'</p></div>';
   }
-  var bands=[['Beginner','under 20%'],['Building','20 – 39%'],
+  var bands=[['Starting','under 20%'],['Building','20 – 39%'],
              ['Progressing','40 – 59%'],['Prepared','60 – 79%'],
              ['Well Prepared','80% and above']];
   return '<div class="hw">'+
@@ -2675,7 +2816,7 @@ function knewCard(R){
       'say anything. A percentage of a handful is noise, so the breakdown stays '+
       'hidden until at least 15 people fall into this group.</p></div>';
   }
-  var names=['Beginner','Building','Progressing','Prepared','Well Prepared'];
+  var names=['Starting','Building','Progressing','Prepared','Well Prepared'];
   var bands=I.spread.map(function(n,i){
     return '<div><u style="background:'+BAND_COLS[i]+'"></u><b>'+n+'</b>'+
       '<span>'+names[i].toUpperCase()+'</span></div>'; }).join('');
@@ -2737,7 +2878,7 @@ function missedLine(R){
 /* What the band actually means — the first question anyone asks when they see
    the word, so it sits right beside it. One per colour on the dial. */
 var BAND_NOTES = {
-  'Beginner':
+  'Starting':
     'Most people here have not started planning yet \u2014 and that is normal, '+
     'because nobody is taught this. Knowing where the money goes each month is '+
     'the first thing that changes it.',
