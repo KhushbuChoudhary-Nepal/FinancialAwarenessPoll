@@ -470,6 +470,62 @@ textarea{resize:vertical;line-height:1.5}
   color:var(--stage-mute)}
 @media(max-width:700px){ .qd .qdo{grid-template-columns:24px 1fr}
   .qd .qdo i{grid-column:2} .qdrules div{grid-template-columns:1fr;gap:2px} }
+
+/* ---- the topic page ---- */
+.tq .sres{gap:9px}
+.tq .sname{font-size:14.5px}
+.tq .sn{font-size:12px}
+.tq .spct{font-size:14px;color:var(--stage-ink)}
+.tq .strack{height:11px}
+.pv.na{opacity:.7}
+.pv.na b{color:var(--stage-mute)}
+
+.tphead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 2px}
+.tphead h1{font-family:var(--f-d);font-weight:700;font-size:26px;margin:0;color:var(--stage-ink)}
+.tphead span{font-family:var(--f-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--stage-mute)}
+.tpsug{margin:8px 0 0;font-size:13px;color:var(--gold,#8A6418);background:#FCF5E6;
+  border:1px solid #E7D3A6;border-radius:8px;padding:8px 12px;display:inline-block}
+.tpnote{margin:10px 0 16px;font-size:13.5px;color:var(--stage-mute)}
+.tq{background:#fff;border:1px solid var(--stage-rule);border-radius:12px;
+  padding:14px 16px;margin:0 0 12px}
+.tq.live{border-color:var(--teal);box-shadow:0 0 0 3px #E6F5EF}
+.tq.tqdone{background:#F8FAFC}
+.tq.out{opacity:.75;background:#F5F7FA}
+.tqh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 6px}
+.tqr{font-family:var(--f-m);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--stage-mute)}
+.tqtag{font-family:var(--f-m);font-size:9px;letter-spacing:.08em;padding:2px 7px;border-radius:3px;
+  background:#EEF4F1;color:var(--teal);border:1px solid #CDE3DB}
+.tqst{margin-left:auto;font-family:var(--f-m);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.tqst.live{background:var(--teal);color:#fff}
+.tqst.done{background:#E6F5EF;color:var(--teal)}
+.tqst.shut{background:#E6F5EF;color:var(--teal)}
+.tqst.wait{background:var(--stage-soft);color:var(--stage-mute)}
+.tqst.off{background:#EEF1F5;color:var(--stage-mute)}
+.tqws{display:flex;flex-direction:column;gap:4px;margin:0 0 7px}
+.tqw{font-size:12px;padding:4px 9px;border-radius:6px}
+.tqw.hint{background:var(--stage-soft);color:var(--stage-mute)}
+.tqw.warn{background:#FCF0E4;color:#8A5A14;border:1px solid #E7CDA6}
+.tqlead{font-style:italic;color:var(--stage-mute);font-size:13px;margin:0 0 4px}
+.tqq{font-family:var(--f-d);font-weight:700;font-size:19px;line-height:1.3;margin:0 0 11px;
+  color:var(--stage-ink)}
+.tqaft{margin:10px 0 0;font-size:13px;color:var(--stage-ink);
+  border-left:2px solid #C79235;padding:2px 0 2px 10px}
+.tqaft b{font-family:var(--f-m);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:#8A6418;display:block;font-weight:500}
+.tqf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tqf .tqsp{flex:1}
+.tqn{font-family:var(--f-m);font-size:12px;color:var(--stage-mute)}
+.b.warn{border-color:#E7C6C6;color:#A33}
+.b.pipein{background:#E6F5EF;border-color:#9AD4C3;color:var(--teal)}
+.sfill.s0{background:#E03131}.sfill.s1{background:#F2A81C}.sfill.s2{background:#12B886}
+.sfill.na{background:#AEBDCC}
+.tpoff{margin-top:26px;border-top:1px dashed var(--stage-rule);padding-top:16px}
+.tpoff h3{font-family:var(--f-m);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--stage-mute);margin:0 0 3px;font-weight:600}
+.tpoff > p{font-size:12.5px;color:var(--stage-mute);margin:0 0 12px}
 .lbnote{margin:0 0 20px;font-size:12.5px;line-height:1.65;color:var(--stage-mute);
   max-width:760px}
 .lbpil{margin-bottom:26px}
@@ -1752,6 +1808,9 @@ function renderPresenter(){
   /* Choosing Intro shows the whole block, because that is how it goes out —
      five questions on one screen, asked in one press. */
   if(isBlockTopic(FILTER) && !SEL) return renderBlockPreview(FILTER);
+  /* One topic, all of its questions, on one page. You ask them one at a time;
+     each result stays on screen so the topic reads as a whole by the end. */
+  if(FILTER && FILTER!=='All' && !isBlockTopic(FILTER)) return renderTopicPage(FILTER);
   var side=sidebar(q);
 
   var stage;
@@ -1823,6 +1882,170 @@ function renderPresenter(){
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
   barMeta.textContent='Presenter';
   wire(); drawQR();
+}
+
+/* Topics that belong together on a day. Picking one offers the other — a
+   nudge while you plan, never a rule. */
+var GOES_WITH = {
+  'Retirement':      ['SSF, CIT, EPF',        'that is where their retirement money actually sits'],
+  'Setting Goals':   ['Goal-Based Investing', 'goals, then where the money for them goes'],
+  'Children':        ['Life Insurance',       'they share the protection question'],
+  'Emergency Fund':  ['Managing Loans',       'losing an income and servicing a loan are the same day']
+};
+/* Two questions that ask the same thing from different sides. Asking both
+   spends a poll and the room notices. */
+var SAME_AS = { 'ef_2':'ln_3', 'ln_3':'ef_2' };
+/* A question that gives away the answer to another one, so the order matters. */
+var ASK_BEFORE = { 'se_2':'se_1' };
+
+function qById(id){ return questions().filter(function(x){ return x.id===id; })[0]; }
+
+/* What to warn about on a question card, in the words you would want to read
+   while standing in front of a room. */
+function cardWarn(q){
+  var out=[];
+  if(q.hint) out.push('<span class="tqw hint">'+esc(q.hint)+'</span>');
+  var same=SAME_AS[q.id];
+  if(same){
+    var o=qById(same);
+    if(o && wasAsked(o)) out.push('<span class="tqw warn">Similar to a question already asked in '+
+      esc(o.topic||'')+'</span>');
+  }
+  var first=ASK_BEFORE[q.id];
+  if(first){
+    var f=qById(first);
+    if(f && !wasAsked(f)) out.push('<span class="tqw warn">Ask &ldquo;'+esc(f.q)+'&rdquo; first &mdash; '+
+      'this one gives the answer away</span>');
+  }
+  return out.length?'<div class="tqws">'+out.join('')+'</div>':'';
+}
+
+/* The live question's numbers arrive in S.counts; every other question's in
+   S.all. A card that has been asked and closed still shows its own result. */
+function cardCounts(q){
+  if(isLive(q)) return counts(q);
+  var a=(S && S.all && S.all[q.id]) || null, by=(a && a.by) || {}, c=[];
+  for(var i=0;i<q.options.length;i++) c.push(+by[i]||0);
+  return { counts:c, total:(a && a.total) || 0 };
+}
+
+/* One question, in whichever of its four states it happens to be. */
+function qCard(q){
+  var live=isLive(q), asked=wasAsked(q), kept=isOn(q), t=cardCounts(q);
+  var best=t.total?Math.max.apply(null,t.counts):0;
+var open_=live && S.open;
+  var st = open_ ? '<span class="tqst live">&#9679; Voting open</span>'
+         : live  ? '<span class="tqst shut">Voting closed</span>'
+         : asked ? '<span class="tqst done">&#10003; Asked</span>'
+         : kept  ? '<span class="tqst wait">Not asked</span>'
+                 : '<span class="tqst off">Removed</span>';
+  var head='<div class="tqh"><span class="tqr">'+esc(rungName(q)||'Extra')+'</span>'+
+    (q.tag?'<span class="tqtag">'+esc(q.tag)+'</span>':'')+st+'</div>';
+
+  var body;
+  if(live || asked){
+    body='<div class="sres">'+q.options.map(function(o,i){
+      var pct=t.total?Math.round(t.counts[i]/t.total*100):0;
+      var sc=(q.scores&&q.scores[i]!==undefined)?q.scores[i]:0;
+      var cl=!q.scored||sc<0?'na':(sc===0?'s0':sc===1?'s1':'s2');
+      return '<div class="srow">'+
+        '<span class="sname">'+esc(o)+'</span><span class="sn">'+t.counts[i]+'</span>'+
+        '<span class="spct">'+pct+'%</span>'+
+        '<span class="strack"><i class="sfill '+cl+'" style="width:'+pct+'%"></i></span></div>';
+    }).join('')+'</div>';
+  } else {
+    body='<div class="prev">'+q.options.map(function(o,i){
+      var sc=(q.scores&&q.scores[i]!==undefined)?q.scores[i]:0;
+      return '<div class="pv'+(sc<0?' na':'')+'"><span>'+String.fromCharCode(65+i)+'</span>'+esc(o)+
+        (q.scored?'<b>'+(sc<0?'&mdash;':sc)+'</b>':'')+'</div>';
+    }).join('')+'</div>';
+  }
+
+  var foot;
+  if(live){
+    foot='<div class="tqf">'+(open_?clockBox():'')+
+      '<span class="tqn">'+ofRoom(t.total)+' answered</span><span class="tqsp"></span>'+
+      '<button class="b" data-rev="1">'+(S.revealed?'Hide results':'Show results to the room')+'</button>'+
+      '<button class="b'+(open_?' go':'')+'" data-close="1">'+
+        (open_?'Close voting':'Open voting again')+'</button></div>';
+  } else if(asked){
+    foot='<div class="tqf"><span class="tqn">'+ofRoom(t.total)+' answered</span>'+
+      '<span class="tqsp"></span>'+
+      '<button class="b" data-ask="'+esc(q.id)+'">Ask again</button>'+
+      pipeBtn(q)+'</div>';
+  } else if(kept){
+    foot='<div class="tqf"><button class="b go" data-ask="'+esc(q.id)+'">Ask the room</button>'+
+      pipeBtn(q)+
+      '<span class="tqsp"></span>'+
+      '<button class="b warn" data-off="'+esc(q.id)+'">Remove from today</button></div>';
+  } else {
+    foot='<div class="tqf"><button class="b" data-ask="'+esc(q.id)+'">Ask the room anyway</button>'+
+      '<button class="b" data-off="'+esc(q.id)+'">Put back in today</button></div>';
+  }
+
+  return '<div class="tq'+(live?' live':'')+(kept?'':' out')+(asked&&!live?' tqdone':'')+'">'+
+    head+cardWarn(q)+
+    (q.lead?'<p class="tqlead">'+esc(q.lead)+'</p>':'')+
+    '<p class="tqq">'+esc(q.q)+'</p>'+body+
+    (q.after&&(asked||live)?'<p class="tqaft"><b>Say after the result</b>'+esc(q.after)+'</p>':'')+
+    foot+'</div>';
+}
+
+function pipeBtn(q){
+  return inRun(q.id)
+    ? '<button class="b pipein" data-pipe="'+esc(q.id)+'">&#10003; In pipeline</button>'
+    : '<button class="b" data-pipe="'+esc(q.id)+'">+ Pipeline</button>';
+}
+
+function renderTopicPage(topic){
+  var all=questions().filter(function(x){ return (x.topic||'')===topic; });
+  var kept=all.filter(isOn), gone=all.filter(function(x){ return !isOn(x); });
+  var askedN=all.filter(wasAsked).length;
+  var liveHere=all.filter(isLive).length>0;
+  var allIn=kept.length>0 && kept.every(function(x){ return inRun(x.id); });
+  var g=GOES_WITH[topic];
+
+  var stage='<div class="stage">'+topbar()+
+    '<div class="ctrl top">'+
+      '<button class="b" id="goHome">Back to the start</button>'+
+      (kept.length?'<button class="b'+(allIn?'':' go')+'" id="addAll"'+(allIn?' disabled':'')+'>'+
+        (allIn?'All in the pipeline':'Add all to pipeline')+'</button>':'')+
+      '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
+      '<span class="done end">Polls done <b>'+pollsDone()+'</b></span>'+
+    '</div>'+
+    '<div class="tphead"><h1>'+esc(topic)+'</h1>'+
+      '<span>'+all.length+' question'+(all.length===1?'':'s')+
+      ' &nbsp;&middot;&nbsp; '+askedN+' asked</span></div>'+
+    (g?'<p class="tpsug">Also consider <b>'+esc(g[0])+'</b> &mdash; '+esc(g[1])+'</p>':'')+
+    '<p class="tpnote">Ask them in order. After each result, decide whether the next one is worth asking.</p>'+
+    kept.map(qCard).join('')+
+    (gone.length?'<div class="tpoff"><h3>Removed from today</h3>'+
+      '<p>Out of the plan, still here if the room takes you there.</p>'+
+      gone.map(qCard).join('')+'</div>':'')+
+  '</div>';
+
+  app.innerHTML='<div class="pres">'+sidebar(selectedQ())+stage+'</div>';
+  barMeta.textContent=topic;
+  wire();
+  [].forEach.call(app.querySelectorAll('[data-ask]'),function(b){
+    b.addEventListener('click',function(){
+      send({act:'set',activeId:b.dataset.ask,open:1,revealed:0});
+    });
+  });
+  [].forEach.call(app.querySelectorAll('[data-off]'),function(b){
+    b.addEventListener('click',function(){
+      var id=b.dataset.off; setOn(id, offList().indexOf(id)>=0);
+    });
+  });
+  var cl=app.querySelector('[data-close]');
+  if(cl) cl.addEventListener('click',function(){ send({act:'set',open:S.open?0:1}); });
+  var rv=app.querySelector('[data-rev]');
+  if(rv) rv.addEventListener('click',function(){ send({act:'set',revealed:S.revealed?0:1}); });
+  on('addAll',function(){
+    var add=kept.filter(function(x){ return !inRun(x.id); }).map(function(x){ return x.id; });
+    if(add.length) setRun(runList().concat(add));
+  });
+  drawQR();
 }
 
 /* Where a question sits in the list you are looking at, not in the master list. */
