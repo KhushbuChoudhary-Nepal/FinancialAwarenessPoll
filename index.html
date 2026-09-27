@@ -357,6 +357,23 @@ textarea{resize:vertical;line-height:1.5}
 
 /* Where the people sit — one bar, the percentage inside each colour. No key:
    the dial above has already taught the reader what the five colours mean. */
+.tbars{grid-column:1/-1;margin-top:20px;border-top:1px solid #DBE1E9;padding-top:16px}
+.tbrow{display:grid;grid-template-columns:132px 1fr;gap:12px;align-items:center;margin:0 0 9px}
+.tbname{font-size:12.5px;font-weight:600;color:#14274A}
+.tbbar{display:flex;height:20px;border-radius:5px;overflow:hidden}
+.tbbar i{display:flex;align-items:center;justify-content:center;font-style:normal;
+  font-family:var(--f-b);font-weight:700;font-size:10.5px;color:#fff;min-width:0}
+.tbbar i.dark{color:#5A4300}
+.tbbar i.thin{font-size:8.5px;letter-spacing:-.03em}
+.tbkey{display:grid;gap:6px;margin-top:15px;border-top:1px solid #E4E9F0;padding-top:13px}
+.tbk{font-size:11px;color:#14274A;display:grid;grid-template-columns:10px 92px 1fr;
+  gap:9px;align-items:baseline;font-weight:600}
+.tbk u{text-decoration:none;width:9px;height:9px;border-radius:2px;display:inline-block;
+  transform:translateY(1px)}
+.tbk em{font-style:normal;font-weight:400;color:#6B7C90}
+.tnames{font-family:var(--f-m);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:#8496A9;margin:-4px 0 10px}
+@media(max-width:640px){ .tbrow{grid-template-columns:1fr;gap:3px} }
 .sp{grid-column:1/-1;margin-top:14px;border-top:1px solid #DBE1E9;padding-top:13px}
 .sphead{margin:0 0 8px;font-family:var(--f-m);font-weight:600;font-size:10px;
   letter-spacing:.16em;text-transform:uppercase;color:#4A5E76}
@@ -365,6 +382,17 @@ textarea{resize:vertical;line-height:1.5}
   font-family:var(--f-m);font-weight:600;font-size:14px;color:#fff;min-width:0;overflow:hidden}
 /* the amber band is too light to carry white text */
 .spbar i.dark{color:#5A4300}
+/* a small band still shows its figure, just smaller */
+.spbar i.thin{font-size:11px;letter-spacing:-.02em}
+/* ---- rewording the report ---- */
+.edt{display:inline}
+.doc.editing .edt{border-bottom:1px dashed #B98A00;background:#FFFBEF;
+  border-radius:3px;padding:0 2px;outline:none;cursor:text}
+.doc.editing .edt:focus{background:#FFF3D0;box-shadow:0 0 0 2px rgba(185,138,0,.25)}
+.edhint{font-size:12px;color:#6b6b6b;align-self:center;margin-left:4px}
+.copytag{font-size:12px;font-weight:600;color:#7a5c00;background:#FFF3D0;
+  border-radius:999px;padding:3px 10px;align-self:center}
+@media print{ .edt{border:0;background:none;padding:0} }
 
 /* the barometer — dial and meaning side by side, the footnote on its own last
    row so it never wraps into a column */
@@ -436,7 +464,10 @@ textarea{resize:vertical;line-height:1.5}
 .obsn b{color:#14274A}
 
 .pbreak{height:0}
-@media print{ .pbreak{break-before:page;page-break-before:always} }
+@media print{ .pbreak{break-before:page;page-break-before:always}
+  /* nothing should be cut in half by a page edge */
+  .tblock,.hrint,.gwrap,.whoblk,.tiles,.fbwrap,.aboutbox,.tbars,.sp{
+    break-inside:avoid;page-break-inside:avoid} }
 
 /* the library — a reference screen, so it reads as a list rather than a tool */
 .ltabs{display:flex;gap:8px;margin:0 0 16px}
@@ -526,6 +557,18 @@ textarea{resize:vertical;line-height:1.5}
 .tpoff h3{font-family:var(--f-m);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
   color:var(--stage-mute);margin:0 0 3px;font-weight:600}
 .tpoff > p{font-size:12.5px;color:var(--stage-mute);margin:0 0 12px}
+.iopts .io.many i{border-radius:5px;font-size:11px}
+.iopts .io.many:not(.on) i{color:transparent}
+.splitl{grid-column:1/-1;margin:9px 0 0;font-size:11.5px;color:#5E7189}
+.fbnote{margin:6px 0 0;font-size:10.5px;color:#8496A9;font-family:var(--f-m)}
+.nsteps{border:1px solid #DBE1E9;border-left:4px solid #0B6F5C;border-radius:10px;
+  padding:13px 16px;margin:14px 0 0;background:#F7FBFA}
+.nshead{font-family:var(--f-m);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:#0B6F5C;font-weight:600;display:block;margin-bottom:7px}
+.nsl{margin:0 0 6px;font-size:12.5px;color:#14274A;line-height:1.6}
+.nsl:last-child{margin-bottom:0}
+.nsl b{color:#0B6F5C}
+.nsl em{font-style:normal;color:#6B7C90;font-family:var(--f-m);font-size:11px}
 .lbnote{margin:0 0 20px;font-size:12.5px;line-height:1.65;color:var(--stage-mute);
   max-width:760px}
 .lbpil{margin-bottom:26px}
@@ -691,7 +734,7 @@ textarea{resize:vertical;line-height:1.5}
   .bandnote{font-size:9.6pt;margin-top:7px} .bandwho{font-size:7pt;line-height:1.6}
   .sp{margin-top:10px;padding-top:9px}
   .sphead{font-size:6.4pt;margin-bottom:6px}
-  .spbar{height:30px} .spbar i{font-size:10pt}
+  .spbar{height:30px} .spbar i{font-size:10pt} .spbar i.thin{font-size:7.6pt}
   .tblocks{gap:9px}
   .tblock{padding:12px 15px;gap:12px}
   .tbody h3{font-size:11pt;line-height:1.4} .tnums{font-size:8.6pt;line-height:1.7}
@@ -1091,7 +1134,7 @@ var VSTATE={};
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v23';
+var NEEDS_VERSION='v27';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -1226,6 +1269,15 @@ function call(params){
     });
 }
 
+/* Rewritten lines are far too long for a web address, so they are posted
+   rather than appended. The script reads posted fields the same way. */
+function callPost(params){
+  return fetch(ENDPOINT,{ method:'POST', redirect:'follow',
+      headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+      body:qstr(params) })
+    .then(function(r){ return r.json(); });
+}
+
 function callScript(params){
   return new Promise(function(res,rej){
     var cb='jgnu'+(++CBN)+'_'+Math.floor(Math.random()*1e6);
@@ -1330,6 +1382,22 @@ function isBlockTopic(t){ return blockTopics().indexOf(t)>=0; }
 function openBlock(){ return (S && S.block) || (S && S.intro ? introTopic() : ''); }
 function blockQs(t){ return questions().filter(function(q){ return q.topic===t; }); }
 function blockLive(t){ return blockQs(t).filter(isOn); }
+/* One question in the feedback block only makes sense to somebody who has just
+   said they want more sessions, so it is not there until they do. */
+function blockShown(t){
+  return blockLive(t).filter(function(q){
+    if(!q.follows) return true;
+    return String(MYANS[q.follows])==='0';        /* the first option is Yes */
+  });
+}
+function answered(q){
+  var v=MYANS[q.id];
+  return q.multi ? !!(v && String(v).length) : v!==undefined;
+}
+function picked(q,i){
+  if(!q.multi) return MYANS[q.id]===i;
+  return String(MYANS[q.id]||'').split('|').indexOf(String(i))>=0;
+}
 function blockCounts(t){
   var b=(S && S.blocks && S.blocks[t]) || null;
   if(b) return b;
@@ -1420,7 +1488,7 @@ function renderAudience(){
 }
 
 function renderBlockAudience(topic){
-  var qs=blockLive(topic), txt=blockText(topic);
+  var qs=blockShown(topic), txt=blockText(topic);
   if(!qs.length){
     app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
       '<h2>Waiting for the next question</h2><p>Keep this page open.</p></div></div>';
@@ -1443,8 +1511,9 @@ function renderBlockAudience(topic){
                 '<p class="iqt sub">'+esc(q.q)+'</p>'
               :'<p class="iqt">'+(n+1)+'. '+esc(q.q)+'</p>')+
         '<div class="iopts">'+q.options.map(function(o,i){
-          return '<button class="io'+(MYANS[q.id]===i?' on':'')+'" data-q="'+esc(q.id)+'" data-i="'+i+'">'+
-            '<i>'+String.fromCharCode(65+i)+'</i><span>'+esc(o)+'</span></button>'; }).join('')+
+          return '<button class="io'+(picked(q,i)?' on':'')+(q.multi?' many':'')+
+            '" data-q="'+esc(q.id)+'" data-i="'+i+'">'+
+            '<i>'+(q.multi?'&#10003;':String.fromCharCode(65+i))+'</i><span>'+esc(o)+'</span></button>'; }).join('')+
         '</div></div>';
     }).join('')+
     '<button class="isub" id="iSub"'+(INTRO_BUSY?' disabled':'')+'>'+
@@ -1457,18 +1526,34 @@ function renderBlockAudience(topic){
   barMeta.textContent=topic;
   [].forEach.call(app.querySelectorAll('.io'),function(b){
     b.addEventListener('click',function(){
-      MYANS[b.dataset.q]=+b.dataset.i; render(true);
+      var id=b.dataset.q, i=b.dataset.i;
+      var q=qs.filter(function(x){ return x.id===id; })[0];
+      if(q && q.multi){
+        var cur=String(MYANS[id]||'').split('|').filter(Boolean);
+        var at=cur.indexOf(i);
+        if(at>=0) cur.splice(at,1);
+        else { if(cur.length>=3) return; cur.push(i); }
+        MYANS[id]=cur.join('|');
+      } else {
+        MYANS[id]=+i;
+        /* Changing the answer above can take the follow-up question away with
+           it — an answer to a question nobody can see must not be sent. */
+        blockLive(topic).forEach(function(x){
+          if(x.follows===id && String(MYANS[id])!=='0') delete MYANS[x.id];
+        });
+      }
+      render(true);
     });
   });
   on('iSub',function(){
     if(INTRO_BUSY) return;
-    var missing=qs.filter(function(q){ return MYANS[q.id]===undefined; });
+    var missing=blockShown(topic).filter(function(q){ return !answered(q); });
     if(missing.length){
       var n=document.getElementById('iNote');
       n.textContent='Still '+missing.length+' to answer.'; n.className='note warn';
       return;
     }
-    sendIntro(qs);
+    sendIntro(blockShown(topic));
   });
 }
 
@@ -1626,7 +1711,7 @@ function settle(qid,i,how){
 }
 
 /* ---- presenter ---- */
-var META_FIELDS=[['company','Company'],['title','Workshop name'],['date','Date'],
+var META_FIELDS=[['orgtype','Type of organisation'],['company','Organisation name'],['title','Workshop name'],['date','Date'],
                  ['time','Start time'],['place','Place'],
                  ['participants','People in the room'],['duration','Duration']];
 /* The start screen asks for an estimate. The report asks what actually
@@ -1637,8 +1722,20 @@ var DURATIONS=['30 minutes','1 hour','90 minutes','2 hours'];
 /* Date and duration are the two fields people mistype, so neither is a free
    text box: one is the browser's own calendar, the other a short list with a
    way out for anything unusual. */
+var ORG_TYPES=['Company','Educational institute','Other'];
+/* What the report calls the people in the room. A school is not a company and
+   the report should not tell its principal that it is. */
+function peopleWord(){
+  var t=String((typeof META!=='undefined' && META.orgtype)||'');
+  return /educat/i.test(t) ? 'students' : /other/i.test(t) ? 'participants' : 'employees';
+}
 function metaField(f){
   var k=f[0], v=META[k]||'';
+  if(k==='orgtype')
+    return '<label><span class="lab">'+f[1]+'</span><select id="m_orgtype">'+
+      ORG_TYPES.map(function(o){
+        return '<option'+(v===o?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+
+      '</select></label>';
   if(k==='date')
     return '<label><span class="lab">'+f[1]+'</span>'+
       '<input type="date" id="m_date" value="'+esc(v)+'"></label>';
@@ -1667,6 +1764,7 @@ function readMetaFields(){
   REPORT_FIELDS.forEach(function(f){
     var e=document.getElementById('m_'+f[0]); if(e) META[f[0]]=e.value;
   });
+  var ot=document.getElementById('m_orgtype'); if(ot) META.orgtype=ot.value;
   var sel=document.getElementById('m_duration'), other=document.getElementById('m_durationOther');
   if(other && !other.classList.contains('hide')) META.duration = other.value.trim();
   else if(sel) META.duration = sel.value==='__other' ? '' : sel.value;
@@ -1764,7 +1862,7 @@ function renderHome(){
   [].forEach.call(app.querySelectorAll('.pastrow'),function(b){
     b.addEventListener('click',function(){
       call({act:'load',code:CODE,row:b.dataset.row}).then(function(d){
-        if(d&&d.ok){ REPORT=d; META=d.meta||META; location.hash='#report'; }
+        if(d&&d.ok){ REPORT=d; takeEdits(d); META=d.meta||META; location.hash='#report'; }
       }).catch(function(){});
     });
   });
@@ -2892,12 +2990,31 @@ function loadSessions(){
 function loadReport(){
   if(!CODE) return;
   call({act:'report',code:CODE}).then(function(d){
-    if(d&&d.ok){ REPORT=d; if(d.meta) META=d.meta; render(true); }
+    if(d&&d.ok){ REPORT=d; takeEdits(d); if(d.meta) META=d.meta; render(true); }
   }).catch(function(){});
   call({act:'sessions',code:CODE}).then(function(d){
     if(d&&d.ok){ SESSIONS=d.sessions; render(true); }
   }).catch(function(){});
 }
+/* The revised wording is kept with the workshop in the Sheet, not on this
+   laptop, so it comes back on whatever device the report is opened from. */
+function saveEdits(){
+  edRender();
+  if(!CODE) return;
+  callPost({ act:'edits', code:CODE, data:JSON.stringify(EDITS) }).then(function(d){
+    if(!d||!d.ok) alert('The report is edited on this screen, but Google did not '+
+      'confirm the save. Check your connection and press Save again.');
+    else if(REPORT) REPORT.edits=JSON.parse(JSON.stringify(EDITS));
+  }).catch(function(){
+    alert('The report is edited on this screen, but it could not be saved to Google.');
+  });
+}
+function takeEdits(d){
+  try { EDITS = (d && d.edits) ? JSON.parse(JSON.stringify(d.edits)) : {}; }
+  catch(e){ EDITS={}; }
+  SHOWSYS=false; EDITING=false;
+}
+
 function saveMeta(){
   ['company','title','date','participants','duration'].forEach(function(k){
     var e=document.getElementById('m_'+k); if(e) META[k]=e.value;
@@ -3005,17 +3122,19 @@ function observation(R, nothing){
      claim inside it is held back when the answers do not support it. */
   var said = I && I.pct;
   var claim = (I && I.show)
-    ? '<b>'+I.pct+'%</b> said the session had little new to teach them &mdash; but '+
-      'their answers place them below the room average. The information is there; '+
-      'the action is missing.'
+    ? '<b>'+I.pct+'%</b> '+ed('obs_claim',
+        'said the session had little new to teach them \u2014 but their answers '+
+        'place them below the room average. The information is there; the action '+
+        'is missing.')
     : (said
-      ? '<b>'+said+'%</b> said the session had little new to teach them. The poll '+
-        'still shows gaps across the topics covered &mdash; the opportunity is to '+
-        'turn what people already know into defined actions.'
+      ? '<b>'+said+'%</b> '+ed('obs_claim',
+          'said the session had little new to teach them. The poll still shows '+
+          'gaps across the topics covered \u2014 the opportunity is to turn what '+
+          'people already know into defined actions.')
       : '');
   var next = nothing
-    ? '<b>'+nothing+'%</b> do not plan to change anything &mdash; a group for '+
-      'targeted follow-up.' : '';
+    ? '<b>'+nothing+'%</b> '+ed('obs_next',
+        'do not plan to change anything \u2014 a group for targeted follow-up.') : '';
   if(!claim && !next) return '';
   return SECHEAD('The knowledge-to-action gap')+
     '<div class="obs">'+
@@ -3070,55 +3189,146 @@ function knewCard(R){
    Colour carries the meaning, so the bands are not labelled; the percentage
    inside each block is all the reading it needs. */
 var BAND_COLS = ['#E03131','#F76707','#FAB005','#82C91E','#12B886'];
+var BAND_NAMES = ['Starting','Building','Progressing','Prepared','Well Prepared'];
+var BAND_MEANS = ['almost none of it in place','a start made, but no system yet',
+                  'halfway — aware, not yet arranged','mostly in place, one gap left',
+                  'they know it, they have arranged it, and it holds'];
+
+/* One row per topic, in the same five colours as the dial. The single figure
+   never showed that a room can be strong on loans and bare on insurance. */
+function topicBars(R){
+  var ts=(R.session_topics||[]).filter(function(t){ return t.spread && t.spreadOf; });
+  if(!ts.length) return '';
+  var rows=ts.map(function(t){
+    var seg=t.spread.map(function(n,i){
+      if(!n) return '';
+      var pct=Math.round(n/t.spreadOf*100);
+      /* the same rule as the room bar: a block with people in it shows its
+         number, smaller if the block is narrow */
+      return '<i class="'+(i===2?'dark ':'')+(pct<10?'thin':'')+'" style="flex:'+n+
+        ';background:'+BAND_COLS[i]+'">'+pct+'%</i>';
+    }).join('');
+    return '<div class="tbrow"><span class="tbname">'+esc(t.topic)+'</span>'+
+      '<span class="tbbar">'+seg+'</span></div>';
+  }).join('');
+  var key=BAND_NAMES.map(function(n,i){
+    return '<span class="tbk"><u style="background:'+BAND_COLS[i]+'"></u><span>'+esc(n)+
+      '</span><em>'+esc(BAND_MEANS[i])+'</em></span>';
+  }).join('');
+  return '<div class="tbars"><p class="sphead">Where people sit, topic by topic</p>'+
+    rows+'<div class="tbkey">'+key+'</div></div>';
+}
 function spreadBar(R){
   var p = R.people;
   if(!p || !p.counted || !p.spread) return '';
   var tot = p.counted;
   var seg = p.spread.map(function(n,i){
+    /* A band with nobody in it is left out altogether. Kept in, it still drew a
+       small coloured stub at the edge of the bar, which read as a few people. */
+    if(!n) return '';
     var pct = Math.round(n/tot*100);
-    /* below about a fifteenth of the width the number would be clipped, so the
-       block shows colour only rather than half a digit */
-    var txt = pct>=7 ? pct+'%' : '';
-    return '<i class="'+(i===2?'dark':'')+'" style="flex:'+n+
+    /* Every block that holds anybody carries its number. A narrow block gets a
+       smaller figure rather than no figure; only an empty band stays blank. */
+    var txt = n ? pct+'%' : '';
+    var cls = (i===2?'dark ':'') + (pct<10 ? 'thin' : '');
+    return '<i class="'+cls+'" style="flex:'+n+
       ';background:'+BAND_COLS[i]+'">'+txt+'</i>';
   }).join('');
   return '<div class="sp">'+
     '<p class="sphead">Where the '+tot+' '+(tot===1?'person sits':'people sit')+'</p>'+
     '<div class="spbar">'+seg+'</div></div>';
 }
+/* The report's last job is to say what happens after it. What was covered is
+   the foundation to reinforce; what the room asked for is the next session. */
+function nextSteps(R){
+  var ST=R.session_topics||[], F=R.feedback||{};
+  var now=ST.map(function(t){ return t.topic; });
+  var want=(F.topics||[]).filter(function(t){ return t.topic; });
+  var all=R.all_topics||[];
+  var left=all.filter(function(t){ return now.indexOf(t)<0; });
+  if(!now.length && !want.length) return '';
+
+  var nextLine;
+  if(want.length){
+    nextLine='<p class="nsl"><b>Next</b> \u2014 chosen by the '+peopleWord()+
+      ' who asked for more sessions:<br>'+
+      want.slice(0,4).map(function(t){
+        return esc(t.topic)+' <em>('+t.n+')</em>'; }).join(' &nbsp;&middot;&nbsp; ')+
+      '</p>';
+  } else if(left.length){
+    nextLine='<p class="nsl"><b>Next</b> \u2014 not yet covered:<br>'+
+      esc(left.slice(0,6).join(' \u00b7 '))+'</p>';
+  } else nextLine='';
+
+  return '<div class="nsteps">'+
+    '<span class="nshead">Recommended next steps</span>'+
+    (now.length?'<p class="nsl"><b>Now</b> \u2014 reinforce what was covered today:<br>'+
+      esc(now.join(' \u00b7 '))+'</p>':'')+
+    nextLine+'</div>';
+}
+
+/* The single word beside the dial describes the average person, and a reader
+   fairly asks how the rest of the room sits around it. Three numbers answer it. */
+function splitLine(R){
+  var p=R.people; if(!p||!p.counted||!p.spread) return '';
+  var b=bandIndex(R.awareness);
+  if(b<0) return '';
+  var below=0, above=0;
+  p.spread.forEach(function(n,i){ if(i<b) below+=n; else if(i>b) above+=n; });
+  var pc=function(n){ return Math.round(n/p.counted*100)+'%'; };
+  /* At the top and the bottom of the scale one side of the room is empty, and
+     "0% sit below it" is a sentence about nobody. */
+  var rest='';
+  if(below && above) rest=' '+pc(below)+' sit below it, and '+pc(above)+' above.';
+  else if(below)     rest=' The other '+pc(below)+' sit below it.';
+  else if(above)     rest=' The other '+pc(above)+' sit above it.';
+  return '<p class="splitl">'+pc(p.spread[b])+' sit in that band.'+rest+'</p>';
+}
+function bandIndex(v){
+  if(v===null||v===undefined) return -1;
+  return v<20?0:v<40?1:v<60?2:v<80?3:4;
+}
+
 /* Said as a count, not a share — a number reads as a fact, a percentage reads
    as a complaint about the room. */
+/* Two different facts, and the old line confused them: people who were in the
+   room but never picked up a phone, and people who answered so little they
+   could not be scored. */
 function missedLine(R){
-  var p = R.people; if(!p) return '';
+  var p = R.people; if(!p || !p.counted) return '';
+  var out='';
   var present = parseInt(META.attended||META.participants,10);
-  var out = p.dropped;
-  if(present && present > p.counted) out = present - p.counted;
-  if(!out || !p.counted) return '';
-  return '<br>'+out+' of the '+(present||(p.counted+out))+
-    ' people present answered too few questions to be counted.';
+  if(present && present > R.responded)
+    out += '<br>'+R.responded+' of the '+present+' took part in the poll.';
+  if(p.dropped)
+    out += '<br>'+p.dropped+' answered too little to be scored.';
+  return out;
 }
 
 /* What the band actually means — the first question anyone asks when they see
    the word, so it sits right beside it. One per colour on the dial. */
+/* What the band means, written without naming any topic — the same five notes
+   serve a session on budgeting and a session on retirement. */
 var BAND_NOTES = {
   'Starting':
-    'Most people here have not started planning yet \u2014 and that is normal, '+
-    'because nobody is taught this. Knowing where the money goes each month is '+
-    'the first thing that changes it.',
+    'Almost none of it is in place yet \u2014 and that is normal, because nobody is '+
+    'taught this. The first step is knowing your own numbers rather than guessing at them.',
   'Building':
-    'A start has been made, but it is not steady yet. Most people are managing '+
-    'month to month without a plan behind it. Turning intention into fixed '+
-    'amounts is what moves this next.',
+    'A start has been made, but it is not steady. Most people here are managing month '+
+    'to month without a system behind it. Turning intention into a fixed arrangement '+
+    'is what moves this next.',
   'Progressing':
-    'The habits are forming. Most people know what they should be doing; what '+
-    'is missing is a number to work towards and a date to reach it by.',
+    'The habits are forming. Most people know what they should be doing; what is '+
+    'missing is the arrangement that makes it happen without having to decide again '+
+    'every month.',
   'Prepared':
-    'The essentials are in place \u2014 savings, cover, and a sense of direction. '+
-    'The work now is matching what they hold to what they are actually saving for.',
+    'Most of it is in place. What is left is the part that only shows under pressure '+
+    '\u2014 whether the arrangement would hold if the income stopped or a large cost arrived.',
   'Well Prepared':
-    'A financially aware group, managing money against real goals. The value now '+
-    'is in keeping the plan current as income and responsibilities change.'
+    'The arrangements are in place, and they would hold. The work now is reviewing '+
+    'them as life changes, rather than building them.'
 };
+
 function bandNote(b){ return BAND_NOTES[b] || ''; }
 function fmtDate(d){ return prettyDate(d); }
 /* 14:30 reads as 2:30 pm on the report and in the list. */
@@ -3185,9 +3395,8 @@ function gaugeSVG(pct){
       ' L'+b2[0].toFixed(1)+','+b2[1].toFixed(1)+'Z" fill="#14274A"/>'+
     '<circle cx="'+CX+'" cy="'+CY+'" r="20" fill="#14274A"/>'+
     '<circle cx="'+CX+'" cy="'+CY+'" r="8" fill="#fff"/>'+
-    '<text x="34" y="322" class="gl">LOW</text>'+
-    '<text x="'+CX+'" y="26" class="gl gc">MODERATE</text>'+
-    '<text x="606" y="322" class="gl ge">HIGH</text>'+
+    /* The dial used to carry LOW / MODERATE / HIGH while everything around it
+       used the five band names. Two systems on one picture; the words go. */
     '<text x="'+CX+'" y="360" class="gv">'+v+'<tspan class="gvp">%</tspan></text>'+
   '</svg>';
 }
@@ -3224,15 +3433,21 @@ function findCard(f,kind){
 /* Four numbers an executive can take in at a glance, before any of the detail.
    Nothing new is measured — the strongest figure from each topic, plus the one
    from the intro that matters most. */
+/* "I have a clear plan and I follow it" is the only answer that means a plan
+   exists. Testing for an option starting with "Yes" broke the day the question
+   was reworded, and every room came out at 100% with no plan. */
+var HAS_PLAN=/(^\s*yes)|clear plan/i;
 function noPlanPct(R){
   var pl=null; (R.intro||[]).forEach(function(r){ if(r.id==='in_plan') pl=r; });
   if(!pl || !pl.total) return null;
   var none=0;
-  pl.options.forEach(function(o,i){ if(!/^yes/i.test(o)) none+=pl.counts[i]; });
+  pl.options.forEach(function(o,i){ if(!HAS_PLAN.test(o)) none+=pl.counts[i]; });
   return Math.round(none/pl.total*100);
 }
 function tiles(R, sec){
   var out=[], np=noPlanPct(R);
+  var tnames=(R.session_topics||[]).map(function(t){ return t.topic; })
+               .join(', ').replace(/, ([^,]*)$/, ' and $1').toLowerCase();
   if(np) out.push({ pct:np, lab:'No financial plan',
                     say:'Planning is the clearest gap.' });
   (R.session_topics||[]).forEach(function(t){
@@ -3252,15 +3467,41 @@ function tiles(R, sec){
         '<span>'+esc(x.lab)+'</span>'+
         '<s>'+esc(x.say)+'</s></div>';
     }).join('')+'</div>'+
+    /* The old line recommended work on protection and long-term planning in a
+       session that measured neither. It now names what was actually asked. */
     '<p class="hrint"><span>HR interpretation</span>'+
-      'The priority is not more information alone. Employees need a structured '+
-      'path from knowledge to financial resilience, protection and long-term '+
-      'planning.</p>';
+      'The priority is not more information alone. '+
+      (tnames ? esc(peopleWord().charAt(0).toUpperCase()+peopleWord().slice(1))+
+                ' need practical systems for '+esc(tnames)+'.'
+              : esc(peopleWord().charAt(0).toUpperCase()+peopleWord().slice(1))+
+                ' need practical systems, not more information.')+
+      ' The recommended next steps are set out with the findings below.</p>';
 }
 
 /* The company already knows its own age spread. What it does not know is
    whether those people have anything behind them — so the intro is written out
    as two sentences: who is in the room, and the thing that makes it matter. */
+/* ── the planner's own words ────────────────────────────────
+   Every line of prose in this report is written by the tool. A line that does
+   not fit a particular room can be rewritten on screen and kept with the
+   workshop, so two copies exist from then on: the System copy, which is what
+   the tool wrote and never changes, and the Revised copy. Only words can be
+   changed — every number, bar and percentage stays as collected, so a revised
+   report can never disagree with the answers behind it. */
+var EDITS={}, SHOWSYS=false, EDITING=false, EDGO=false;
+/* While a line is being reworded nothing may redraw the page underneath it,
+   not even the automatic refresh. Only the buttons below ask for a redraw. */
+function edRender(){ EDGO=true; try { render(true); } finally { EDGO=false; } }
+function ed(key, txt){
+  txt=String(txt==null?'':txt);
+  var t=(!SHOWSYS && EDITS[key]!=null) ? EDITS[key] : txt;
+  /* The tool's own wording travels with the line, so a line edited back to
+     what it said originally stops counting as an edit. */
+  return '<span class="edt'+(EDITS[key]!=null?' edited':'')+'" data-ed="'+key+
+    '" data-sys="'+esc(txt)+'">'+esc(t)+'</span>';
+}
+function hasEdits(){ for(var k in EDITS){ if(EDITS[k]!=null) return true; } return false; }
+
 var AGE_SAY = { 'under 30':'under 30', '30 to 45':'between 30 and 45',
                 'over 45':'over 45', '30-40':'in their thirties',
                 '40-50':'in their forties', 'over 50':'over 50' };
@@ -3282,10 +3523,25 @@ function aboutEmployees(R){
   var hasKids = kid && /^yes/i.test(kid.opt);
   if(kid) who.push(hasKids ? 'parents' : 'not yet parents');
 
-  var s1 = who.length
-    ? 'Most people here are '+who.slice(0,-1).join(', ')+
-      (who.length>1?', and ':'')+who[who.length-1]+'.'
-    : '';
+  /* These are three separate answers, each the largest group in its own
+     question. Joined into one sentence they describe a person nobody has shown
+     to exist. */
+  var W=peopleWord();
+  var bits=[];
+  if(age) bits.push('most '+W+' are '+(AGE_SAY[age.opt.toLowerCase()]||age.opt.toLowerCase()));
+  if(mar) bits.push('the largest group is '+(/married/i.test(mar.opt)?'married'
+                  : /separated/i.test(mar.opt)?'separated':'single'));
+  /* Stated as a fact about the people who do have children, never as a remark
+     about the people who do not. */
+  if(by.in_kids && by.in_kids.total){
+    var k=by.in_kids, yes=0;
+    k.options.forEach(function(o,i){ if(/^yes/i.test(String(o))) yes+=k.counts[i]; });
+    var kp=Math.round(yes/k.total*100);
+    if(kp) bits.push(kp+'% have children');
+  }
+  var s1 = bits.length ? bits.join(', ')+'.' : '';
+  s1 = s1.charAt(0).toUpperCase()+s1.slice(1);
+  if(s1) s1 = ed('prof1', s1);
 
 
 
@@ -3294,16 +3550,17 @@ function aboutEmployees(R){
   var s2='', pl=by.in_plan;
   if(pl && pl.total){
     var none=0;
-    pl.options.forEach(function(o,i){ if(!/^yes/i.test(o)) none+=pl.counts[i]; });
+    pl.options.forEach(function(o,i){ if(!HAS_PLAN.test(o)) none+=pl.counts[i]; });
     var pct=Math.round(none/pl.total*100);
     if(pct){
-      s2='<b>'+pct+'%</b> of them have no financial plan';
-      s2 += hasKids ? ' &mdash; with a family depending on that income, this is where the risk sits.'
-                    : ' &mdash; the earning years are the ones that decide the rest.';
+      var tail = 'of '+peopleWord()+' have no clear financial plan'
+        + (hasKids ? ' \u2014 with a family depending on that income, this is where the risk sits.'
+                   : ' \u2014 the earning years are the ones that decide the rest.');
+      s2='<b>'+pct+'%</b> '+ed('prof2', tail);
     }
   }
   return (s1||s2) ? '<div class="whoblk">'+
-      (s1?'<p class="wholine">'+esc(s1)+'</p>':'')+
+      (s1?'<p class="wholine">'+s1+'</p>':'')+
       (s2?'<p class="whopoint">'+s2+'</p>':'')+
     '</div>' : '';
 }
@@ -3368,11 +3625,11 @@ function renderReport(){
       return '<div class="tblock">'+
         '<span class="tnum">'+(n+1)+'</span>'+
         '<div class="tbody"><p class="ttop">'+esc(t.topic)+'</p>'+
-        '<h3>'+esc(t.theme||t.verdict||'')+'</h3>'+
-        (t.theme&&t.verdict?'<p class="tsay">'+esc(t.verdict)+'</p>':'')+
+        '<h3>'+ed('t'+n+'_head', t.theme||t.verdict||'')+'</h3>'+
+        (t.theme&&t.verdict?'<p class="tsay">'+ed('t'+n+'_say', t.verdict)+'</p>':'')+
         '<p class="tsig">Key poll signals</p>'+
-        '<p class="tnums">'+t.lines.map(function(l){
-            return '<b>'+l.pct+'%</b> '+esc(l.say); }).join('<br>')+
+        '<p class="tnums">'+t.lines.map(function(l,li){
+            return '<b>'+l.pct+'%</b> '+ed('t'+n+'_l'+li, l.say); }).join('<br>')+
         '</p></div></div>';
     }).join('') : '';
 
@@ -3425,30 +3682,35 @@ function renderReport(){
     /* Three figures across the top, the detail underneath — the section reads
        as a result before it reads as a breakdown. */
     var three=[];
+    /* Read in the order the question asks them, so what the session gave
+       people comes before what it missed. */
+    var LT=L.slice().sort(function(a,b){
+      return (a.i==null?9:a.i)-(b.i==null?9:b.i); });
     if(F.useful!==null&&F.useful!==undefined)
-      three.push([F.useful,'Found session useful',
-        (L[0]?L[0].pct+'% '+L[0].say+(L[1]?'; '+L[1].pct+'% '+L[1].say:'')+'.':''),'ok']);
+      three.push([F.useful,'Learned something or gained clarity',
+        (LT[0]?LT[0].pct+'% '+LT[0].say+(LT[1]?'; '+LT[1].pct+'% '+LT[1].say:'')+'.':''),'ok']);
     if(actPct!==null) three.push([actPct,'Intend to take action',
       'A strong signal that the session created momentum.','ok']);
     if(F.more!==null&&F.more!==undefined)
       three.push([F.more,'Want more sessions',
-        'Supports a continuing financial-wellness programme.','gold']);
+        F.more+'% asked for further sessions.','gold']);
     fbBlock='<div class="fbwrap">'+
       SECHEAD('Did the session land?')+
       (three.length?'<div class="tiles three">'+three.map(function(t){
         return '<div class="tile '+t[3]+'"><b>'+t[0]+'<em>%</em></b>'+
           '<span>'+esc(t[1])+'</span>'+
           (t[2]?'<s>'+esc(t[2])+'</s>':'')+'</div>'; }).join('')+'</div>':'')+
-      (nx.length ? SECHEAD('What employees say they will do next')+
-        bars(F.next) : '')+
+      (nx.length ? SECHEAD('Top actions '+peopleWord()+' intend to take')+
+        bars(F.next)+'<p class="fbnote">Top three answers shown.</p>' : '')+
       /* The other half, said plainly and without a heading that announces it. */
       /* One or the other, never both: the observation already describes these
          people, and its figure is drawn from the same answers. */
       /* Everything about that group is said once, in its own section above. */
+      /* The percentage who want more sessions is already a tile in this very
+         section — saying it again in the closing line is the same fact twice. */
       ((F.closing&&META.company)?'<p class="fbclose">Overall it was '+esc(F.closing)+
-        ' initiative taken by <b>'+esc(META.company)+'</b>'+
-        (F.more!==null&&F.more!==undefined ? ', and <b>'+F.more+
-          '%</b> of employees would like more such sessions in future':'')+'.</p>':'')+
+        ' initiative taken by <b>'+esc(META.company)+'</b>, and employees have '+
+        'asked for more sessions like it.</p>':'')+
     '</div>';
   }
 
@@ -3486,14 +3748,27 @@ function renderReport(){
     '<div class="repwrap">'+
       '<div class="reptools noprint">'+
         '<div class="row">'+
-          '<button class="b2" id="repPrint">Save as PDF</button>'+
-          '<button class="b2 ghost" id="repBack">Back to the poll</button>'+
+          (EDITING
+            ? '<button class="b2" id="repEdSave">Save the revised copy</button>'+
+              '<button class="b2 ghost" id="repEdCancel">Cancel</button>'+
+              '<span class="edhint">Click any underlined line and type over it. '+
+              'Numbers and bars cannot be changed.</span>'
+            : '<button class="b2" id="repPrint">Save as PDF</button>'+
+              '<button class="b2 ghost" id="repEdit">Edit the words</button>'+
+              (hasEdits()
+                ? '<button class="b2 ghost'+(SHOWSYS?'':' open')+'" id="repSys">'+
+                    (SHOWSYS?'Show the revised copy':'Show the system copy')+'</button>'+
+                  '<button class="b2 ghost" id="repEdClear">Undo all my edits</button>'
+                : '')+
+              '<button class="b2 ghost" id="repBack">Back to the poll</button>')+
           '<button class="b2 ghost" id="tgDet">Workshop details</button>'+
           '<button class="b2 ghost" id="tgOwn">Who was in the room</button>'+
           '<button class="b2 ghost" id="tgAll">Every question</button>'+
           '<button class="b2 ghost" id="tgHow">How this works</button>'+
-          (R.savedAt?'<span class="savedtag">Saved automatically &middot; '+
+          (R.savedAt&&!EDITING?'<span class="savedtag">Saved automatically &middot; '+
             esc(clockOf(R.savedAt))+'</span>':'')+
+          (hasEdits()&&!EDITING?'<span class="copytag">'+
+            (SHOWSYS?'System copy':'Revised copy')+'</span>':'')+
         '</div>'+
         '<div class="fold hide" id="foldDet">'+det+'</div>'+
         '<div class="fold hide" id="foldOwn">'+
@@ -3503,7 +3778,7 @@ function renderReport(){
         '<div class="fold hide" id="foldHow">'+howItWorks()+'</div>'+
       '</div>'+
 
-      '<div class="doc" id="repDoc">'+
+      '<div class="doc'+(EDITING?' editing':'')+'" id="repDoc">'+
         '<div class="dtop">'+
           '<div class="dlogo"><img src="'+LOGO+'" alt="Jugnu — See Beyond"></div>'+
           '<div class="dtitle"><h1>Employee Financial Wellness<br>Snapshot</h1>'+
@@ -3524,25 +3799,28 @@ function renderReport(){
         (aw===null
           ? '<p class="nodata">No scored questions were answered, so an awareness '+
             'level cannot be worked out.</p>'
-          : sec('Financial awareness level')+
+          : sec('Financial Preparedness (Based on topics discussed)')+
             '<div class="gwrap">'+
               '<div class="gleft">'+gaugeSVG(aw)+'</div>'+
               '<div class="gright">'+
-                '<p class="gwhat">What this means</p>'+
+                '<p class="gwhat">The average person</p>'+
                 '<div class="bandbig">'+esc(R.band)+'</div>'+
-                '<p class="bandnote">'+bandNote(R.band)+'</p>'+
+                '<p class="bandnote">'+ed('bandnote', bandNote(R.band))+'</p>'+
               '</div>'+
               spreadBar(R)+
-              '<p class="bandwho">* Based on polls conducted during the session.'+
+              splitLine(R)+
+              topicBars(R)+
+              '<p class="bandwho">This measures how much planning is in place '+
+                '&mdash; not intelligence, and not income.'+
                 missedLine(R)+'</p>'+
             '</div>')+
 
-        tiles(R, sec)+
+        '<div class="pbreak"></div>'+tiles(R, sec)+
 
-        (topicBlocks?'<div class="pbreak"></div>'+sec('Financial knowledge and actions')+
+        (topicBlocks?sec('Financial knowledge and actions')+
           '<p class="tlead">'+ST.length+' topic'+(ST.length===1?' was':'s were')+
             ' covered. A brief synopsis of the responses received on each.</p>'+
-          '<div class="tblocks">'+topicBlocks+'</div>':'')+
+          '<div class="tblocks">'+topicBlocks+'</div>'+nextSteps(R):'')+
 
         observation(R, (R.feedback||{}).nothing)+
 
@@ -3559,8 +3837,11 @@ function renderReport(){
 
         '<p class="method"><b>Disclaimer:</b> This session was held to create '+
           'financial awareness, and no product or service was promoted. '+
-          'All responses were anonymous &mdash; no individual answer was '+
-          'recorded or shared.</p>'+
+          /* Answers are stored per device so each person can be scored — that
+             is what the dial and every bar rest on. Saying nothing was recorded
+             was not true; saying nobody is identified is. */
+          'Responses were collected anonymously and are reported only in '+
+          'aggregate &mdash; no individual is identified.</p>'+
 
         '<div class="dend">jugnu &nbsp;&mdash;&nbsp; <span>SEE BEYOND</span></div>'+
       '</div>'+
@@ -3581,6 +3862,32 @@ function renderReport(){
     setTimeout(function(){ document.title=was; },800);
   });
   on('repBack',function(){ STAGE='run'; location.hash='#present'; });
+
+  /* ---- editing the words ---- */
+  if(EDITING){
+    [].forEach.call(app.querySelectorAll('.edt'),function(el){
+      el.setAttribute('contenteditable','true');
+      el.setAttribute('spellcheck','true');
+    });
+    var first=app.querySelector('.edt'); if(first) first.focus();
+  }
+  on('repEdit',function(){ EDITING=true; SHOWSYS=false; edRender(); });
+  on('repEdCancel',function(){ EDITING=false; edRender(); });
+  on('repSys',function(){ SHOWSYS=!SHOWSYS; edRender(); });
+  on('repEdClear',function(){
+    if(!confirm('Remove every change you made and go back to what the tool wrote?')) return;
+    EDITS={}; SHOWSYS=false; saveEdits();
+  });
+  on('repEdSave',function(){
+    [].forEach.call(app.querySelectorAll('.edt'),function(el){
+      var key=el.getAttribute('data-ed');
+      var sys=el.getAttribute('data-sys')||'';
+      var txt=String(el.innerText||'').replace(/\s+/g,' ').trim();
+      if(!txt || txt===sys.replace(/\s+/g,' ').trim()) delete EDITS[key];
+      else EDITS[key]=txt;
+    });
+    EDITING=false; SHOWSYS=false; saveEdits();
+  });
   [['tgDet','foldDet'],['tgOwn','foldOwn'],['tgAll','foldAll'],
    ['tgHow','foldHow']].forEach(function(pair){
     on(pair[0],function(){
@@ -3594,8 +3901,10 @@ function renderReport(){
 
 function render(force){
   var sig=signature();
+  if(EDITING && !EDGO) return;
   if(!force){
     if(EDIT!==null) return;        // an open editor must not be swept away
+    if(EDITING) return;            // nor a report being reworded
     if(sig===LASTSIG) return;      // nothing changed
     if(typing()) return;           // someone is mid-word
   }
