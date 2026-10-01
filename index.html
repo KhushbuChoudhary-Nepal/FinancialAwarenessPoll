@@ -1177,7 +1177,7 @@ function resumeAnswers(){
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v32';
+var NEEDS_VERSION='v35';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -1306,13 +1306,14 @@ function qstr(params){
 function call(params){
   if(VIA_SCRIPT) return callScript(params);
   var controller=typeof AbortController!=='undefined'?new AbortController():null;
-  var timeout=controller?setTimeout(function(){controller.abort();},20000):null;
+  var timeout=controller?setTimeout(function(){controller.abort();},8000):null;
   return fetch(ENDPOINT+'?'+qstr(params),{method:'GET',redirect:'follow',signal:controller?controller.signal:undefined})
     .then(function(r){ return r.json(); })
     .then(function(d){if(timeout)clearTimeout(timeout);return d;})
     .catch(function(e){
       if(timeout)clearTimeout(timeout);
-      return callScript(params).then(function(d){ VIA_SCRIPT=true; return d; });
+      VIA_SCRIPT=true;
+      return callScript(params);
     });
 }
 
@@ -1329,7 +1330,7 @@ function callScript(params){
   return new Promise(function(res,rej){
     var cb='jgnu'+(++CBN)+'_'+Math.floor(Math.random()*1e6);
     var el=document.createElement('script'), done=false;
-    var t=setTimeout(function(){ finish(); rej(new Error('timed out')); },20000);
+    var t=setTimeout(function(){ finish(); rej(new Error('timed out')); },12000);
     function finish(){
       if(done) return; done=true; clearTimeout(t);
       try{ delete window[cb]; }catch(e){ window[cb]=undefined; }
@@ -1347,31 +1348,51 @@ function callScript(params){
 /* The room asks a tiny question on a loop — "has anything changed?" — and pays
    for a full reply only when the answer is different. While results are on
    show the bars must move, so that case always fetches in full. */
-var TICK=null;
+var TICK=null, PUBLIC_CHECKING=false, PUBLIC_REFRESH_QUEUED=false;
+function publicRefreshControls(){
+  if(MODE!=='aud')return;
+  var host=document.getElementById('publicRefresh');
+  if(!host){
+    host=document.createElement('div');host.id='publicRefresh';
+    host.style.cssText='max-width:720px;margin:0 auto 32px;padding:0 20px;text-align:center';
+    host.innerHTML='<button type="button" class="b2" id="publicRefreshBtn" style="width:auto;min-width:200px">Refresh question</button><p class="note" id="publicRefreshNote" aria-live="polite"></p>';
+    app.appendChild(host);
+    document.getElementById('publicRefreshBtn').addEventListener('click',refreshPublicQuestion);
+  }
+  var button=document.getElementById('publicRefreshBtn'), note=document.getElementById('publicRefreshNote');
+  button.disabled=PUBLIC_CHECKING;button.textContent=PUBLIC_CHECKING?'Checking…':'Refresh question';
+  note.textContent=PUBLIC_CHECKING?'Checking for the latest question…':FAILS?'Could not update yet. The page keeps trying; you can check again.':'This page updates automatically. Use this if your question has not appeared.';
+}
+function refreshPublicQuestion(){
+  if(MODE!=='aud' || PUBLIC_CHECKING || !ENDPOINT)return Promise.resolve();
+  PUBLIC_CHECKING=true;publicRefreshControls();
+  if(BUSY){PUBLIC_REFRESH_QUEUED=true;return Promise.resolve();}
+  return fullState(true);
+}
+function finishPublicRefresh(){
+  if(MODE==='aud' && PUBLIC_REFRESH_QUEUED){PUBLIC_REFRESH_QUEUED=false;return fullState(true);}
+  PUBLIC_CHECKING=false;PUBLIC_REFRESH_QUEUED=false;publicRefreshControls();
+}
+
 
 function refresh(){
-  if(BUSY || !ENDPOINT) return Promise.resolve();
-  /* Nothing to fetch until the presenter is in, and refreshing here would
-     redraw the code box and wipe what is being typed. */
-  if(MODE!=='aud' && !CODE) return Promise.resolve();
-  if(MODE==='aud' && S && !S.revealed && TICK){
-    BUSY=true;
-    return call({act:'tick'}).then(function(d){
-      BUSY=false; FAILS=0;
-      if(d && d.ok && d.v===TICK) return;      // nothing new — stop here
-      return fullState();
-    }).catch(function(){ BUSY=false; FAILS++; render(); });
-  }
+  if(BUSY || !ENDPOINT)return Promise.resolve();
+  if(MODE!=='aud' && !CODE)return Promise.resolve();
   return fullState();
 }
 
-function fullState(){
+function fullState(forcePublic){
+  var epoch=CONTROL_EPOCH;
   BUSY=true;
-  var p={act:'state'};
+  var p=MODE==='aud' && !forcePublic?{act:'pulse',v:TICK||''}:{act:'state'};
   if(MODE!=='aud' && CODE) p.code=CODE;
   return call(p).then(function(d){
-    BUSY=false; FAILS=0;
-    if(!d || !d.ok) return;
+    BUSY=false;
+    if(epoch!==CONTROL_EPOCH)return;
+    FAILS=0;
+    if(!d || !d.ok)throw new Error('Update not confirmed');
+    if(d.unchanged)return;
+    if(S && S.sessionId===d.sessionId && Number(d.revision||0)<Number(S.revision||0))return;
     if(d.v) TICK=d.v;
     var wasBlock = S ? ((S.block)||(S.intro?introTopic():'')) : '';
     var nowBlock = (d.block)||(d.intro?((d.introTopic)||'Intro'):'');
@@ -1385,8 +1406,8 @@ function fullState(){
        your choice wins until Google has confirmed it. */
     if(PLANWANT) d.plan=PLANWANT.slice();
     if(RUNWANT) d.run=RUNWANT.slice();
-    S=d; restoreAnswers(); if(d.meta && METASAVE===null) META=d.meta; trackClock(); render();
-  }).catch(function(){ BUSY=false; FAILS++; render(); });
+    S=d; restoreAnswers(); if(d.meta && METASAVE===null) META=d.meta; trackClock(); render(!!forcePublic);
+  }).catch(function(){ BUSY=false; FAILS++; render(); }).then(finishPublicRefresh);
 }
 
 /* ---- shared helpers ---- */
@@ -1492,13 +1513,18 @@ function renderAudience(){
                     :'One moment.')+'</p></div></div>';
     barMeta.textContent='Connecting'; return;
   }
+  var ongoing=S.workshopActive!==undefined?S.workshopActive:(!S.endedAt && S.started!==false && !!(S.started || S.activeId || S.block || askedList().length));
+  var delayed=FAILS>0?'<p class="note warn">Connection delayed. This page is checking again automatically.</p>':'';
+  if(!ongoing){
+    app.innerHTML='<div class="aud"><div class="rest"><h2>No ongoing workshop</h2><p>Please wait for Khushbu to start a workshop.</p>'+delayed+'</div></div>';
+    barMeta.textContent='No ongoing workshop';return;
+  }
   if(openBlock()){ return renderBlockAudience(openBlock()); }
   var q=activeQ();
-  if(!q){
-    app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
-      '<h2>Waiting for the next question</h2>'+
-      '<p>Keep this page open. The question appears the moment it opens.</p></div></div>';
-    barMeta.textContent='Waiting'; return;
+  if(!q || (!S.open && !S.revealed)){
+    var heading=askedList().length?'Waiting for the next question':'Waiting for the first question';
+    app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span><h2>'+heading+'</h2><p>Keep this page open. It updates automatically when a question is asked.</p>'+delayed+'</div></div>';
+    barMeta.textContent='Waiting';return;
   }
   var mine=MYANS[q.id], open=!!S.open, reveal=!!S.revealed, body;
   if(reveal && S.counts){
@@ -1519,7 +1545,7 @@ function renderAudience(){
     }).join('')+'</div><p class="note'+(VSTATE[q.id]==='fail'?' warn':'')+'">'+(open
       ? (mine==null ? 'Anonymous &mdash; your name is not collected.'
         : VSTATE[q.id]==='busy' ? 'Saving your answer&hellip;'
-        : VSTATE[q.id]==='fail' ? 'That did not reach us &mdash; tap your answer again.'
+        : VSTATE[q.id]==='fail' ? 'Your answer is not confirmed yet. We will retry while voting is open.'
         : 'Answer saved. You can change it while voting is open.')
       : (mine==null ? 'Voting is closed for this question.'
         : VSTATE[q.id]==='ok' ? 'Voting is closed. Your answer is saved.'
@@ -1529,7 +1555,7 @@ function renderAudience(){
   app.innerHTML='<div class="aud"><div class="qcard">'+
     '<p class="qn">Question '+(askedNumber(q)||1)+'</p>'+
     (q.lead?'<p class="lead">'+esc(q.lead)+'</p>':'')+
-    '<h1 class="qtext">'+esc(q.q)+'</h1>'+body+'</div></div>';
+    '<h1 class="qtext">'+esc(q.q)+'</h1>'+body+delayed+'</div></div>';
   barMeta.textContent = reveal?'Results':(open?'Voting open':'Voting closed');
   [].forEach.call(app.querySelectorAll('.opt'),function(b){
     b.addEventListener('click',function(){ vote(q.id,+b.dataset.i); });
@@ -1902,72 +1928,66 @@ function sessionStarted(id){
 /* A workshop nobody ended keeps the last question on screen for everyone
    holding the link. After a few hours that is almost certainly not intended,
    so the presenter is told before she does anything else. */
-var LEAVEOLD=false;
-function oldSessionBar(){
-  if(LEAVEOLD || !S) return '';
-  var live = S.activeId || S.block || (S.asked && S.asked.length);
-  if(!live) return '';
-  var began=sessionStarted(S.sessionId);
-  if(!began) return '';
-  var hrs=(Date.now()-began.getTime())/3600000;
-  if(hrs < 3) return '';
-  var when = hrs < 24
-    ? 'started ' + Math.round(hrs) + ' hours ago'
-    : 'started on ' + began.getDate() + ' ' +
-      ['January','February','March','April','May','June','July','August',
-       'September','October','November','December'][began.getMonth()];
-  var what = S.block ? 'The ' + esc(S.block) + ' questions are'
-           : S.activeId ? 'A question is'
-           : 'It is';
-  return '<div class="oldsess">'+
-    '<p class="oldhead">A workshop is still running</p>'+
-    '<p class="oldline">It was '+when+'. '+what+' on screen for anyone who opens '+
-      'the link. Ending it saves the workshop &mdash; you can reopen its report '+
-      'from the list below.</p>'+
-    '<div class="oldbtns">'+
-      '<button class="b2" id="oldEnd">End it now</button>'+
-      '<button class="b2 ghost" id="oldKeep">Leave it running</button>'+
-    '</div></div>';
+function hasExistingSession(){
+  if(!S)return false;
+  if(S.activeId || S.block)return true;
+  if(S.stoppedAt)return false;
+  if(S.started===true)return true;
+  return S.started==null && !!sessionStarted(S.sessionId) && !!(S.meta && S.meta.company);
+}
+function existingSessionCard(){
+  if(!hasExistingSession())return '';
+  var m=S.meta||{}, began=sessionStarted(S.sessionId), status=S.block
+    ? 'The '+esc(S.block)+' questions are open.'
+    : S.activeId ? (S.open?'Voting is open.':'Voting is closed; the last question is still on the public screen.')
+    : 'The session has started. The audience is waiting for the first question.';
+  var when=began?began.toLocaleString('en-GB',{timeZone:'Asia/Kathmandu',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).replace(/am|pm/g,function(x){return x.toUpperCase();}):'';
+  return '<div class="hcard"><h2>Existing session</h2>'+
+    '<p class="hsub"><b>'+esc(m.title||m.company||'Current workshop')+'</b>'+
+    (m.title && m.company?' — '+esc(m.company):'')+
+    (when?'<br>Started: '+esc(when)+' (Nepal time)':'')+'<br>'+status+'</p>'+
+    '<button class="b2" id="hCont">Continue</button>'+
+    '<button class="b2 ghost" id="stopPoll"'+(STOPPING?' disabled':'')+'>'+(STOPPING?'Stopping…':'End workshop')+'</button></div>';
+}
+var SESSION_LOAD_BUSY=false, SESSION_LOAD_ERROR='';
+function pastWorkshopsContent(){
+  if(SESSION_LOAD_ERROR)return '<p class="hsub">Could not load past workshops. '+esc(SESSION_LOAD_ERROR)+'</p><button class="b2 ghost" id="retrySessions">Retry</button>';
+  if(SESSIONS===null)return '<p class="hsub">Loading past workshops…</p>';
+  if(!SESSIONS.length)return '<p class="hsub">No past workshops saved.</p>';
+  return '<div class="past">'+SESSIONS.map(pastRow).join('')+'</div>';
 }
 
 function renderHome(){
-  var running = S && S.activeId;
-  app.innerHTML='<div class="homewrap">'+
-    oldSessionBar()+
+    app.innerHTML='<div class="homewrap">'+
+    existingSessionCard()+
     '<div class="hcard">'+
       '<h2>Start a fresh poll</h2>'+
       '<p class="hsub">The counts go back to zero. Everything already collected stays saved '+
         'and can be reopened from the list below.</p>'+
       '<div class="mgrid">'+META_FIELDS.map(metaField).join('')+'</div>'+
       '<button class="b2" id="hStart">Start the poll</button>'+
-      (running ? '<button class="b2 ghost" id="hCont">Carry on with the poll already running</button>' : '')+
     '</div>'+
     '<div class="hcard">'+
       '<h2>Past workshops</h2>'+
-      (SESSIONS===null ? '<p class="hsub">Loading&hellip;</p>'
-        : SESSIONS.length ? '<div class="past">'+SESSIONS.map(pastRow).join('')+'</div>'
-        : '<p class="hsub">None saved yet. Run a poll, then press Save this workshop on the report.</p>')+
+      pastWorkshopsContent()+
     '</div></div>';
   barMeta.textContent='Presenter';
   wireMetaFields();
   wirePlan();
+  on('stopPoll',stopCurrentPoll);
+  on('retrySessions',function(){SESSIONS=null;loadSessions();render(true);});
   on('hStart',function(){
     readMetaFields();
     if(!META.company.trim()){ alert('A company name, at least — the report is titled with it.'); return; }
-    var q={act:'meta',code:CODE};
+    var q={act:'start',code:CODE};
     for(var k in META) q[k]=META[k];
     METASAVE=1;
-    call(q).then(function(){ return call({act:'reset',code:CODE}); })
-      .then(function(){ STAGE='run'; SEL=null; refresh(); render(true); })
-      .catch(function(){ alert('Could not reach Google. Check your connection and try again.'); });
+    var btn=document.getElementById('hStart');if(btn){btn.disabled=true;btn.textContent='Starting…';}
+    controlCall(q)
+      .then(function(d){adoptControlState(d,true);STAGE='run';SEL=null;render(true);refresh();})
+      .catch(function(e){if(btn){btn.disabled=false;btn.textContent='Start the poll';}alert('The new session was not confirmed. '+e.message+'. Please try again.');});
   });
   on('hCont',function(){ STAGE='run'; SEL=S.activeId; render(true); });
-  on('oldKeep',function(){ LEAVEOLD=true; render(true); });
-  on('oldEnd',function(){
-    call({act:'reset',code:CODE}).then(function(){
-      SESSIONS=null; loadSessions(); refresh(); render(true);
-    }).catch(function(){ alert('Could not reach Google. Check your connection and try again.'); });
-  });
   [].forEach.call(app.querySelectorAll('.pastrow'),function(b){
     b.addEventListener('click',function(){
       call({act:'load',code:CODE,row:b.dataset.row}).then(function(d){
@@ -2330,6 +2350,7 @@ function sidebar(q){
       '<button class="dashbtn'+(BOARD?' on':'')+'" id="goBoard">Dashboard</button>'+
       '<button class="dashbtn'+(LIB?' on':'')+'" id="goLib">Library</button>'+
       '<button class="dashbtn'+((!BOARD&&!LIB&&!PIPE)?' on':'')+'" id="goRun">Current session</button>'+
+      '<button class="dashbtn" id="stopPoll" style="grid-column:1/-1;color:#a32929"'+(STOPPING?' disabled':'')+'>'+(STOPPING?'Stopping…':'End workshop')+'</button>'+
     '</div>'+
     '<div class="navsep"></div>'+
     '<button class="dashbtn wide'+(PIPE?' on':'')+'" id="goPipe">Today Pipeline'+
@@ -2730,6 +2751,7 @@ function renderBlockPresenter(topic){
   app.innerHTML='<div class="pres onecol"><div class="stage">'+
     '<div class="ctrl top">'+
       '<button class="b go" id="introClose">Close this block</button>'+
+      '<button class="b" id="stopPoll"'+(STOPPING?' disabled':'')+'>'+(STOPPING?'Stopping…':'End workshop')+'</button>'+
       '<button class="b" id="refreshNow">&#8635; Refresh now</button>'+
       '<button class="b" id="goQs">Go to the questions</button>'+
       clockBox()+
@@ -2742,6 +2764,7 @@ function renderBlockPresenter(topic){
     '<p class="hidden-note">Yours only &mdash; the room never sees this, and it stays out of the report</p>'+
   '</div></div>';
   barMeta.textContent=topic;
+  on('stopPoll',stopCurrentPoll);
   on('introClose',function(){ send({act:'set',block:''}); });
   on('goQs',function(){ send({act:'set',block:''}); });
   on('goHome',function(){ STAGE='home'; SEL=null; SESSIONS=null; loadSessions(); render(true); });
@@ -2862,6 +2885,7 @@ function wireEditor(){
 function wire(){
   on('goBoard',function(){ BOARD=true; LIB=false; EDIT=null; render(true); });
   on('goLib',function(){ LIB=true; BOARD=false; PIPE=false; EDIT=null; loadLib(); render(true); });
+  on('stopPoll',stopCurrentPoll);
   on('goRun',function(){ LIB=false; BOARD=false; PIPE=false; EDIT=null; render(true); });
   on('goPipe',function(){ PIPE=true; LIB=false; BOARD=false; EDIT=null; render(true); });
   [].forEach.call(app.querySelectorAll('[data-pipe]'),function(b){
@@ -2970,7 +2994,42 @@ function wire(){
   on('nextQ',function(){ step(1); });
 
 }
-function send(p){ p.code=CODE; call(p).then(refresh).catch(function(){}); }
+var CONTROL_EPOCH=0, CONTROL_QUEUE=Promise.resolve(), STOPPING=false;
+function controlCall(p){
+  if(!p.op)p.op=Date.now().toString(36)+'_'+Math.random().toString(36).slice(2);
+  var attempts=0;
+  function attempt(){attempts++;return call(p).then(function(d){
+    if(d && d.error==='busy' && attempts<3)return new Promise(function(resolve){setTimeout(resolve,1000*attempts+Math.round(Math.random()*1000));}).then(attempt);
+    if(!d || !d.ok)throw new Error(d && d.error ? d.error : 'No confirmation from Google');
+    return d;
+  });}
+  var request=CONTROL_QUEUE.then(attempt,attempt);
+  CONTROL_QUEUE=request.catch(function(){});
+  return request;
+}
+function adoptControlState(d,fresh){
+  if(!d || !d.state)return;
+  CONTROL_EPOCH++;
+  var old=S||{}, next={};for(var k in old)next[k]=old[k];
+  for(var field in d.state)next[field]=d.state[field];
+  if(fresh){next.all={};next.people=0;next.counts={total:0,by:{}};next.blocks={};next.introCounts={};next.introPeople=0;}
+  next.revision=Number(d.state.rev||0);
+  next.workshopActive=!d.state.endedAt && d.state.started!==false && !!(d.state.started || d.state.activeId || d.state.block || (d.state.asked && d.state.asked.length));
+  if(d.meta){next.meta=d.meta;META=d.meta;}
+  S=next;TICK=null;trackClock();
+}
+function stopCurrentPoll(){
+  if(STOPPING || !S)return;
+  STOPPING=true;render(true);
+  controlCall({act:'end',code:CODE,sess:S.sessionId}).then(function(d){
+    adoptControlState(d,false);STOPPING=false;SEL=null;EDIT=null;render(true);refresh();
+  }).catch(function(e){STOPPING=false;render(true);alert('The workshop has not been confirmed ended. '+e.message+'. Please try again.');});
+}
+function send(p){
+  p.code=CODE;if(S)p.sess=S.sessionId;
+  return controlCall(p).then(function(d){adoptControlState(d,false);render(true);return refresh();})
+    .catch(function(e){alert('This change was not confirmed. '+e.message+'. Please try again.');});
+}
 function saveQuestions(qs){
   call({act:'config',code:CODE,questions:JSON.stringify(qs)}).then(refresh).catch(function(){});
 }
@@ -3084,26 +3143,28 @@ function signature(){
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
     MYANS, JSON.stringify(VSTATE), FAILS>2, STAGE, EDIT&&JSON.stringify(EDIT), BOARD, JSON.stringify(OPEN_P), SEL, LEVEL, FILTER, offList().join(','), S&&S.block, S&&S.plan, S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
     S&&S.blocks, S&&S.people, S&&S.all, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
-    REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, META]);
+    REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, SESSION_LOAD_ERROR, SESSION_LOAD_BUSY, S&&S.started, S&&S.stoppedAt, META]);
 }
 function typing(){
   var a=document.activeElement;
   return !!(a && (a.tagName==='INPUT' || a.tagName==='TEXTAREA'));
 }
 function loadSessions(){
-  if(!CODE) return;
-  call({act:'sessions',code:CODE}).then(function(d){
-    if(d&&d.ok){ SESSIONS=d.sessions; render(true); }
-  }).catch(function(){ SESSIONS=[]; render(true); });
+  if(!CODE || SESSION_LOAD_BUSY)return Promise.resolve();
+  SESSION_LOAD_BUSY=true;SESSION_LOAD_ERROR='';
+  return call({act:'sessions',code:CODE}).then(function(d){
+    if(!d || !d.ok || !Array.isArray(d.sessions))throw new Error(d && d.error ? d.error : 'Google did not return the workshop list');
+    SESSIONS=d.sessions;SESSION_LOAD_BUSY=false;render(true);
+  }).catch(function(e){
+    SESSION_LOAD_BUSY=false;SESSION_LOAD_ERROR=String(e.message||e);SESSIONS=[];render(true);
+  });
 }
 function loadReport(){
   if(!CODE) return;
   call({act:'report',code:CODE}).then(function(d){
     if(d&&d.ok){ REPORT=d; takeEdits(d); if(d.meta) META=d.meta; render(true); }
   }).catch(function(){});
-  call({act:'sessions',code:CODE}).then(function(d){
-    if(d&&d.ok){ SESSIONS=d.sessions; render(true); }
-  }).catch(function(){});
+  loadSessions();
 }
 /* The revised wording is kept with the workshop in the Sheet, not on this
    laptop, so it comes back on whatever device the report is opened from. */
@@ -4021,6 +4082,7 @@ function render(force){
   LASTSIG=sig;
   versionCheck();
   MODE==='rep' ? renderReport() : MODE==='pres' ? renderPresenter() : renderAudience();
+  publicRefreshControls();
 }
 
 var qrDone='';
@@ -4038,11 +4100,11 @@ if(!ENDPOINT){ setup(); }
 else{
   render(); refresh(); if(MODE==='rep' && CODE) loadReport();
   /* the presenter needs it snappy; 150 phones must not all knock at once */
-  var base = MODE==='pres' ? 4000 : 7000;
+  var base = MODE==='pres' ? 2500 : 4000;
   setInterval(function(){
     if(document.hidden) return;
     refresh();
-  }, base + Math.round(Math.random()*(MODE==='pres'?1000:3000)));
+  }, base + Math.round(Math.random()*(MODE==='pres'?1000:2000)));
   document.addEventListener('visibilitychange',function(){ if(!document.hidden){refresh();resumeAnswers();} });
   window.addEventListener('online',function(){refresh();resumeAnswers();});
   setInterval(resumeAnswers,20000+Math.round(Math.random()*5000));
