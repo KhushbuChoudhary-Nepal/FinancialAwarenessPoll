@@ -1090,6 +1090,7 @@ textarea{resize:vertical;line-height:1.5}
     <div class="btitle">
       <h1>Financial Awareness Poll</h1>
       <p class="barmeta" id="barMeta">Connecting</p>
+      <p id="presentIdentity" hidden style="margin:8px 0 0;color:#fff;font-size:16px;line-height:1.5"></p>
     </div>
     <div class="bpl"><div class="k">PLANNER</div><div class="v">Khushbu Choudhary</div></div>
   </div>
@@ -1103,6 +1104,8 @@ textarea{resize:vertical;line-height:1.5}
   font-size:14px;line-height:1.45;font-weight:600}
 </style>
 <div id="vwarn" class="vwarn" hidden></div>
+
+<div id="presentAction" role="status" aria-live="polite" hidden style="max-width:1180px;margin:14px auto;padding:12px 18px;border-radius:8px;font-size:16px;font-weight:600"></div>
 
 <div id="app">
   <div class="aud"><div class="rest">
@@ -1352,6 +1355,7 @@ var TICK=null, PUBLIC_CHECKING=false, PUBLIC_REFRESH_QUEUED=false;
 function publicRefreshControls(){
   if(MODE!=='aud')return;
   var host=document.getElementById('publicRefresh');
+  if(!workshopIsActive()){if(host)host.remove();return;}
   if(!host){
     host=document.createElement('div');host.id='publicRefresh';
     host.style.cssText='max-width:720px;margin:0 auto 32px;padding:0 20px;text-align:center';
@@ -1361,7 +1365,36 @@ function publicRefreshControls(){
   }
   var button=document.getElementById('publicRefreshBtn'), note=document.getElementById('publicRefreshNote');
   button.disabled=PUBLIC_CHECKING;button.textContent=PUBLIC_CHECKING?'Checking…':'Refresh question';
-  note.textContent=PUBLIC_CHECKING?'Checking for the latest question…':FAILS?'Could not update yet. The page keeps trying; you can check again.':'This page updates automatically. Use this if your question has not appeared.';
+  note.textContent=PUBLIC_CHECKING?'Checking for the latest question…':FAILS?'Could not update yet. The page keeps trying; you can check again.':'';
+  note.hidden=!note.textContent;
+}
+function workshopIsActive(){
+  if(!S)return false;
+  return S.workshopActive!==undefined?!!S.workshopActive:(!S.endedAt && S.started!==false && !!(S.started || S.activeId || S.block || (S.asked && S.asked.length)));
+}
+var PRESENTER_ACTION='', PRESENTER_ACTION_KIND='';
+function presenterAction(text,kind){
+  PRESENTER_ACTION=text;PRESENTER_ACTION_KIND=kind||'pending';presenterDetails();
+}
+function presenterDetails(){
+  var identity=document.getElementById('presentIdentity'),notice=document.getElementById('presentAction');
+  var signedIn=MODE==='pres' && !!CODE && !!S;
+  if(identity){
+    identity.hidden=!signedIn;
+    if(signedIn){
+      barMeta.textContent='Presenter';
+      var m=S.meta||META||{},names=[m.company,m.title].filter(function(x){return !!x;});
+      identity.textContent=names.length?'Presented to: '+names.join(' - '):'Workshop details not available';
+    }
+  }
+  if(notice){
+    var text=PRESENTER_ACTION,kind=PRESENTER_ACTION_KIND;
+    if(!text && signedIn && S.endedAt){text='Workshop ended.';kind='success';}
+    notice.hidden=!signedIn || !text;
+    notice.textContent=text;
+    notice.style.background=kind==='error'?'#FDECEA':kind==='success'?'#E4F5EF':'#FFF3D6';
+    notice.style.color=kind==='error'?'#8A2C1E':'#14274A';
+  }
 }
 function refreshPublicQuestion(){
   if(MODE!=='aud' || PUBLIC_CHECKING || !ENDPOINT)return Promise.resolve();
@@ -3025,7 +3058,7 @@ function adoptControlState(d,fresh){
   CONTROL_EPOCH++;
   var old=S||{}, next={};for(var k in old)next[k]=old[k];
   for(var field in d.state)next[field]=d.state[field];
-  if(fresh){next.all={};next.people=0;next.counts={total:0,by:{}};next.blocks={};next.introCounts={};next.introPeople=0;}
+  if(fresh){PRESENTER_ACTION='';PRESENTER_ACTION_KIND='';next.all={};next.people=0;next.counts={total:0,by:{}};next.blocks={};next.introCounts={};next.introPeople=0;}
   next.revision=Number(d.state.rev||0);
   next.workshopActive=!d.state.endedAt && d.state.started!==false && !!(d.state.started || d.state.activeId || d.state.block || (d.state.asked && d.state.asked.length));
   if(d.meta){next.meta=d.meta;META=d.meta;}
@@ -3033,15 +3066,27 @@ function adoptControlState(d,fresh){
 }
 function stopCurrentPoll(){
   if(STOPPING || !S)return;
-  STOPPING=true;render(true);
+  STOPPING=true;presenterAction('Ending workshop…','pending');render(true);
   controlCall({act:'end',code:CODE,sess:S.sessionId}).then(function(d){
-    adoptControlState(d,false);STOPPING=false;SEL=null;EDIT=null;render(true);refresh();
-  }).catch(function(e){STOPPING=false;render(true);if(e.presenterAuth)return;alert('The workshop has not been confirmed ended. '+e.message+'. Please try again.');});
+    adoptControlState(d,false);
+    if(workshopIsActive() || !S.endedAt)throw new Error('Google has not confirmed that the workshop ended');
+    STOPPING=false;SEL=null;EDIT=null;
+    presenterAction('Workshop ended. The public screen will update automatically.','success');render(true);refresh();
+  }).catch(function(e){STOPPING=false;if(!e.presenterAuth)presenterAction('Workshop ending is not confirmed. Please try again.','error');render(true);if(e.presenterAuth)return;alert('The workshop has not been confirmed ended. '+e.message+'. Please try again.');});
 }
 function send(p){
   p.code=CODE;if(S)p.sess=S.sessionId;
-  return controlCall(p).then(function(d){adoptControlState(d,false);render(true);return refresh();})
-    .catch(function(e){if(e.presenterAuth)return;alert('This change was not confirmed. '+e.message+'. Please try again.');});
+  var asking=!!p.activeId || !!p.block;
+  if(asking)presenterAction('Asking the room…','pending');
+  return controlCall(p).then(function(d){
+    adoptControlState(d,false);
+    if(asking){
+      if(p.activeId && (String(S.activeId)!==String(p.activeId) || !S.open))throw new Error('The question was not confirmed open');
+      if(p.block && S.block!==p.block)throw new Error('The question section was not confirmed open');
+      presenterAction('Asked — the question is open for responses. Audience screens will update automatically.','success');
+    }else{PRESENTER_ACTION='';PRESENTER_ACTION_KIND='';}
+    render(true);return refresh();
+  }).catch(function(e){if(e.presenterAuth)return;if(asking)presenterAction('Asking the room is not confirmed. Please try again.','error');alert('This change was not confirmed. '+e.message+'. Please try again.');});
 }
 function saveQuestions(qs){
   call({act:'config',code:CODE,questions:JSON.stringify(qs)}).then(refresh).catch(function(){});
@@ -4099,6 +4144,7 @@ function render(force){
   versionCheck();
   MODE==='rep' ? renderReport() : MODE==='pres' ? renderPresenter() : renderAudience();
   publicRefreshControls();
+  presenterDetails();
 }
 
 var qrDone='';
