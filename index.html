@@ -1180,7 +1180,7 @@ function resumeAnswers(){
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v39';
+var NEEDS_VERSION='v41';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -1380,8 +1380,15 @@ function presenterAction(text,kind){
 function presenterDetails(){
   var identity=document.getElementById('presentIdentity'),notice=document.getElementById('presentAction');
   var signedIn=MODE==='pres' && !!CODE && !!S;
+  barMeta.hidden=MODE==='aud';
+  var publicNames=MODE==='aud' && workshopIsActive() && S.publicWorkshop;
   if(identity){
-    identity.hidden=!signedIn;
+    identity.hidden=!signedIn && !publicNames;
+    if(publicNames){
+      var names=[publicNames.company,publicNames.title].filter(function(x){return !!x;});
+      identity.textContent=names.join(' - ');
+      identity.hidden=!names.length;
+    }
     if(signedIn){
       barMeta.textContent='Presenter';
       var m=S.meta||META||{},names=[m.company,m.title].filter(function(x){return !!x;});
@@ -1579,7 +1586,7 @@ function renderAudience(){
         '<span class="rname">'+esc(o)+(mine===i?' &nbsp;<b>&mdash; you</b>':'')+'</span>'+
         '<span class="rpct">'+pct+'%</span>'+
         '<span class="rtrack"><i class="rfill" style="width:'+pct+'%"></i></span></div>';
-    }).join('')+'</div><p class="note">'+t.total+' '+(t.total===1?'answer':'answers')+' from the room.</p>';
+    }).join('')+'</div>';
   } else {
     body='<div class="opts">'+q.options.map(function(o,i){
       var st=(mine===i)?(VSTATE[q.id]||'busy'):'';
@@ -2259,7 +2266,7 @@ var open_=live && S.open;
     (q.lead?'<p class="tqlead">'+esc(q.lead)+'</p>':'')+
     '<p class="tqq">'+esc(q.q)+'</p>'+body+
     (q.after&&(asked||live)?'<p class="tqaft"><b>Say after the result</b>'+esc(q.after)+'</p>':'')+
-    foot+'</div>';
+    foot+'<div style="padding:0 18px 16px"><button class="b" data-manage="'+esc(q.id)+'">Edit question</button></div></div>';
 }
 
 function pipeBtn(q){
@@ -2557,7 +2564,7 @@ function renderLibrary(){
                        :(isIntro?'not quoted in the report'
                                :'no written line &mdash; the report would print the answer itself'))+
                 '</i></div>';
-            }).join('')+'</div></div>';
+            }).join('')+'</div><button class="b" data-manage="'+esc(q.id)+'">Edit question</button></div>';
         }).join('');
         return '<div class="lbtopic">'+head+list+'</div>';
       }).join('');
@@ -2569,13 +2576,13 @@ function renderLibrary(){
       '</div>';
     stage='<div class="stage">'+topbar()+
       '<div class="meta"><span>Library &nbsp;&middot;&nbsp; '+qs.length+' questions</span>'+
-        '<span>Reference only &mdash; nothing here prints</span></div>'+
+        '<button class="b" id="libraryAdd">+ Add a question</button></div>'+
       tabs+
       (LIBTAB==='data'
         ? libData(qs, says)
         : '<p class="lbnote">Every answer and the line it puts in the report. '+
           'The number on the left is the points that answer carries. '+
-          'Tell me about anything that reads wrong and I will change it.</p>'+body)+
+          'Use Edit question to change or permanently delete a question.</p>'+body)+
       '</div>';
   }
   app.innerHTML='<div class="pres">'+side+stage+'</div>';
@@ -2767,8 +2774,7 @@ function renderBlockPreview(topic){
   [].forEach.call(app.querySelectorAll('[data-edit]'),function(b){
     b.addEventListener('click',function(){
       var x=blockQs(topic).filter(function(y){return y.id===b.dataset.edit;})[0];
-      if(x) EDIT={id:x.id,q:x.q,lead:x.lead||'',topic:x.topic,level:x.level||'Any',
-                  options:x.options.slice(),scored:false,scores:(x.scores||[]).slice()};
+      if(x)openQuestionEditor(x.id);
       render(true);
     });
   });
@@ -2883,7 +2889,7 @@ function edRow(text, pts, i, n){
 function edGather(){
   var opts=[], scr=[];
   [].forEach.call(document.querySelectorAll('[data-opt]'),function(el){ opts.push(el.value); });
-  [].forEach.call(document.querySelectorAll('[data-pt]'), function(el){ scr.push(Math.max(0,+el.value||0)); });
+  [].forEach.call(document.querySelectorAll('[data-pt]'), function(el){ scr.push(Math.max(-1,+el.value||0)); });
   while(scr.length<opts.length) scr.push(0);
   EDIT.options=opts; EDIT.scores=scr;
   var g=function(id){ var e=document.getElementById(id); return e?e.value:''; };
@@ -2895,11 +2901,12 @@ function on(id,fn){ var e=document.getElementById(id); if(e) e.addEventListener(
 
 function wireEditor(){
   on('edSave',saveEdit);
-  on('edCancel',function(){ EDIT=null; render(true); });
+  on('edCancel',function(){ if(QUESTION_SAVING)return;EDIT=null; render(true); });
   on('edDel',function(){
-    if(!confirm('Delete this question from the library?')) return;
+    if(QUESTION_SAVING || !EDIT)return;
+    if(!confirm('Permanently delete this question from the library and future workshops?')) return;
     var qs=questions().filter(function(x){ return x.id!==EDIT.id; });
-    EDIT=null; saveQuestions(qs);
+    saveQuestions(qs,'Question deleted from the library.');
   });
   on('edAdd',function(){
     edGather(); EDIT.options.push(''); EDIT.scores.push(0); render(true);
@@ -2926,7 +2933,17 @@ function wireEditor(){
   [].forEach.call(document.querySelectorAll('[data-dn]'),function(b){
     b.addEventListener('click',function(){ var i=+b.dataset.dn; move(i,i+1); }); });
 }
+function openQuestionEditor(id){
+  if(QUESTION_SAVING)return;
+  var q=questions().filter(function(x){return x.id===id;})[0];if(!q)return;
+  EDIT=JSON.parse(JSON.stringify(q));EDIT.lead=EDIT.lead||'';EDIT.level=EDIT.level||'Any';
+  EDIT.scores=(EDIT.scores||[]).slice();render(true);
+}
 function wire(){
+  [].forEach.call(app.querySelectorAll('[data-manage]'),function(b){
+    b.addEventListener('click',function(){openQuestionEditor(b.dataset.manage);});
+  });
+  on('libraryAdd',function(){EDIT={q:'',lead:'',options:['',''],topic:'General',level:'Any',scored:true,scores:[]};render(true);});
   on('goBoard',function(){ BOARD=true; LIB=false; EDIT=null; render(true); });
   on('goLib',function(){ LIB=true; BOARD=false; PIPE=false; EDIT=null; loadLib(); render(true); });
   on('stopPoll',stopCurrentPoll);
@@ -3011,10 +3028,7 @@ function wire(){
   on('askIntro',function(){ SEL=null; send({act:'set',block:FILTER}); });
   on('addQ',function(){ EDIT={q:'',lead:'',options:['',''],topic:(FILTER==='All'?'General':FILTER),
     level:(LEVEL==='All'?'Any':LEVEL),scored:true,scores:[]}; render(true); });
-  on('editQ',function(){ var q=selectedQ();
-    if(q) EDIT={id:q.id,q:q.q,lead:q.lead||'',topic:q.topic,level:q.level||'Any',
-                options:q.options.slice(),scored:!!q.scored,scores:(q.scores||[]).slice()};
-    render(true); });
+  on('editQ',function(){var q=selectedQ();if(q)openQuestionEditor(q.id);});
   on('toggleOpen',function(){ send({act:'set',open:S.open?0:1}); });
   on('toggleRev',function(){ send({act:'set',revealed:S.revealed?0:1}); });
   function visibleHere(){
@@ -3110,28 +3124,46 @@ function send(p){
     render(true);return refresh();
   }).catch(function(e){if(e.presenterAuth)return;if(asking)presenterAction('Asking the room is not confirmed. Please try again.','error');alert('This change was not confirmed. '+e.message+'. Please try again.');});
 }
-function saveQuestions(qs){
-  call({act:'config',code:CODE,questions:JSON.stringify(qs)}).then(refresh).catch(function(){});
+var QUESTION_SAVING=false;
+function saveQuestions(qs,message){
+  if(QUESTION_SAVING)return Promise.resolve();
+  if(!qs.length){alert('Keep at least one question in the library.');return Promise.resolve();}
+  QUESTION_SAVING=true;presenterAction('Saving question changes…','pending');
+  ['edSave','edDel','edCancel'].forEach(function(id){var b=document.getElementById(id);if(b)b.disabled=true;});
+  return call({act:'config',code:CODE,questions:JSON.stringify(qs)}).then(function(d){
+    if(d && d.error==='bad code')throw presenterAuthError();
+    if(!d || !d.ok)throw new Error(d && d.error || 'No confirmation from Google');
+    QUESTION_SAVING=false;CONTROL_EPOCH++;TICK=null;S.questions=qs;EDIT=null;
+    presenterAction(message||'Question saved for future workshops.','success');render(true);refresh();
+  }).catch(function(e){
+    QUESTION_SAVING=false;if(e.presenterAuth)return;
+    presenterAction('Question changes are not confirmed saved. Please try again.','error');render(true);
+    alert('The change was not confirmed saved. '+e.message+'. Your edit is still open.');
+  });
 }
+
 function saveEdit(){
+  if(QUESTION_SAVING || !EDIT)return;
   edGather();
   var qt=(EDIT.q||'').trim();
-  var opts=(EDIT.options||[]).map(function(x){ return (x||'').trim(); }).filter(Boolean);
+  var opts=(EDIT.options||[]).map(function(x){ return (x||'').trim(); });
+  if(opts.some(function(x){return !x;})){alert('Fill each option, or remove its blank row.');return;}
   if(!qt || opts.length<2){ alert('A question and at least two options, please.'); return; }
   var scores=opts.map(function(){ return 0; });
   if(EDIT.scored){
-    scores=(EDIT.scores||[]).slice(0,opts.length).map(function(x){ return Math.max(0,+x||0); });
+    scores=(EDIT.scores||[]).slice(0,opts.length).map(function(x){ return Math.max(-1,+x||0); });
     while(scores.length<opts.length) scores.push(0);
     if(!scores.some(function(x){ return x>0; })){
       alert('At least one option needs points above zero, or untick the scoring box.'); return; }
   }
-  var body={ q:qt, lead:(EDIT.lead||'').trim(), topic:EDIT.topic, level:EDIT.level,
-             options:opts, scored:!!EDIT.scored, scores:scores };
+  var body={};for(var k in EDIT)body[k]=EDIT[k];
+  Object.assign(body,{ q:qt, lead:(EDIT.lead||'').trim(), topic:EDIT.topic, level:EDIT.level,
+             options:opts, scored:!!EDIT.scored, scores:scores });
   var qs=questions().slice();
   if(EDIT.id){ body.id=EDIT.id;
     for(var i=0;i<qs.length;i++) if(qs[i].id===EDIT.id) qs[i]=body; }
   else { body.id='q'+Date.now().toString(36); qs.push(body); }
-  EDIT=null; saveQuestions(qs);
+  saveQuestions(qs,'Question saved for future workshops.');
 }
 
 function gate(){
@@ -3226,7 +3258,7 @@ function signature(){
     (S && S.questions ? S.questions : []).map(function(q){ return q.id+'|'+q.q+'|'+q.options.join('|'); }),
     MYANS, JSON.stringify(VSTATE), FAILS>2, STAGE, EDIT&&JSON.stringify(EDIT), BOARD, JSON.stringify(OPEN_P), SEL, LEVEL, FILTER, offList().join(','), S&&S.block, S&&S.plan, S&&S.intro, INTRO_SENT, INTRO_BUSY, INTRO_FAIL, INTRO_WHY, INTRO_AT, JSON.stringify(INTRO_DONE), S&&S.version,
     S&&S.blocks, S&&S.people, S&&S.all, (S&&S.asked||[]).join(','), REPORT && REPORT.sessionId, REPORT && REPORT.results.length,
-    REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, SESSION_LOAD_ERROR, SESSION_LOAD_BUSY, S&&S.started, S&&S.stoppedAt, META]);
+    REPORT && REPORT.awareness, SESSIONS && SESSIONS.length, SESSION_LOAD_ERROR, SESSION_LOAD_BUSY, S&&S.started, S&&S.stoppedAt, S&&S.publicWorkshop, META]);
 }
 function typing(){
   var a=document.activeElement;
