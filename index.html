@@ -1180,7 +1180,7 @@ function resumeAnswers(){
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v41';
+var NEEDS_VERSION='v43';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -2266,7 +2266,7 @@ var open_=live && S.open;
     (q.lead?'<p class="tqlead">'+esc(q.lead)+'</p>':'')+
     '<p class="tqq">'+esc(q.q)+'</p>'+body+
     (q.after&&(asked||live)?'<p class="tqaft"><b>Say after the result</b>'+esc(q.after)+'</p>':'')+
-    foot+'<div style="padding:0 18px 16px"><button class="b" data-manage="'+esc(q.id)+'">Edit question</button></div></div>';
+    foot.slice(0,-6)+'<button class="b" data-manage="'+esc(q.id)+'">Edit question</button></div>'+'</div>';
 }
 
 function pipeBtn(q){
@@ -2550,7 +2550,7 @@ function renderLibrary(){
         var list=mine.map(function(q){
           var sy=says[q.id]||[];
           return '<div class="lbq"><p class="lbqh">'+esc(q.q)+
-            '<em>'+esc(rungName(q))+'</em></p>'+
+            '<em>'+esc(rungName(q))+'</em><button class="b" data-manage="'+esc(q.id)+'" style="margin-left:12px">Edit question</button></p>'+
             (q.lead?'<p class="lblead">'+esc(q.lead)+'</p>':'')+
             '<div class="lbopts">'+q.options.map(function(o,i){
               var sc=(q.scores&&q.scores[i])||0;
@@ -2564,7 +2564,7 @@ function renderLibrary(){
                        :(isIntro?'not quoted in the report'
                                :'no written line &mdash; the report would print the answer itself'))+
                 '</i></div>';
-            }).join('')+'</div><button class="b" data-manage="'+esc(q.id)+'">Edit question</button></div>';
+            }).join('')+'</div></div>';
         }).join('');
         return '<div class="lbtopic">'+head+list+'</div>';
       }).join('');
@@ -2906,7 +2906,7 @@ function wireEditor(){
     if(QUESTION_SAVING || !EDIT)return;
     if(!confirm('Permanently delete this question from the library and future workshops?')) return;
     var qs=questions().filter(function(x){ return x.id!==EDIT.id; });
-    saveQuestions(qs,'Question deleted from the library.');
+    saveQuestions(qs,'Question deleted from the library.',{act:'question',change:'delete',qid:EDIT.id});
   });
   on('edAdd',function(){
     edGather(); EDIT.options.push(''); EDIT.scores.push(0); render(true);
@@ -3125,12 +3125,14 @@ function send(p){
   }).catch(function(e){if(e.presenterAuth)return;if(asking)presenterAction('Asking the room is not confirmed. Please try again.','error');alert('This change was not confirmed. '+e.message+'. Please try again.');});
 }
 var QUESTION_SAVING=false;
-function saveQuestions(qs,message){
+function saveQuestions(qs,message,change){
   if(QUESTION_SAVING)return Promise.resolve();
   if(!qs.length){alert('Keep at least one question in the library.');return Promise.resolve();}
+  if(!change){alert('Choose a question to edit or delete first.');return Promise.resolve();}
+  change.code=CODE;
   QUESTION_SAVING=true;presenterAction('Saving question changes…','pending');
   ['edSave','edDel','edCancel'].forEach(function(id){var b=document.getElementById(id);if(b)b.disabled=true;});
-  return call({act:'config',code:CODE,questions:JSON.stringify(qs)}).then(function(d){
+  return controlCall(change).then(function(d){
     if(d && d.error==='bad code')throw presenterAuthError();
     if(!d || !d.ok)throw new Error(d && d.error || 'No confirmation from Google');
     QUESTION_SAVING=false;CONTROL_EPOCH++;TICK=null;S.questions=qs;EDIT=null;
@@ -3161,9 +3163,9 @@ function saveEdit(){
              options:opts, scored:!!EDIT.scored, scores:scores });
   var qs=questions().slice();
   if(EDIT.id){ body.id=EDIT.id;
-    for(var i=0;i<qs.length;i++) if(qs[i].id===EDIT.id) qs[i]=body; }
-  else { body.id='q'+Date.now().toString(36); qs.push(body); }
-  saveQuestions(qs,'Question saved for future workshops.');
+    var found=false;for(var i=0;i<qs.length;i++) if(qs[i].id===EDIT.id){qs[i]=body;found=true;}if(!found)qs.push(body); }
+  else { body.id='q'+Date.now().toString(36); qs.push(body);EDIT.id=body.id; }
+  saveQuestions(qs,'Question saved for future workshops.',{act:'question',change:'save',qid:body.id,question:JSON.stringify(body)});
 }
 
 function gate(){
