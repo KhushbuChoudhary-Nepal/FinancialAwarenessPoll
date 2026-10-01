@@ -1390,6 +1390,7 @@ function fullState(forcePublic){
     BUSY=false;
     if(epoch!==CONTROL_EPOCH)return;
     FAILS=0;
+    if(MODE!=='aud' && CODE && d && ((d.error==='bad code') || (d.ok && !d.meta)))throw presenterAuthError();
     if(!d || !d.ok)throw new Error('Update not confirmed');
     if(d.unchanged)return;
     if(S && S.sessionId===d.sessionId && Number(d.revision||0)<Number(S.revision||0))return;
@@ -1407,7 +1408,7 @@ function fullState(forcePublic){
     if(PLANWANT) d.plan=PLANWANT.slice();
     if(RUNWANT) d.run=RUNWANT.slice();
     S=d; restoreAnswers(); if(d.meta && METASAVE===null) META=d.meta; trackClock(); render(!!forcePublic);
-  }).catch(function(){ BUSY=false; FAILS++; render(); }).then(finishPublicRefresh);
+  }).catch(function(e){BUSY=false;if(!e.presenterAuth)FAILS++;render();}).then(finishPublicRefresh);
 }
 
 /* ---- shared helpers ---- */
@@ -1985,7 +1986,7 @@ function renderHome(){
     var btn=document.getElementById('hStart');if(btn){btn.disabled=true;btn.textContent='Starting…';}
     controlCall(q)
       .then(function(d){adoptControlState(d,true);STAGE='run';SEL=null;render(true);refresh();})
-      .catch(function(e){if(btn){btn.disabled=false;btn.textContent='Start the poll';}alert('The new session was not confirmed. '+e.message+'. Please try again.');});
+      .catch(function(e){if(btn){btn.disabled=false;btn.textContent='Start the poll';}if(e.presenterAuth)return;alert('The new session was not confirmed. '+e.message+'. Please try again.');});
   });
   on('hCont',function(){ STAGE='run'; SEL=S.activeId; render(true); });
   [].forEach.call(app.querySelectorAll('.pastrow'),function(b){
@@ -2994,11 +2995,23 @@ function wire(){
   on('nextQ',function(){ step(1); });
 
 }
+var PRESENTER_AUTH_NOTE='';
+function requirePresenterLogin(){
+  if(MODE==='aud')return;
+  CODE='';S=null;TICK=null;CONTROL_EPOCH++;BUSY=false;
+  PRESENTER_AUTH_NOTE='Please enter the presenter code saved in your Apps Script. The remembered code was not accepted.';
+  try{sessionStorage.removeItem('jugnu.poll.code');}catch(e){}
+  render(true);
+}
+function presenterAuthError(){
+  requirePresenterLogin();var e=new Error('Please sign in again with your current presenter code');e.presenterAuth=true;return e;
+}
 var CONTROL_EPOCH=0, CONTROL_QUEUE=Promise.resolve(), STOPPING=false;
 function controlCall(p){
   if(!p.op)p.op=Date.now().toString(36)+'_'+Math.random().toString(36).slice(2);
   var attempts=0;
   function attempt(){attempts++;return call(p).then(function(d){
+    if(d && d.error==='bad code')throw presenterAuthError();
     if(d && d.error==='busy' && attempts<3)return new Promise(function(resolve){setTimeout(resolve,1000*attempts+Math.round(Math.random()*1000));}).then(attempt);
     if(!d || !d.ok)throw new Error(d && d.error ? d.error : 'No confirmation from Google');
     return d;
@@ -3023,12 +3036,12 @@ function stopCurrentPoll(){
   STOPPING=true;render(true);
   controlCall({act:'end',code:CODE,sess:S.sessionId}).then(function(d){
     adoptControlState(d,false);STOPPING=false;SEL=null;EDIT=null;render(true);refresh();
-  }).catch(function(e){STOPPING=false;render(true);alert('The workshop has not been confirmed ended. '+e.message+'. Please try again.');});
+  }).catch(function(e){STOPPING=false;render(true);if(e.presenterAuth)return;alert('The workshop has not been confirmed ended. '+e.message+'. Please try again.');});
 }
 function send(p){
   p.code=CODE;if(S)p.sess=S.sessionId;
   return controlCall(p).then(function(d){adoptControlState(d,false);render(true);return refresh();})
-    .catch(function(e){alert('This change was not confirmed. '+e.message+'. Please try again.');});
+    .catch(function(e){if(e.presenterAuth)return;alert('This change was not confirmed. '+e.message+'. Please try again.');});
 }
 function saveQuestions(qs){
   call({act:'config',code:CODE,questions:JSON.stringify(qs)}).then(refresh).catch(function(){});
@@ -3061,13 +3074,16 @@ function gate(){
     '<button class="b2" id="pgo">Open presenter view</button>'+
     '<p class="err" id="perr" style="display:none">That code did not match.</p></div>';
   barMeta.textContent='Presenter';
+  if(PRESENTER_AUTH_NOTE){var note=document.getElementById('perr');note.textContent=PRESENTER_AUTH_NOTE;note.style.display='block';}
   var go=function(){
-    var v=(document.getElementById('pcode').value||'').trim(); if(!v) return;
-    call({act:'set',code:v}).then(function(d){
-      if(d&&d.ok){ CODE=v; try{sessionStorage.setItem('jugnu.poll.code',v);}catch(e){}
+    var button=document.getElementById('pgo');if(button.disabled)return;
+    var v=(document.getElementById('pcode').value||'').trim();if(!v)return;
+    button.disabled=true;button.textContent='Checking…';
+    call({act:'state',code:v}).then(function(d){
+      if(d && d.ok && d.meta){CODE=v;S=d;PRESENTER_AUTH_NOTE=''; try{sessionStorage.setItem('jugnu.poll.code',v);}catch(e){}
         render(true); refresh(); if(MODE==='rep') loadReport(); }
-      else document.getElementById('perr').style.display='block';
-    }).catch(function(){ document.getElementById('perr').style.display='block'; });
+      else {button.disabled=false;button.textContent='Open presenter view';var error=document.getElementById('perr');if(!error)return;error.textContent='That code did not match. Please use the presenter code saved in your deployed Apps Script.';error.style.display='block';}
+    }).catch(function(){button.disabled=false;button.textContent='Open presenter view';var error=document.getElementById('perr');if(error){error.textContent='Could not check presenter access. Please try again.';error.style.display='block';}});
   };
   document.getElementById('pgo').addEventListener('click',go);
   document.getElementById('pcode').addEventListener('keydown',function(e){ if(e.key==='Enter') go(); });
