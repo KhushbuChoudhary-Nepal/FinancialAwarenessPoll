@@ -1180,7 +1180,7 @@ function resumeAnswers(){
 
 /* Must match CODE_VERSION in Code-poll.gs. If the two differ, one of the two
    files was not updated and answers can go missing quietly. */
-var NEEDS_VERSION='v43';
+var NEEDS_VERSION='v44';
 function versionCheck(){
   var box=document.getElementById('vwarn'); if(!box) return;
   /* The room must never see a maintenance note — this is for the presenter. */
@@ -1292,7 +1292,89 @@ function deviceId(){
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-function audienceURL(){ return location.origin+location.pathname; }
+function audienceURL(){ return expiryAudienceURL() || generalAudienceURL(); }
+
+/* The audience waiting screen opens after local signature verification.
+   Google is still required for questions, votes, results and early End. */
+var POLL_LINK_PUBLIC_KEY="MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs6bJ+/nv0GprMkLQqHk6hcaGttuSzYu+1GLpmuh2DjFgeCuTiA77uV3cb/S9uvP65XA/2LujaM5Sou2BZ3QM0IEvTNgnWI92npDJI9QerzJ6kg5TaO8NA4W9X14264foWIyn1zWuWKHyZJ5+AoCfC+vgcUFOx8ZmEt8n1H+KDg9R8ndYdNajwWQ4FLRvd/rkmSNtbTAdKGywVNsNaTNE8qrUgIOmOyCfv+4DAFSvojJrz0FuKilncy9JpQfUlrPfCI2kSZmq3mWjkbjXE+hpILEbeIQxk3bdl7JonSvD3RzzRMPzI8dlVSqNVAmlxjsk1FYwbODOfu1OrjJ9yaJHlwIDAQAB";
+var POLL_LINK=null, POLL_LINK_STATUS='', POLL_LINK_READY=false, POLL_LINK_CHANGED=false;
+function pollLinkBytes(value){
+  if(!/^[A-Za-z0-9_-]+$/.test(value))throw new Error('Invalid token');
+  var raw=atob(value.replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from(raw,function(c){return c.charCodeAt(0);});
+}
+function initPollLink(){
+  POLL_LINK=null;POLL_LINK_STATUS='';POLL_LINK_CHANGED=false;POLL_LINK_READY=false;
+  if(MODE!=='aud' || location.hash.indexOf('#w=')!==0){POLL_LINK_READY=true;return Promise.resolve();}
+  POLL_LINK_STATUS='checking';
+  if(!window.crypto || !window.crypto.subtle){POLL_LINK_STATUS='unsupported';POLL_LINK_READY=true;return Promise.resolve();}
+  var parts=location.hash.slice(3).split('.');
+  if(parts.length!==2 || location.hash.length>4000){POLL_LINK_STATUS='invalid';POLL_LINK_READY=true;return Promise.resolve();}
+  return Promise.resolve().then(function(){
+    var signature=pollLinkBytes(parts[1]);
+    var publicBytes=Uint8Array.from(atob(POLL_LINK_PUBLIC_KEY),function(c){return c.charCodeAt(0);});
+    return window.crypto.subtle.importKey('spki',publicBytes,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']).then(function(key){
+      return window.crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,signature,new TextEncoder().encode(parts[0]));
+    }).then(function(ok){
+      if(!ok)throw new Error('Signature does not match');
+      var a=JSON.parse(new TextDecoder().decode(pollLinkBytes(parts[0])));
+      if(!Array.isArray(a) || a.length!==6 || a[0]!==1 || typeof a[1]!=='string' || !/^s[0-9]{10,}$/.test(a[1]) ||
+        typeof a[2]!=='string' || !a[2].trim() || a[2].length>120 || typeof a[3]!=='string' || a[3].length>120 ||
+        !Number.isFinite(a[4]) || !Number.isFinite(a[5]) || a[5]<=a[4] || a[5]-a[4]>7*86400000)throw new Error('Invalid workshop');
+      POLL_LINK={sessionId:a[1],company:a[2],title:a[3],openedAt:a[4],expiresAt:a[5]};POLL_LINK_STATUS='';
+      if(Date.now()>=a[5])POLL_LINK_STATUS='expired';
+    });
+  }).catch(function(){POLL_LINK_STATUS='invalid';}).then(function(){POLL_LINK_READY=true;});
+}
+function pollLinkBlocked(){
+  if(MODE!=='aud')return false;
+  if(POLL_LINK && Date.now()>=POLL_LINK.expiresAt)POLL_LINK_STATUS='expired';
+  return !POLL_LINK_READY || !!POLL_LINK_STATUS || POLL_LINK_CHANGED;
+}
+function pollLinkScreen(){
+  var title=POLL_LINK_STATUS==='checking'?'Opening workshop…':POLL_LINK_STATUS==='expired'?'This workshop link has expired':
+    POLL_LINK_STATUS==='unsupported'?'Please use a current browser':POLL_LINK_CHANGED?'This workshop is no longer current':'This workshop link is invalid';
+  var message=POLL_LINK_STATUS==='checking'?'Checking your workshop link.':POLL_LINK_STATUS==='unsupported'?'Open this link in a current version of Chrome, Edge, Safari or Firefox.':'Please ask the presenter for a new workshop link.';
+  app.innerHTML='<div class="aud"><div class="rest"><h2>'+title+'</h2><p>'+message+'</p></div></div>';barMeta.textContent='Workshop link';
+}
+function generalAudienceURL(){return location.origin+location.pathname;}
+function expiryAudienceURL(){
+  var link=S && S.workshopLink;
+  return link && link.sessionId===S.sessionId && link.expiresAt>Date.now()?generalAudienceURL()+'#w='+link.token:'';
+}
+function pollNepalInput(ms){return new Date(ms+345*60000).toISOString().slice(0,16);}
+function pollNepalTime(ms){return new Date(ms).toLocaleString('en-GB',{timeZone:'Asia/Kathmandu',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).replace(/am|pm/g,function(v){return v.toUpperCase();});}
+function copyPollLink(url,button){
+  if(navigator.clipboard && navigator.clipboard.writeText)return navigator.clipboard.writeText(url).then(function(){button.textContent='Copied';}).catch(function(){window.prompt('Copy this link:',url);});
+  window.prompt('Copy this link:',url);return Promise.resolve();
+}
+function renderWorkshopLinks(){
+  if(MODE!=='pres' || !CODE || !S || !S.meta)return;
+  var link=expiryAudienceURL(), stored=S.workshopLink;
+  var old=document.getElementById('workshopLinks');if(old)old.remove();
+  var box=document.createElement('div');box.id='workshopLinks';box.className='hcard';box.style.cssText='max-width:1040px;margin:20px auto;padding:24px';
+  box.innerHTML='<h2>Workshop audience link</h2><p class="hsub">Choose the expiry in Nepal time. The expiry link opens the waiting screen without a Google check. Questions and votes still need Google.</p>'+
+    '<label for="pollLinkExpiry">Link expires (Nepal time)</label><div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0">'+
+    '<input type="datetime-local" id="pollLinkExpiry" value="'+pollNepalInput(stored && stored.expiresAt>Date.now()?stored.expiresAt:Date.now()+3*3600000)+'">'+
+    '<button class="b2" id="pollCreateLink"'+(!workshopIsActive()?' disabled':'')+'>'+(stored?'Create / extend expiry link':'Create expiry link')+'</button></div>'+
+    (!workshopIsActive()?'<p class="note">Start or resume the workshop to create a link.</p>':'')+
+    (link?'<p class="hsub"><b>'+esc([S.meta.company,S.meta.title].filter(Boolean).join(' - '))+'</b><br>Expires: '+esc(pollNepalTime(stored.expiresAt))+'</p><p class="url" style="overflow-wrap:anywhere">'+esc(link)+'</p><button class="b2" id="pollCopyExpiry">Copy expiry link</button> ':'')+
+    '<button class="b2 ghost" id="pollCopyGeneral">Copy normal link</button><p class="note" id="pollLinkMessage">For comparison, test both links on the same device and network. End workshop still stops live voting. Older links keep their original expiry when you extend it.</p>';
+  app.appendChild(box);
+  on('pollCopyGeneral',function(){copyPollLink(generalAudienceURL(),this);});
+  on('pollCopyExpiry',function(){copyPollLink(link,this);});
+  on('pollCreateLink',function(){
+    var button=this, value=document.getElementById('pollLinkExpiry').value;
+    var expiry=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)?Date.parse(value+':00+05:45'):NaN;
+    if(!Number.isFinite(expiry) || expiry<=Date.now() || expiry-Date.now()>7*86400000){document.getElementById('pollLinkMessage').textContent='Choose a future expiry within 7 days.';return;}
+    button.disabled=true;button.textContent='Creating…';
+    controlCall({act:'workshoplink',code:CODE,sess:S.sessionId,expiresAt:expiry}).then(function(d){
+      if(!d.link || !d.link.token || d.link.sessionId!==S.sessionId)throw new Error('Link not confirmed');
+      S.workshopLink=d.link;render(true);refresh();
+    }).catch(function(e){button.disabled=false;button.textContent='Create expiry link';var message=document.getElementById('pollLinkMessage');if(message)message.textContent='Link creation was not confirmed. '+e.message;});
+  });
+}
+
 
 /* ---- talking to the sheet ---- */
 /* Two roads to Google. The normal one reads the reply directly. Some office
@@ -1307,6 +1389,7 @@ function qstr(params){
 }
 
 function call(params){
+  if(MODE==='aud' && pollLinkBlocked())return Promise.reject(new Error('Workshop link is not active'));
   if(VIA_SCRIPT) return callScript(params);
   var controller=typeof AbortController!=='undefined'?new AbortController():null;
   var timeout=controller?setTimeout(function(){controller.abort();},8000):null;
@@ -1381,7 +1464,7 @@ function presenterDetails(){
   var identity=document.getElementById('presentIdentity'),notice=document.getElementById('presentAction');
   var signedIn=MODE==='pres' && !!CODE && !!S;
   barMeta.hidden=MODE==='aud';
-  var publicNames=MODE==='aud' && workshopIsActive() && S.publicWorkshop;
+  var publicNames=MODE==='aud' && !pollLinkBlocked() && ((workshopIsActive() && S.publicWorkshop) || POLL_LINK);
   if(identity){
     identity.hidden=!signedIn && !publicNames;
     if(publicNames){
@@ -1414,7 +1497,7 @@ function presenterDetails(){
   }
 }
 function refreshPublicQuestion(){
-  if(MODE!=='aud' || PUBLIC_CHECKING || !ENDPOINT)return Promise.resolve();
+  if(MODE!=='aud' || PUBLIC_CHECKING || !ENDPOINT || pollLinkBlocked())return Promise.resolve();
   PUBLIC_CHECKING=true;publicRefreshControls();
   if(BUSY){PUBLIC_REFRESH_QUEUED=true;return Promise.resolve();}
   return fullState(true);
@@ -1426,6 +1509,7 @@ function finishPublicRefresh(){
 
 
 function refresh(){
+  if(MODE==='aud' && pollLinkBlocked()){render(true);return Promise.resolve();}
   if(BUSY || !ENDPOINT)return Promise.resolve();
   if(MODE!=='aud' && !CODE)return Promise.resolve();
   return fullState();
@@ -1442,6 +1526,8 @@ function fullState(forcePublic){
     FAILS=0;
     if(MODE!=='aud' && CODE && d && ((d.error==='bad code') || (d.ok && !d.meta)))throw presenterAuthError();
     if(!d || !d.ok)throw new Error('Update not confirmed');
+    if(MODE==='aud' && pollLinkBlocked()){render(true);return;}
+    if(POLL_LINK && MODE==='aud' && d.sessionId && d.sessionId!==POLL_LINK.sessionId){POLL_LINK_CHANGED=true;S=null;TICK=null;render(true);return;}
     if(d.unchanged)return;
     if(S && S.sessionId===d.sessionId && Number(d.revision||0)<Number(S.revision||0))return;
     if(d.v) TICK=d.v;
@@ -1556,6 +1642,10 @@ function counts(q){
 
 /* ---- audience ---- */
 function renderAudience(){
+  if(pollLinkBlocked()){pollLinkScreen();return;}
+  if(POLL_LINK && !S){
+    app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span><h2>Waiting for the first question</h2><p>'+esc([POLL_LINK.company,POLL_LINK.title].filter(Boolean).join(' - '))+'</p><p>'+(FAILS?'Question connection is delayed. This page keeps trying automatically.':'Workshop link verified. Connecting for live questions…')+'</p></div></div>';barMeta.textContent='Waiting';return;
+  }
   if(!ENDPOINT) return setup();
   if(!S){
     app.innerHTML='<div class="aud"><div class="rest"><span class="dot"></span>'+
@@ -4201,6 +4291,8 @@ function render(force){
   MODE==='rep' ? renderReport() : MODE==='pres' ? renderPresenter() : renderAudience();
   publicRefreshControls();
   presenterDetails();
+  renderWorkshopLinks();
+  if(MODE==='pres')drawQR();
 }
 
 var qrDone='';
@@ -4216,7 +4308,8 @@ function drawQR(){
 try{ CODE=sessionStorage.getItem('jugnu.poll.code')||''; }catch(e){}
 if(!ENDPOINT){ setup(); }
 else{
-  render(); refresh(); if(MODE==='rep' && CODE) loadReport();
+  initPollLink().then(function(){render(true);refresh();});
+  render(); if(MODE==='rep' && CODE) loadReport();
   /* the presenter needs it snappy; 150 phones must not all knock at once */
   var base = MODE==='pres' ? 2500 : 4000;
   setInterval(function(){
@@ -4231,8 +4324,8 @@ else{
      looking at the audience view and thinks nothing happened. */
   window.addEventListener('hashchange',function(){
     var want = modeFor(location.hash+location.search);
-    if(want!==MODE){ MODE=want; EDIT=null; if(want==='rep'){ REPORT=null; loadReport(); }
-      render(true); refresh(); }
+    if(want!==MODE || want==='aud'){ MODE=want; EDIT=null;S=null;TICK=null; if(want==='rep'){ REPORT=null; loadReport(); }
+      initPollLink().then(function(){render(true);refresh();});render(true); }
   });
 }
 })();
